@@ -1,0 +1,25 @@
+conencted & connection with destination ID 6 (7 in configure)
+
+return sends a message with an extra byte for the desintation field.
+
+Trying to push labels:
+
+
+pushing labels
+debug data [235, 0, 0, 0, 0, 3, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97]
+DEBUG label message [16, 2, 235, 0, 0, 0, 0, 3, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 97, 22, 236, 16, 3]
+BEBUG BYTES b'\x10\x02\xeb\x00\x00\x00\x00\x03aaaaaaaaaaaaaaaa\x16\xec\x10\x03'
+b'\x10\x06'
+
+
+
+-------------------------------------
+DEBUG THE ROUTER
+
+TELNET on 172.16.255.10 port 55555
+
+(if ssh'd into MCS, enter telnet 172.16.255.10 55555
+
+enter following into telnet session with router to enable debug info:
+audit/update 105
+audit/update 70
