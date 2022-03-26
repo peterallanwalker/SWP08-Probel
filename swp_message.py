@@ -1,5 +1,5 @@
-# SWP08
-# Message class for encoding and decoding router control messages using the SWP08/Probel protocol
+# SWP08 Message Class
+# For encoding and decoding router control messages using the SWP08/Probel protocol
 # Message.encoded is a byte string ready to be sent by Connection.send()
 # Peter Walker, June 2021
 #

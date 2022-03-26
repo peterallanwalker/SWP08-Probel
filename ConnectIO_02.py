@@ -8,7 +8,7 @@
 import time
 from swp08_02 import Message
 
-from connection_01 import Connection
+from connection import Connection
 from swp_message import Message
 
 import swp_utils as utils
