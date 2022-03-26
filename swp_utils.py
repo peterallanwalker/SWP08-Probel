@@ -2,7 +2,7 @@
 # Constants and helper functions for working with the SWP08 router control protocol
 # Peter Walker, June 2021
 
-# CONSTANTS
+# - CONSTANTS
 SOM = [0x10, 0x02]  # SWP08 Message header ("Start Of Message")
 EOM = [0x10, 0x03]  # SWP08 Message end ("End of Message")
 
@@ -15,7 +15,7 @@ COMMANDS = {"connect": 0x02,    # Send to router to set a connection
             }
 
 
-# HELPER FUNCTIONS
+# - HELPER FUNCTIONS
 
 def calculate_checksum(data):
     """

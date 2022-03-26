@@ -9,9 +9,9 @@ import time
 from swp08_02 import Message
 
 from connection_01 import Connection
-from swp08_01 import Message
+from swp_message import Message
 
-import swp_utils_01 as utils
+import swp_utils as utils
 
 
 def convert_string(s):

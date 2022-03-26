@@ -5,7 +5,7 @@
 # SWP08 protocol info:
 # https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf
 
-import swp_utils_01 as utils
+import swp_utils as utils
 
 
 class Message:

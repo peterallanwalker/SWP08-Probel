@@ -2,7 +2,7 @@
 # Identifies, validates and Extracts SWP08 messages from byte strings
 # Peter Walker, June 2021.
 
-import swp_utils_01 as utils 
+import swp_utils as utils
 
 
 def _find_header(data: bytes) -> int:
