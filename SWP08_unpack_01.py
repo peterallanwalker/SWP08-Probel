@@ -87,7 +87,7 @@ if __name__ == '__main__':
     
     messages, residual_data = unpack_data(test_data)
     for msg in messages:
-        print (msg)
+        print(msg)
         
-    print (residual_data)
-    
+    print(residual_data)
+

@@ -1,5 +1,5 @@
 # SWP08
-# For encoding and decoding to SWP08 router control messages
+# Encoding and decoding router control messages using the SWP08/Probel protocol
 # Peter Walker, June 2021
 
 # SWP08 protocol info:
@@ -25,7 +25,7 @@ class Message:
             - or call Message.decode(msg byte string) to instantiate a message object from its encoded form.
         """
         if encoded:
-            # we will be pre-validating received messages so dont want to waste time error checking here
+            # - We will be pre-validating received messages so dont want to waste time error checking here
 
             # TODO -decode
             self._encoded = encoded
