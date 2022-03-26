@@ -17,6 +17,7 @@ class Message:
                  multiplier=None,
                  source=None,
                  destination=None,
+                 source_label=None,
                  encoded=None,):
         """
             *** NOT INTENDED TO BE CALLED DIRECTLY, INSTANTIATE USING THE CLASS METHODS... ***
@@ -55,15 +56,16 @@ class Message:
             self._encoded = self._encode()
 
     def __str__(self):
-        return "SWP08 Message object - Command: {}, Matrix: {}, Level: {}, Multiplier: {}, Source: {}, Destination: {}, Encoded: {}".format(self._command, self._matrix, self._level, self._multiplier, self._source, self._destination, self._encoded)
+        return "SWP08 Message object - Command: {}, Matrix: {}, Level: {}, Multiplier: {}, Source: {}, Destination: {}, Label: {}, Encoded: {}".format(self._command, self._matrix, self._level, self._multiplier, self._source, self._destination, self.source_label, self._encoded)
 
     """ PUBLIC CONSTRUCTORS FOR INSTANTIATING THIS CLASS """
     @classmethod
-    def connect(cls, source, destination, matrix=0, level=0, multiplier=0):
+    def connect(cls, source, destination, source_label=None, matrix=0, level=0, multiplier=0):
         """
         Instantiate a connection Message object
         :param source:
         :param destination:
+        :param source_label:
         :param matrix:
         :param level:
         :param multiplier:
