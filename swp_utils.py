@@ -1,6 +1,14 @@
 # SWP08 UTILITIES
 # Constants and helper functions for working with the SWP08 router control protocol
 # Peter Walker, June 2021
+#
+# Updated March 2022 - added support for pushing labels.
+# ... Note this is not typical usage of the protocol,
+#     it is used by VSM to push labels to Calrec Apollo/Artemis audio mixers
+
+# SWP08 protocol info:
+# https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf
+# Other versions of the protocol doc are available in the project's protocol docs folder
 
 # - CONSTANTS
 SOM = [0x10, 0x02]  # SWP08 Message header ("Start Of Message")
@@ -12,8 +20,16 @@ DESTINATION_BYTE = 5
 
 COMMANDS = {"connect": 0x02,    # Send to router to set a connection
             "connected": 0x04,  # Sent from router when a connection is made
+            "push_labels": 107,
+            "push_labels_extended": 235,
             }
 
+CHAR_LEN_CODES = {4: 0,
+                  8: 1,
+                  12: 2,
+                  16: 3,
+                  32: 4
+                  }
 
 # - HELPER FUNCTIONS
 

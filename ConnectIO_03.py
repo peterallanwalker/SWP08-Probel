@@ -91,6 +91,13 @@ if __name__ == '__main__':
 
     print(20 * '#' + ' ConnectIO - SWP08 router controller ' + 20 * '#')
 
+    labels = ["ones", "twos", "thre", "four"]
+    labels2 = ["pete", "test", "help", "zXXX"]
+    label_message = push_labels(labels)
+    print("TEST\n", label_message)
+
+
+
     #address = "172.29.1.24"     # Impulse default Router Management adapaptor
     address = "192.169.1.201"    # Impulse added address for Router on Interface 3
     port = 61000  # Fixed port for SWP08
@@ -130,10 +137,10 @@ if __name__ == '__main__':
 
 
     print("sending connections")
-    connection.send(test1._encoded)
-    connection.send(test2._encoded)
-    connection.send(test3._encoded)
-    connection.send(test4._encoded)
+    connection.send(test1.encoded)
+    connection.send(test2.encoded)
+    connection.send(test3.encoded)
+    connection.send(test4.encoded)
 
     #connection.send(dis1)
     #connection.send(dis2)

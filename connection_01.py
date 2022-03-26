@@ -7,7 +7,7 @@
 import socket
 import threading
 
-import SWP08_unpack_01 as swp
+import swp_unpack as swp
 #import CSCP_unpack_1_1 as cscp
 
 TIMEOUT = 3  # how long to wait when starting connection and receiving data.

@@ -133,10 +133,10 @@ if __name__ == '__main__':
 
 
     print("sending connections")
-    connection.send(test1._encoded)
-    connection.send(test2._encoded)
-    connection.send(test3._encoded)
-    connection.send(test4._encoded)
+    connection.send(test1.encoded)
+    connection.send(test2.encoded)
+    connection.send(test3.encoded)
+    connection.send(test4.encoded)
 
     #connection.send(dis1)
     #connection.send(dis2)
