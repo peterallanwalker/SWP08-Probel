@@ -3,17 +3,17 @@
 # Peter Walker, March 2022
 
 # - TODO, pass argument csv file name to test multiple patches?
-# TODO provide option for longer labels (perhaps as part of setings)
+# TODO provide option for longer labels (perhaps as part of settings)
 # provide option to pass a CSV to test multiple patches
 # deal with different matrix/level/multiplier etc
 # sort labels div/mod else wont work with IDs > 10?
 # option to send lots of labels
 
-from string import punctuation
+from string import punctuation  # - used just to parse/sanitise user input.
 
 import connection_settings as config
 from connection import Connection
-from swp_message import Message  # TODO check how this works when Message relies on functions & imports that are not being imported
+from swp_message import Message
 
 
 def get_user_input():

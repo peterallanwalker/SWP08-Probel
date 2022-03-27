@@ -5,6 +5,8 @@
 
 import json
 
+import swp_utils
+
 CONFIG_FILE = "connection_settings.json"
 
 
@@ -73,7 +75,8 @@ def _load_settings():
     if not r:
         r = {"Router IP Address": None,
              "Port": 61000,
-             "Protocol": "swp08"
+             "Protocol": "swp08",
+             "label length": 4
              }
     return r
 
@@ -89,6 +92,16 @@ def _ask_ip_address():
         ip_address = input("Enter mixer's IP address: ")
         if _validate_ip_address(ip_address):
             return ip_address
+
+
+def _ask_label_length():
+    valid = False
+    while not valid:
+        label_length = input("Enter SWP label length, options: {}".format(swp_utils.CHAR_LEN_CODES))
+        if not label_length.isnumeric():
+            continue
+        elif int(label_length) in swp_utils.CHAR_LEN_CODES:
+            return label_length
 
 
 def _confirm_settings(config):
@@ -109,7 +122,8 @@ def _confirm_settings(config):
     if use_settings == "n":
         # User does not want to keep last used settings, so get their input for new settings
         config["Router IP Address"] = _ask_ip_address()
-
+        if config["Protocol"] == "swp08":
+            config["label length"] = _ask_label_length()
     return config
 
 
