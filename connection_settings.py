@@ -71,7 +71,10 @@ def _load_settings():
         r = False
 
     if not r:
-        r = {"Router IP Address": None}
+        r = {"Router IP Address": None,
+             "Port": 61000,
+             "Protocol": "swp08"
+             }
     return r
 
 
@@ -97,7 +100,7 @@ def _confirm_settings(config):
 
     # Present last used settings and ask to confirm or update
     while not use_settings:
-        print("Current Connection Settings: ")
+        print("Last used connection settings: ")
         for heading in config:
             print("\t", heading, ":", config[heading])
 
@@ -116,6 +119,7 @@ def get_settings():
     Loads connection settings (just IP address in this version) & gets user to confirm or edit
     :return: dict of user confirmed settings
     """
+    # TODO - handle corrupt/malformed json settings file
     r = _load_settings()
     r = _confirm_settings(r)
     return r
