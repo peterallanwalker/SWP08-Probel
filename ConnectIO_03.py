@@ -33,8 +33,8 @@ def push_labels(labels):
 
     matrix = 0
     name_len = 0  # 4 char label # TODO - try 00, 01, 02, 03, 04 (different message length formats but 0 should be 4 char)
-    start_dest_div = 0 #/ 256 #  .. # OK, THIS IS NOW WORKING, BUT NEED DESTINATIONS WITH LOW IDs, NEED TO FIX THE DIV/MOD
-    start_dest_mod = 0 #% 256
+    start_dest_div = int(0 / 256) #  .. # OK, THIS IS NOW WORKING, BUT NEED DESTINATIONS WITH LOW IDs, NEED TO FIX THE DIV/MOD
+    start_dest_mod = 0 % 256
     qty_names = 4
 
     # TODO - NOTE, LABELS MUST BE OF THE EXPECTED LENGTH
@@ -153,10 +153,10 @@ if __name__ == '__main__':
     print("pushing labels")
 
     labels = ["ones", "twos", "thre", "four"]
-    labels2 = ["pete", "test", "help", "zXXX"]
+    #labels = ["pete", "test", "help", "zXXX"]
 
-    #label_message = push_labels(labels)
-    #connection.send(label_message)
+    label_message = push_labels(labels)
+    connection.send(label_message)
 
     time.sleep(2)
     #label_message = push_labels(labels2)

@@ -23,3 +23,28 @@ TELNET on 172.16.255.10 port 55555
 enter following into telnet session with router to enable debug info:
 audit/update 105
 audit/update 70
+
+
+-------------------------------------
+
+---------------------------------
+BUGS ?
+CE-8119 UI does not update correctly when swp overpatches a previous SWP path
+(does not update the connected source, through the routing does change. - confusing?
+COnnected destination does change
+end up being undbale to remove from UI as well as its displaying a stale patch that does not actuall exist,
+
+also, labels, of faders do not update when overpatching like this.
+
+NOTE, if you push a label to a dest, we update all dests fed from the same source with that label.... I guess thats oK
+but it was a bit unexpected, and compounded when the wrong source is displayed on the fader.
+
+
+
+
+lsoing connection but connection status still connected? (check pinging)
+router debug says error system 104
+
+todo - salvos
+
+

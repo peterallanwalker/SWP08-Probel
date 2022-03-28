@@ -57,22 +57,22 @@ def unpack_data(data, previous_insufficient_data=False):
     while len(data) > 0:
         header_byte = _find_header(data)  # First index within data containing a CSCP start of header value (0xF1 / 241)
         if header_byte != -1:
-            print("[SWP08_unpack]: processing data:", data)
-            print("[SWP08_unpack]: potential header found at index", header_byte)
-            print("SWP_unpack", data)
+            #print("[SWP08_unpack]: processing data:", data)
+            #print("[SWP08_unpack]: potential header found at index", header_byte)
+            #print("SWP_unpack", data)
             if header_byte + 10 >= len(data):  # Connect & COnnected messages are 11 bytes long TODO - handle other message types.
-                print("[SWP08_unpack]: insuficcient data for complet message")
+                #print("[SWP08_unpack]: insuficcient data for complet message")
                 insufficient_data = data[header_byte:]
                 break
             
             if data[header_byte + 9] == utils.EOM[0] and data[header_byte + 10] == utils.EOM[1]:
-                print("[SWP08_unpack]: SOM & EOM FOUND. Extracted message:", data[header_byte : header_byte + 11])
+                #print("[SWP08_unpack]: SOM & EOM FOUND. Extracted message:", data[header_byte : header_byte + 11])
                 # TODO - PROPERLY VALIDATE MESSAGES USING CHECKSUM & BYTE COUNT, + HANDLE OTHER MESSAGE TYPES
                 messages.append(data[header_byte : header_byte + 11])
                 data = data[header_byte + 11:]
 
             else:
-                print ('invalid header - EOM not found,  discarding!')
+                #print ('invalid header - EOM not found,  discarding!')
                 data = data[header_byte+1:]  # Discard processed header.
 
         else:

@@ -186,8 +186,8 @@ class Message:
 
         elif self.command in ("push_labels", "push_labels_extended"):
             # TODO - deal with the div/mod, else this will only handle low numbered destinations
-            start_dest_div = self.destination
-            start_dest_mod = self.destination
+            start_dest_div = int(self.destination / 256)
+            start_dest_mod = self.destination % 256
             label_qty = len(self.labels)
             labels = format_labels(self.labels)
             data = command + [self._char_len, start_dest_div, start_dest_mod, label_qty] + labels

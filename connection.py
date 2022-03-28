@@ -89,7 +89,7 @@ class Connection:
 
             if data:
                 self.pinged = False
-                print(data)
+                print("[connection.py.run]: DATA RECEIVED", data)
                 
                 messages, self._residual_data = self._unpack(data, self._residual_data) # TODO - TEST SPLIT MESSAGES
                 

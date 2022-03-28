@@ -4,10 +4,13 @@
 
 # - TODO, pass argument csv file name to test multiple patches?
 # TODO provide option for longer labels (perhaps as part of settings)
+# TODO present returned messaegs better (ACK/NAK)
 # provide option to pass a CSV to test multiple patches
 # deal with different matrix/level/multiplier etc
 # sort labels div/mod else wont work with IDs > 10?
 # option to send lots of labels
+
+import time
 
 from string import punctuation  # - used just to parse/sanitise user input.
 
@@ -40,6 +43,13 @@ def get_user_input():
     return int(source), int(destination), label
 
 
+def get_incoming_message(conn):
+    message = conn.get_message()
+    while message:
+        #print("Message Recieved", Message.decode(message))
+        print("Message Recieved", message)
+        message = conn.get_message()
+
 if __name__ == '__main__':
     # - Format & print header
     heading = "SWPO8 Router Control - Cross-point switching and label pushing"
@@ -52,23 +62,28 @@ if __name__ == '__main__':
     config.save_settings(settings)
 
     # - Open a TCP connection with the router
-    #connection = Connection(settings["Router IP Address"], settings["Port"], settings["Protocol"])
+    connection = Connection(settings["Router IP Address"], settings["Port"], settings["Protocol"])
+    #connection = Connection(settings["Router IP Address"], settings["Port"], "SWP08")
 
     # - Wait for connection status to be Connected
     print("Waiting for connection...")
-    #while connection.status != "Connected":
-    #    pass
+    while connection.status != "Connected":
+        pass
 
-    #print(connection.status)
-    print("Note, values are 0 based, (I.E. Calrec GUI/CSV values - 1)")
+    print("Note, values are 0 based, (I.E. Calrec GUI/CSV values-1)")
 
     while True:
+        if connection.status != "connected":
+            print(connection.status)
         source, destination, label = get_user_input()
         patch_msg = Message.connect(source, destination)
         print("Sending", patch_msg)
-        #connection.send(patch_msg)
+        connection.send(patch_msg.encoded)
+        #get_incoming_message(connection)
+        #time.sleep(2)  # messages failing sometimes.. maybe wait for NAK
         if label:
             label_msg = Message.push_labels([label], destination)
             print("Sending", label_msg)
-            #connection.send(label_msg)
+            connection.send(label_msg.encoded)
+            #get_incoming_message(connection)
         print("\n")
