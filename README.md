@@ -53,7 +53,7 @@ Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a li
 
 #### TODO
 - [ ] Validate using checksum.
-- [ ] Process/expose ACK & NAK to the main thread (how to differentiate a SOM+ACK/NAK from potential valid general message content)
+- [ ] Process/expose ACK & NAK to the main thread (how to differentiate a SOM+ACK/NAK from potential valid general message content... lookup DLE in the protcol doc, think supposed to pass DLE DLE if DLE within message to differentiate from header? ... so need to check this or may also fail to validate messages... test by focing mixer to return a message with a DEL byte)
 
 ### connection_settings.py
 Handles loading of last used settings, user confirm/edit and save as json.
