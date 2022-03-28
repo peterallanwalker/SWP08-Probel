@@ -1,7 +1,7 @@
 # Connection Settings handler
 # Peter Walker 2020.
 # Stripped down from CSCP-MIDI for simple SWP use
-# (removed port option as SWP uses fixed port, and removed all the MIDI port handling)
+# (removed port option as SWP uses fixed port, and removed all the MIDI port handling and control mapping)
 
 import json
 

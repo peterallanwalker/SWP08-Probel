@@ -33,6 +33,7 @@ CHAR_LEN_CODES = {4: 0,
 
 # - HELPER FUNCTIONS
 
+
 def calculate_checksum(data):
     """
         Calculates and returns a checksum for an SWP08 message.

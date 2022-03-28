@@ -19,7 +19,7 @@ def _find_header(data: bytes) -> int:
 
 
 def _is_checksum_valid(message, header_byte, byte_count):
-    # TODO - Not currently using this in this project, adapt for SWP and use to properly validate incoming messages
+    # TODO - NOT CURRENTLY USING THIS - SHOULD DO - NEED TO ADAPT FOR SWP08
     # TODO - make generic checksum creator for building messages and validating (replace the compare below)
     message_checksum = message[header_byte + utils.CSCP_HEADER_LENGTH + byte_count]
     compare_checksum = 0

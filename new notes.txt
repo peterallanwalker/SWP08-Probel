@@ -45,6 +45,9 @@ but it was a bit unexpected, and compounded when the wrong source is displayed o
 lsoing connection but connection status still connected? (check pinging)
 router debug says error system 104
 
-todo - salvos
+todo - salvos (from CSV)
+todo - test extended labels
+todo - test setting longer label lengths
+todo
 
 
