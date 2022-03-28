@@ -7,7 +7,7 @@
 Cross-point switching tested with Calrec Brio and Apollo+/Impulse audio mixers.
 Label pushing tested with Calrec Apollo+ (label exchange is not supported on Brio or Summa)
 
-To help with debugging, telnet into the Calrec router on port 55555 (default address of Impulse router on the internal network via interface 2 is 172.16.255.10), and enter `audit/update 105` & `audit/update 70` to enable SWP related debug output. (Note router telnet session may not be responsive to commands initially, in which case, repeatedly entering `help` untill the help info is displayed gets it recognising input)
+To help with debugging if needed, telnet into the Calrec router on port 55555 (default address of Impulse router on the internal network via interface 2 is 172.16.255.10), and enter `audit/update 105` & `audit/update 70` to enable SWP related debug output. (Note router telnet session may not be responsive to commands initially, in which case, repeatedly entering `help` untill the help info is displayed gets it recognising input)
 
 ## Project Files
 
