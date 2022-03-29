@@ -97,7 +97,9 @@ def _ask_ip_address():
 def _ask_label_length():
     valid = False
     while not valid:
-        label_length = input("Enter SWP label length, options: {}".format(swp_utils.CHAR_LEN_CODES))
+        # TODO - format outtput to print keys
+        # TODO - this is changing the json file, but does not seem to be changing the label len displayed
+        label_length = input("Enter SWP label length, options: {}: ".format(swp_utils.CHAR_LEN_CODES.items()))
         if not label_length.isnumeric():
             continue
         elif int(label_length) in swp_utils.CHAR_LEN_CODES:
@@ -122,7 +124,7 @@ def _confirm_settings(config):
     if use_settings == "n":
         # User does not want to keep last used settings, so get their input for new settings
         config["Router IP Address"] = _ask_ip_address()
-        if config["Protocol"] == "swp08":
+        if config["Protocol"] == "SWP08":
             config["label length"] = _ask_label_length()
     return config
 

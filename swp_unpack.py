@@ -54,6 +54,10 @@ def unpack_data(data, previous_insufficient_data=False):
     messages = []
     insufficient_data = False
 
+    ## - DEBUG - ##
+
+    print("\nswp_unpack DATA DUMP", data)
+
     while len(data) > 0:
         header_byte = _find_header(data)  # First index within data containing a CSCP start of header value (0xF1 / 241)
         if header_byte != -1:
