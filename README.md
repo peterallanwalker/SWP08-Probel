@@ -12,7 +12,7 @@ To help with debugging if needed, telnet into the Calrec router on port 55555 (d
 ## Project Files
 
 ### connectIO.py
-A main entry point to the application for users - creates a connection, prompts for individual source-to-destination routes with optional label to pass.
+A main entry point to the application for users - creates a connection (based on last used settings if any, prompts for confrim/edit), prompts for individual source-to-destination routes with optional label to pass.
 
 #### TODO
 - [ ] Take csv filename as command line argument to test bulk patching / salvos.
