@@ -11,6 +11,12 @@ To help with debugging if needed, telnet into the Calrec router on port 55555 (d
 
 ## Project Files
 
+### connectIO.py
+A main entry point to the application for users - creates a connection, prompts for individual source-to-destination routes with optional label to pass.
+
+#### TODO
+- [ ] Take csv filename as command line argument to test bulk patching / salvos.
+
 ### swp_message.py
 The core of this appplication, provides a Message class with various contructors for encoding and decoding messages using the SWP08 protocol.
 
@@ -58,11 +64,6 @@ Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a li
 
 ### connection_settings.py
 Handles loading of last used settings, user confirm/edit and save as json.
-
-### connectIO.py
-A main entry point to the application for users - creates a connection, prompts for individual source-to-destination routes with optional label to pass.
-
-- [ ] Take csv filename as command line argument to test bulk patching / salvos.
 
 ### prot0x.py
 Rough testing/in-progress dev scripts.
