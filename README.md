@@ -66,8 +66,8 @@ Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a li
 Handles loading of last used settings, user confirm/edit and save as json.
 
 #### TODO
-- [ ] Fix label length prompt output
-- [ ] chanign label len does nto seem to work.. think it must be in the push labels function though
+- [x] Fix label length prompt output
+- [x] changing label len does not seem to work.. must be in the push labels function of connectIO though
 
 ### prot0x.py
 Rough testing/in-progress dev scripts.
