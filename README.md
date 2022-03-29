@@ -40,13 +40,13 @@ The `Message` class provides a `__str__` method so info can be printed to view t
 - [ ] Support more messages types
 
 ### connection.py
-Provides the Connection class `Connection(IP_address, port, protocol=protocol)` to handle an IP socket connection between the application and the mixer/router. IP_address is a string, port is an int, protocol is an optional string - "CSCP" or "SWP08" currently supported, default is CSCP (so pass "SWP08" when instantiating for router control). The instantiated connection object runs a separate thread for receiving and buffering incoming messages without blocking the main application. Provides `Connection.send_message()` & `Connection.get_message()` methods to send (`connection.send(message.encoded)`) and receive messages (`message = connection.receive()` 'pops' off the oldest received message in the buffer - `connection.\_messages[0]`, so the next call to `receive()` returns the next message). 
+Provides the Connection class `Connection(IP_address, port, protocol=protocol)` to handle an IP socket connection between the application and the mixer/router. IP_address is a string, port is an int, protocol is an optional string - "CSCP" or "SWP08" currently supported, default is CSCP (so pass "SWP08" when instantiating for router control). The instantiated connection object runs a separate thread for receiving and buffering incoming messages without blocking the main application. Provides `Connection.send_message()` & `Connection.get_message()` methods to send (`connection.send(message.encoded)`) and receive messages (`message = connection.receive()` 'pops' off the oldest received message in the buffer - `connection._messages[0]`, so the next call to `receive()` returns the next message). 
 
 Note, incoming bytes are parsed into separate validated SWP/CSCP messages based on header/SOM, (checksum not currently validated for SWP messages) and end-of-message/EOM by swp_unpack before being added to the receive() buffer.
 
 #### TODO
 - [ ] Calrec router seems to be dropping the SWP connection at times - check the ping in connection.run, its supposed to prompt for activity when quiet and attempt reconnect if no response (... will need a "benign" swp message that elicits a response without making a state change).
-- [ ] Might be handy to provide receive_buffer_len() and flush_buffer() methods if I feel the need to externally call `len(connection.\_messages)` or `connection._messages = []` (not needing this outside of early CSCP debug so far, but not currently displaying messages responses nicely inline with the main connectIO.py output so may be handy for that).
+- [ ] Might be handy to provide receive_buffer_len() and flush_buffer() methods if I feel the need to externally call `len(connection._messages)` or `connection._messages = []` (not needing this outside of early CSCP debug so far, but not currently displaying messages responses nicely inline with the main connectIO.py output so may be handy for that).
 
 ### swp_utils.py
 Provides constants for the SWP08 protocol and a calculate_checksum() function.
