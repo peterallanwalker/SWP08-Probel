@@ -43,12 +43,13 @@ def get_user_input():
     return int(source), int(destination), label
 
 
-def get_incoming_message(conn):
+def get_received_messages(conn):
     message = conn.get_message()
     while message:
         #print("Message Recieved", Message.decode(message))
-        print("Message Recieved", message)
+        print("Message Received", message)
         message = conn.get_message()
+
 
 if __name__ == '__main__':
     # - Format & print header
@@ -74,16 +75,15 @@ if __name__ == '__main__':
 
     while True:
         if connection.status != "connected":
-            print(connection.status)
+            print("connection status:", connection.status)
         source, destination, label = get_user_input()
         patch_msg = Message.connect(source, destination)
         print("Sending", patch_msg)
         connection.send(patch_msg.encoded)
-        #get_incoming_message(connection)
-        #time.sleep(2)  # messages failing sometimes.. maybe wait for NAK
+
         if label:
             label_msg = Message.push_labels([label], destination, char_len=settings["Label Length"])
             print("Sending", label_msg)
             connection.send(label_msg.encoded)
-            #get_incoming_message(connection)
+            #get_received_messages(connection)
         print("\n")
