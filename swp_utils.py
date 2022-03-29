@@ -31,8 +31,8 @@ CHAR_LEN_CODES = {4: 0,
                   32: 4
                   }
 
-# - HELPER FUNCTIONS
 
+# - HELPER FUNCTIONS
 
 def calculate_checksum(data):
     """

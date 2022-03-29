@@ -125,7 +125,7 @@ def _confirm_settings(config):
         # User does not want to keep last used settings, so get their input for new settings
         config["Router IP Address"] = _ask_ip_address()
         if config["Protocol"] == "SWP08":
-            config["label length"] = _ask_label_length()
+            config["Label Length"] = _ask_label_length()
     return config
 
 

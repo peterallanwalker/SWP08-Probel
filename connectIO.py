@@ -82,7 +82,7 @@ if __name__ == '__main__':
         #get_incoming_message(connection)
         #time.sleep(2)  # messages failing sometimes.. maybe wait for NAK
         if label:
-            label_msg = Message.push_labels([label], destination)
+            label_msg = Message.push_labels([label], destination, char_len=settings["Label Length"])
             print("Sending", label_msg)
             connection.send(label_msg.encoded)
             #get_incoming_message(connection)
