@@ -95,11 +95,14 @@ def _ask_ip_address():
 
 
 def _ask_label_length():
+    options = ""
+    for option in swp_utils.CHAR_LEN_CODES.keys():
+        options += (str(option) + " ")
     valid = False
     while not valid:
         # TODO - format outtput to print keys
         # TODO - this is changing the json file, but does not seem to be changing the label len displayed
-        label_length = input("Enter SWP label length, options: {}: ".format(swp_utils.CHAR_LEN_CODES.items()))
+        label_length = input("Enter SWP label length, options: {}: ".format(options))
         if not label_length.isnumeric():
             continue
         elif int(label_length) in swp_utils.CHAR_LEN_CODES:

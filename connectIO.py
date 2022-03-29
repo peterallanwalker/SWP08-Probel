@@ -2,13 +2,10 @@
 # For testing SWP08/Probel router control - cross-point switching + label pushing
 # Peter Walker, March 2022
 
-# - TODO, pass argument csv file name to test multiple patches?
-# TODO provide option for longer labels (perhaps as part of settings)
-# TODO present returned messaegs better (ACK/NAK)
-# provide option to pass a CSV to test multiple patches
+# TODO, pass argument csv file name to test multiple patches
+# TODO present returned messages better (ACK/NAK)
 # deal with different matrix/level/multiplier etc
-# sort labels div/mod else wont work with IDs > 10?
-# option to send lots of labels
+
 
 import time
 
@@ -35,6 +32,7 @@ def get_user_input():
         print("Source and destination values need to be numbers")
         return invalid_input_response
 
+    # - If more arguments supplied, concatenate into a label
     if len(r) > 2:
         label = " ".join(r[2:])
     else:
@@ -44,11 +42,11 @@ def get_user_input():
 
 
 def get_received_messages(conn):
-    message = conn.get_message()
-    while message:
-        #print("Message Recieved", Message.decode(message))
-        print("Message Received", message)
+
+    while len(connection._messages):
         message = conn.get_message()
+        #print("Message Recieved", Message.decode(message))
+        print("Message Received:", message)
 
 
 if __name__ == '__main__':
