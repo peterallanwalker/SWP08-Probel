@@ -52,14 +52,14 @@ class Connection:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.settimeout(TIMEOUT)
             self.sock.connect((self.address, self.port))
-            print('connection: IP connection established with address {} on port {}'.format(self.address, self.port))
+            print('[Connection]: IP connection established with address {} on port {}'.format(self.address, self.port))
 
             # I just have to send any message, not this one specifically)
             # TODO - ping device / request some data
             self.status = "Connected"
 
         except socket.timeout:
-            print('Connection: Failed to create connection with address {} on port {}'.format(self.address, self.port))
+            print('[Connection]: socket timeout - Failed to create connection with address {} on port {}'.format(self.address, self.port))
             self.close()
             #self.sock = False
             self.sock = None
@@ -70,6 +70,7 @@ class Connection:
         while not self.sock:
             if not self.status == 'Connection Lost!':
                 self.status = 'Not Connected'
+            print("[Connection]: Attempting to connect...")
             self.connect()
 
         # TODO - test this - if sock.recv timesout does that kill sock, will I still be able to get messages recieved in interim before next call to recv?
@@ -90,7 +91,7 @@ class Connection:
             if data:
                 self.pinged = False
                 print("[connection.py.run]: DATA RECEIVED", data)
-                
+
                 messages, self._residual_data = self._unpack(data, self._residual_data) # TODO - TEST SPLIT MESSAGES
                 
                 if messages:

@@ -100,7 +100,7 @@ def _ask_label_length():
         options += (str(option) + " ")
     valid = False
     while not valid:
-        # TODO - format outtput to print keys
+        # TODO - format output to print keys
         # TODO - this is changing the json file, but does not seem to be changing the label len displayed
         label_length = input("Enter SWP label length, options: {}: ".format(options))
         if not label_length.isnumeric():

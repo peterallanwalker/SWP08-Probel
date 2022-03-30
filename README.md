@@ -47,6 +47,7 @@ Note, incoming bytes are parsed into separate validated SWP/CSCP messages based 
 #### TODO
 - [ ] Calrec router seems to be dropping the SWP connection at times - check the ping in connection.run, its supposed to prompt for activity when quiet and attempt reconnect if no response (... will need a "benign" swp message that elicits a response without making a state change).
 - [ ] Might be handy to provide receive_buffer_len() and flush_buffer() methods if I feel the need to externally call `len(connection._messages)` or `connection._messages = []` (not needing this outside of early CSCP debug so far, but not currently displaying messages responses nicely inline with the main connectIO.py output so may be handy for that).
+- [ ] Tidy print output or remove hand have main thread output status.
 
 ### swp_utils.py
 Provides constants for the SWP08 protocol and a calculate_checksum() function.
