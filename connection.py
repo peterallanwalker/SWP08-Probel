@@ -8,7 +8,8 @@ import socket
 import threading
 
 import swp_unpack as swp
-#import CSCP_unpack_1_1 as cscp
+
+# import CSCP_unpack_1_1 as cscp
 
 TIMEOUT = 3  # how long to wait when starting connection and receiving data.
 RECEIVE_TIMEOUT = 10
@@ -17,21 +18,19 @@ RECEIVE_TIMEOUT = 10
 class Connection:
 
     def __init__(self, address, port, protocol="CSCP"):
-        
+
         self._protocol = protocol
-        
+
         # Set the function to use for unpacking data based on the protocol being used
         if protocol == "CSCP":
             self._unpack = cscp.unpack_data
         elif protocol == "SWP08":
             self._unpack = swp.unpack_data
-        
-        
+
         self.address = address
         self.port = port
-        
-        
-        #self.sock = False
+
+        # self.sock = False
         self.sock = None
         self.status = 'Starting'
 
@@ -45,23 +44,26 @@ class Connection:
         self.receiver.start()
 
     def __str__(self):
-        return "Connection object - IP address: {}, port: {}, protocol: {}, status: {}".format(self.address, self.port, self._protocol, self.status)
+        return "Connection object - IP address: {}, port: {}, protocol: {}, status: {}".format(self.address, self.port,
+                                                                                               self._protocol,
+                                                                                               self.status)
 
     def connect(self):
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.settimeout(TIMEOUT)
             self.sock.connect((self.address, self.port))
-            print('[Connection]: IP connection established with address {} on port {}'.format(self.address, self.port))
+            print('[Connection]: Connection established with address {} on port {}'.format(self.address, self.port))
 
             # I just have to send any message, not this one specifically)
             # TODO - ping device / request some data
             self.status = "Connected"
 
         except socket.timeout:
-            print('[Connection]: socket timeout - Failed to create connection with address {} on port {}'.format(self.address, self.port))
+            print('[Connection]: socket timeout - Failed to create connection with address {} on port {}'.format(
+                self.address, self.port))
             self.close()
-            #self.sock = False
+            # self.sock = False
             self.sock = None
 
     def run(self):
@@ -70,7 +72,7 @@ class Connection:
         while not self.sock:
             if not self.status == 'Connection Lost!':
                 self.status = 'Not Connected'
-            print("[Connection]: Attempting to connect...")
+            print("[Connection]: {}. Attempting to connect...".format(self.status))
             self.connect()
 
         # TODO - test this - if sock.recv timesout does that kill sock, will I still be able to get messages recieved in interim before next call to recv?
@@ -92,8 +94,8 @@ class Connection:
                 self.pinged = False
                 print("[connection.py.run]: DATA RECEIVED", data)
 
-                messages, self._residual_data = self._unpack(data, self._residual_data) # TODO - TEST SPLIT MESSAGES
-                
+                messages, self._residual_data = self._unpack(data, self._residual_data)  # TODO - TEST SPLIT MESSAGES
+
                 if messages:
                     for msg in messages:
                         self._messages.append(msg)
@@ -107,9 +109,11 @@ class Connection:
     def send(self, message):
         try:
             self.sock.sendall(message)
-        except:
-            pass
-    
+        except self.sock.error as e:
+            print("[Connection.send]: Failed to send, error:", e)
+            return False
+        # TODO - wait for ACK/NAK before returning? (if protocol = swp, will break CSCP doing that... test higher up in connectIO)
+
     # TODO - dont think I'm using this?
     def receive(self):
         """ Check Receive Buffer """
@@ -124,7 +128,7 @@ class Connection:
             self.receiver.stop()
         except:
             pass
-    
+
     def get_message(self):
         if len(self._messages):
             oldest_message = self._messages[0]
@@ -132,12 +136,15 @@ class Connection:
             return oldest_message
         else:
             return None
-            
+
+    def flush_receive_buffer(self):
+        self._messages = []
+
 
 if __name__ == '__main__':
-    
+
     import time
-    
+
     print(20 * '#' + ' IP Connection Manager' + 20 * '#')
 
     # address = "172.29.1.24"  # Impulse default SWP08 Router Management adaptor
@@ -147,12 +154,13 @@ if __name__ == '__main__':
 
     # Open a TCP connection with the mixer/router
     connection = Connection(address, port, protocol="SWP08")
-    
-    #print("[connection.py] :", connection)
+
+    # print("[connection.py] :", connection)
     time.sleep(1)
     print("[connection.py] :", connection)
-    
+
     while True:
         message = connection.get_message()
         if message:
-            print("[connection_01]: messages in receive buffer: {}, message: {}".format(len(connection._messages), message))
+            print("[connection_01]: messages in receive buffer: {}, message: {}".format(len(connection._messages),
+                                                                                        message))

@@ -2,6 +2,13 @@
 # Identifies, validates and Extracts SWP08 messages from byte strings
 # Peter Walker, June 2021.
 
+# ver 2 in progress,
+# deal with DLEDLE
+# get checksum verification working
+# have a test debug mode to chek all messages in ones we dont support cant unpack
+# hanlde ACK/NAK.
+
+
 import swp_utils as utils
 
 

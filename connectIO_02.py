@@ -77,6 +77,9 @@ if __name__ == '__main__':
         source, destination, label = get_user_input()
         patch_msg = Message.connect(source, destination)
 
+        # NEW prot
+        connection.flush_receive_buffer()
+
         print("Sending:", patch_msg)
         connection.send(patch_msg.encoded)
 
