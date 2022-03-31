@@ -13,6 +13,8 @@
 # - CONSTANTS
 SOM = [0x10, 0x02]  # SWP08 Message header ("Start Of Message")
 EOM = [0x10, 0x03]  # SWP08 Message end ("End of Message")
+ACK = [0x10, 0x06]  # Returned by router to acknowledge receipt of a valid message
+NAK = [0x10, 0x15]  # Returned by router if message is not valid (e.g. wrong format/byte-count/checksum)
 
 COMMAND_BYTE = 2    # Command type is set in the 3rd byte of an SWP08 message
 SOURCE_BYTE = 6

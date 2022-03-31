@@ -3,24 +3,23 @@
 # Peter Walker, June 2021.
 
 # ver 2 in progress,
-# deal with DLEDLE
+# deal with DLE/ DLE DLE
 # get checksum verification working
-# have a test debug mode to chek all messages in ones we dont support cant unpack
-# hanlde ACK/NAK.
+# have a test debug mode to check all messages including ones we dont support or cant unpack
+# handle ACK/NAK.
 
 
 import swp_utils as utils
 
 
 def _find_header(data: bytes) -> int:
-    """ Checks for SWP08 protocol's SOM (start of message header) 
-            within passed byte string
-        Returns index of potential first byte of SOM if found, -1 if not found.
-        :param data: bytes
+    """ Searches a byte string for a SWP message header
+        Returns index of first SWP message header found, -1 if not found.
+        :param data: byte string
         :return: int
     """
-    for i, byte in enumerate(data):
-        if byte == utils.SOM[0]:
+    for i in len(data) -1:
+        if data[i] == utils.SOM[0] and data[i+1] == utils.SOM[1]:
             return i
     return -1
 
