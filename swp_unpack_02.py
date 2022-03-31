@@ -3,10 +3,10 @@
 # Peter Walker, June 2021.
 
 # ver 2 in progress,
-# deal with DLEDLE
+# deal with DLE DLE
 # get checksum verification working
 # have a test debug mode to chek all messages in ones we dont support cant unpack
-# hanlde ACK/NAK.
+# handle ACK/NAK.
 
 
 import swp_utils as utils
@@ -27,7 +27,6 @@ def _find_header(data: bytes) -> int:
 
 def _is_checksum_valid(message, header_byte, byte_count):
     # TODO - NOT CURRENTLY USING THIS - SHOULD DO - NEED TO ADAPT FOR SWP08
-    # TODO - make generic checksum creator for building messages and validating (replace the compare below)
     message_checksum = message[header_byte + utils.CSCP_HEADER_LENGTH + byte_count]
     compare_checksum = 0
 
@@ -56,13 +55,13 @@ def unpack_data(data, previous_insufficient_data=False):
     """
     
     if previous_insufficient_data:
-        data = previous_insufficient_data + data # TODO - test this
+        data = previous_insufficient_data + data
 
     messages = []
     insufficient_data = False
 
-    ## - DEBUG - ##
-    print("\nswp_unpack DATA DUMP", data)
+    # - FOR DEBUG, print raw received - #
+    print("\n[swp_unpack.unpack_data]: DATA DUMP - ", data)
 
     while len(data) > 0:
         header_byte = _find_header(data)  # First index within data containing a CSCP start of header value (0xF1 / 241)
@@ -77,7 +76,7 @@ def unpack_data(data, previous_insufficient_data=False):
             
             if data[header_byte + 9] == utils.EOM[0] and data[header_byte + 10] == utils.EOM[1]:
                 #print("[SWP08_unpack]: SOM & EOM FOUND. Extracted message:", data[header_byte : header_byte + 11])
-                # TODO - PROPERLY VALIDATE MESSAGES USING CHECKSUM & BYTE COUNT, + HANDLE OTHER MESSAGE TYPES
+                # TODO! - PROPERLY VALIDATE MESSAGES USING CHECKSUM & BYTE COUNT, + HANDLE OTHER MESSAGE TYPES
                 messages.append(data[header_byte : header_byte + 11])
                 data = data[header_byte + 11:]
 
