@@ -6,6 +6,9 @@
 # TODO present returned messages better (ACK/NAK)
 # deal with different matrix/level/multiplier etc
 
+# prot ver 02 - print responses from router, cleanly in flow of user input rather than as they come in from Connection.
+# todo - provide a version that outputs all response, including what we cant parse, and ACK/NAK
+#      ... should really wait for ack and retry if none before sending next message.
 
 import time
 
@@ -42,10 +45,8 @@ def get_user_input():
 
 
 def get_received_messages(conn):
-
-    while len(connection._messages):
+    while len(conn._messages):
         message = conn.get_message()
-        #print("Message Recieved", Message.decode(message))
         print("Message Received:", message)
 
 
@@ -74,18 +75,17 @@ if __name__ == '__main__':
         if connection.status != "Connected":
             print("connection status:", connection.status)
 
-        source, destination, label = get_user_input()
-        patch_msg = Message.connect(source, destination)
-
-        # NEW prot
         connection.flush_receive_buffer()
+        source, destination, label = get_user_input()
+        connect_msg = Message.connect(source, destination)
 
-        print("Sending:", patch_msg)
-        connection.send(patch_msg.encoded)
+        print("Sending:", connect_msg)
+        connection.send(connect_msg.encoded)
 
         if label:
             label_msg = Message.push_labels([label], destination, char_len=settings["Label Length"])
             print("Sending", label_msg)
             connection.send(label_msg.encoded)
-            #get_received_messages(connection)
-        print("\n")
+
+        print("\nChecking for response from router...")
+        get_received_messages(connection)
