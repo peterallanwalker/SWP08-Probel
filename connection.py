@@ -1,13 +1,14 @@
 # CONNECTION
 # IP connection manager, buffers incoming messages, provides send and receive methods
 # Peter Walker, June 2021
-
 # Based on CSCP_connection, let's aim to keep it generic, with SWP08 specific handling external to this file.
 
 import socket
 import threading
 
-import swp_unpack as swp
+#import swp_unpack as swp
+# TODO - unpack 2 has not been tested with Connection
+import swp_unpack_02 as swp
 
 # import CSCP_unpack_1_1 as cscp
 

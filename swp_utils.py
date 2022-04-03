@@ -5,12 +5,13 @@
 # Updated March 2022 - added support for pushing labels.
 # ... Note this is not typical usage of the protocol,
 #     it is used by VSM to push labels to Calrec Apollo/Artemis audio mixers
-
+#
 # SWP08 protocol info:
 # https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf
 # Other versions of the protocol doc are available in the project's protocol docs folder
 
 # - CONSTANTS
+DLE = 0x10  # - DLE is a special value used to identify headers/EOM. Wherever DLE/0x10/16 is used within payload, it should be duplicated DLE DLE to differentiate
 SOM = [0x10, 0x02]  # SWP08 Message header ("Start Of Message")
 EOM = [0x10, 0x03]  # SWP08 Message end ("End of Message")
 ACK = [0x10, 0x06]  # Returned by router to acknowledge receipt of a valid message
@@ -51,6 +52,20 @@ def calculate_checksum(data):
     return twos_compliment(checksum)
 
 
+def is_checksum_valid(message):
+    message = message[2: -2]  # - Strip SOM & EOM
+    message_checksum = message[-1]  # - Last byte
+    message = message[:-1]  # - Strip checksum
+    # need to pass list of bytes to calculate_checksum, not byte string
+    payload = [b for b in message]  # - Bytes from bytestring to list of bytes
+    compare_checksum = calculate_checksum(payload)
+
+    if message_checksum == compare_checksum:
+        return True
+    else:
+        return False
+
+
 def twos_compliment(value):
     """
     :param value: integer
@@ -80,3 +95,5 @@ def twos_compliment(value):
         result = int(result, 2)  # Convert back to decimal int
 
     return result
+
+

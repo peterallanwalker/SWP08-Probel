@@ -71,17 +71,35 @@ class Message:
             # - We will be pre-validating received messages so dont want to waste time error checking here
             self.labels = False
             self.encoded = encoded
-            self.command = list(utils.COMMANDS.keys())[list(utils.COMMANDS.values()).index(self.encoded[utils.COMMAND_BYTE])]
-            
-            if self.command in ("connect", "connected"):
-                # TODO - handle different matrix, level and multiplier
-                # TODO - handle other message types, labels, ACK & NACK
+
+            if encoded == bytes(utils.ACK):
+                self.command = "ACK"
+                # TODO HANDLE THIS BETTER - FIX __str__ for None or fix init to replace None with False
                 self.matrix = 0
                 self.level = 0
                 self.multiplier = 0
-                self.source = self.encoded[utils.SOURCE_BYTE]
-                self.destination = self.encoded[utils.DESTINATION_BYTE]
+                self.source = False
+                self.destination = False
+            elif encoded == bytes(utils.NAK):
+                self.command = "NAK"
+                # TODO HANDLE THIS BETTER - FIX __str__ for None or fix init to replace None with False
+                self.matrix = 0
+                self.level = 0
+                self.multiplier = 0
+                self.source = False
+                self.destination = False
+            else:
+                # TODO - this will fail if its a command we don't recognise...
+                self.command = list(utils.COMMANDS.keys())[list(utils.COMMANDS.values()).index(self.encoded[utils.COMMAND_BYTE])]
 
+                if self.command in ("connect", "connected"):
+                    # TODO - handle different matrix, level and multiplier
+                    # TODO - handle other message types, labels, ACK & NACK
+                    self.matrix = 0
+                    self.level = 0
+                    self.multiplier = 0
+                    self.source = self.encoded[utils.SOURCE_BYTE]
+                    self.destination = self.encoded[utils.DESTINATION_BYTE]
         else:
             self.command = command
             # TODO - Handle different matrix/level/multiplier
