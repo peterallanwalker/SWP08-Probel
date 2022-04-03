@@ -49,19 +49,17 @@ Provides the Connection class `Connection(IP_address, port, protocol=protocol)` 
 Note, incoming bytes are parsed into separate validated SWP/CSCP messages based on header/SOM, (checksum not currently validated for SWP messages) and end-of-message/EOM by swp_unpack before being added to the receive() buffer.
 
 #### TODO
-- [ ] Now using swp_unpack_02 for ACK/NAK support - untested with real connection
-
-#### TODO
 - [ ] Calrec router seems to be dropping the SWP connection at times - check the ping in connection.run, its supposed to prompt for activity when quiet and attempt reconnect if no response (... will need a "benign" swp message that elicits a response without making a state change).
 - [ ] Might be handy to provide receive_buffer_len() and flush_buffer() methods if I feel the need to externally call `len(connection._messages)` or `connection._messages = []` (not needing this outside of early CSCP debug so far, but not currently displaying messages responses nicely inline with the main connectIO.py output so may be handy for that).
 - [ ] Tidy print output or remove and have main thread output status.
 - [ ] Change user input to be 1 based / match the values set in calrec UI and CSV
+- [ ] Now using swp_unpack_02 for ACK/NAK support - untested with real connection
 
 ### swp_utils.py
 Provides constants for the SWP08 protocol and a calculate_checksum() function.
 
 #### TODO
-- [ ] Ought to move the is_checksum_valid() from swp_unpack.py to here as well... though not using that yet in SWP.
+- [x] Ought to move the is_checksum_valid() from swp_unpack.py to here as well... though not using that yet in SWP.
 
 ### swp_unpack.py
 Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a list of separated messages. Handles potential case of a message being split between separate socket receive data chunks.
