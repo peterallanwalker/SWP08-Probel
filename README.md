@@ -16,6 +16,7 @@ A main entry point to the application for users - creates a connection (based on
 
 #### TODO
 - [ ] Take csv filename as command line argument to test bulk patching / salvos.
+- [ ] Replace with connectIO_02 for NAK/ACK handling when done and tested (and replace swp_unpack with swp_unpack_02)
 
 ### swp_message.py
 The core of this appplication, provides a Message class with various contructors for encoding and decoding messages using the SWP08 protocol.
@@ -38,6 +39,9 @@ The `Message` class provides a `__str__` method so info can be printed to view t
 - [ ] Provide support for non-zero matrix, level and mulitplier values. 
 - [ ] Test extended commands and mulitpliers for high numbers of sources/destinations.
 - [ ] Support more messages types
+- [ ] Test new ACK/NAK support
+- [ ] Sort either the init or the __str__ so I don't need to populate all values for all message types (think I default init values to None instead of False or other for a reason byt can't remember why offhand.
+- [ ] Provide a print_summary or make __str__ more succint for messages that do not have all connect/connected values
 
 ### connection.py
 Provides the Connection class `Connection(IP_address, port, protocol=protocol)` to handle an IP socket connection between the application and the mixer/router. IP_address is a string, port is an int, protocol is an optional string - "CSCP" or "SWP08" currently supported, default is CSCP (so pass "SWP08" when instantiating for router control). The instantiated connection object runs a separate thread for receiving and buffering incoming messages without blocking the main application. Provides `Connection.send_message()` & `Connection.get_message()` methods to send (`connection.send(message.encoded)`) and receive messages (`message = connection.receive()` 'pops' off the oldest received message in the buffer - `connection._messages[0]`, so the next call to `receive()` returns the next message). 
@@ -49,12 +53,13 @@ Note, incoming bytes are parsed into separate validated SWP/CSCP messages based 
 - [ ] Might be handy to provide receive_buffer_len() and flush_buffer() methods if I feel the need to externally call `len(connection._messages)` or `connection._messages = []` (not needing this outside of early CSCP debug so far, but not currently displaying messages responses nicely inline with the main connectIO.py output so may be handy for that).
 - [ ] Tidy print output or remove and have main thread output status.
 - [ ] Change user input to be 1 based / match the values set in calrec UI and CSV
+- [ ] Now using swp_unpack_02 for ACK/NAK support - untested with real connection
 
 ### swp_utils.py
 Provides constants for the SWP08 protocol and a calculate_checksum() function.
 
 #### TODO
-- [ ] Ought to move the is_checksum_valid() from swp_unpack.py to here as well... though not using that yet in SWP.
+- [x] Ought to move the is_checksum_valid() from swp_unpack.py to here as well... though not using that yet in SWP.
 
 ### swp_unpack.py
 Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a list of separated messages. Handles potential case of a message being split between separate socket receive data chunks.
