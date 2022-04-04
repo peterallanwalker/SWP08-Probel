@@ -21,6 +21,9 @@ import connection_settings as config
 from connection import Connection
 from swp_message import Message
 
+# Number of send/resend to attempt until ACK received
+MAX_SEND_ATTEMPTS = 5
+
 
 def get_user_input():
     r = input("\nEnter source, destination & optional label: ")
@@ -45,6 +48,20 @@ def get_user_input():
         label = False
 
     return int(source), int(destination), label
+
+
+def send_message(connection, message):
+    connection.flush_receive_buffer()
+    connection.send(message.encoded)
+    ack = False
+    tries = 0
+    while tries < MAX_SEND_ATTEMPTS:
+        response = connection.receive()
+        if response:
+            response = Message.decode(response)
+            print("Message received from router:", response)
+            if response.command == "ACK":
+                ack = True
 
 
 def get_received_messages(conn):
@@ -77,14 +94,17 @@ if __name__ == '__main__':
     print("\nNote, values are 0 based, (I.E. Calrec GUI/CSV values-1)")
 
     while True:
-        if connection.status != "Connected":
+        while connection.status != "Connected":
+            # TODO: put a timer in and print every n secs
             print("connection status:", connection.status)
 
         source, destination, label = get_user_input()
+
         patch_msg = Message.connect(source, destination)
 
         print("Sending:", patch_msg)
-        connection.send(patch_msg.encoded)
+        #connection.send(patch_msg.encoded)
+        send_message(connection, patch_msg)
 
         if label:
             label_msg = Message.push_labels([label], destination, char_len=settings["Label Length"])
