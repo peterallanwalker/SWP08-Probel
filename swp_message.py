@@ -12,6 +12,7 @@
 # Other versions of the protocol doc are available in the project's protocol docs folder
 
 import swp_utils as utils
+import cli_utils
 
 
 def set_label_len(labels, char_len):
@@ -125,6 +126,8 @@ class Message:
 
             self.encoded = self._encode()
 
+        self.summary = self._get_summary()
+
     def __str__(self):
         return "SWP08 Message object - Command: {}, Matrix: {}, Level: {}, Multiplier: {}, Source: {}, Destination: {}," \
                "\nLabels: {}\nEncoded: {}".format(self.command, self.matrix, self.level, self.multiplier,
@@ -191,6 +194,10 @@ class Message:
                           matrix=matrix, level=level, multiplier=multiplier)
         return message
 
+    """ PUBLIC METHODS """
+    def print_summary(self, heading):
+        cli_utils.print_block(heading, self.summary)
+
     """ PRIVATE METHODS """
     def _encode(self):
         """
@@ -220,6 +227,20 @@ class Message:
         message = utils.SOM + data + [checksum] + utils.EOM
 
         return bytes(message)
+
+    def _get_summary(self):
+        if self.source:
+            source = 'Source: ' + str(self.source) + ','
+        else:
+            source = ''
+        if self.labels:
+            labels = '\n'.join(self.labels)
+        else:
+            labels = ''
+        r = ['Command: {}, [Matrix, Level, Multiplier: {}, {}, {}]'.format(self.command, self.matrix, self.level, self.multiplier),
+             '{} Destination: {} {}'.format(source, self.destination, labels),
+             ]
+        return r
 
 
 if __name__ == '__main__':

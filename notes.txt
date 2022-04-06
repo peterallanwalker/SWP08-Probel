@@ -135,3 +135,32 @@ All messages start with SOM, but SOM is two bytes - DLE (\x10) & STX (\x02)
      ... so if you find a DLE \x10 and it does not have another behind it, then its a header or eom.
 
 
+--------------------------------------------------------
+current output of connectIO_02:
+######################################################################
+ -- SWPO8 Router Control - Cross-point switching and label pushing --
+----------------------------------------------------------------------
+Last used connection settings:
+         Router IP Address : 192.169.1.201
+         Port : 61000
+         Protocol : SWP08
+         Label Length : 4
+
+Use these settings? (y/n):
+[Connection]: Not Connected. Attempting to connect...
+[Connection]: Connection established with address 192.169.1.201 on port 61000
+
+Note, values are 0 based, (I.E. Calrec GUI/CSV values-1)
+
+Enter source, destination & optional label: 10 1
+Sending: SWP08 Message object - Command: connect, Matrix: 0, Level: 0, Multiplier: 0, Source: 10, Destination: 1,
+Labels: False
+Encoded: b'\x10\x02\x02\x00\x00\x01\n\x05\xee\x10\x03'
+ACK received
+SWP08 Message object - Command: connected, Matrix: 0, Level: 0, Multiplier: 0, Source: 10, Destination: 1,
+Labels: False
+Encoded: b'\x10\x02\x04\x00\x00\x01\n\x05\xec\x10\x03'
+
+
+
+Enter source, destination & optional label:

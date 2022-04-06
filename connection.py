@@ -93,7 +93,7 @@ class Connection:
 
             if data:
                 self.pinged = False
-                print("[connection.py.run]: DATA RECEIVED", data)
+                #print("[connection.py.run]: DATA RECEIVED", data)
 
                 messages, self._residual_data = self._unpack(data, self._residual_data)  # TODO - TEST SPLIT MESSAGES
 
@@ -115,7 +115,7 @@ class Connection:
             return False
         # TODO - wait for ACK/NAK before returning? (if protocol = swp, will break CSCP doing that... test higher up in connectIO)
 
-    # TODO - dont think I'm using this?
+    # TODO - dont think I'm using this? - JUST BEEN CALLING BY ACCIDENT INSTEAD OF GET_MESSAGE!!!!!
     def receive(self):
         """ Check Receive Buffer """
         self.sock.settimeout(None)

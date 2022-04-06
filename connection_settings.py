@@ -106,7 +106,7 @@ def _ask_label_length():
         if not label_length.isnumeric():
             continue
         elif int(label_length) in swp_utils.CHAR_LEN_CODES:
-            return label_length
+            return int(label_length)
 
 
 def _confirm_settings(config):
