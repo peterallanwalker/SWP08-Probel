@@ -6,11 +6,8 @@
 import socket
 import threading
 
-#import swp_unpack as swp
-# TODO - unpack 2 has not been tested with Connection
-import swp_unpack_02 as swp
-
-# import CSCP_unpack_1_1 as cscp
+import swp_unpack as swp
+#import CSCP_unpack_1_1 as cscp
 
 TIMEOUT = 3  # how long to wait when starting connection and receiving data.
 RECEIVE_TIMEOUT = 10

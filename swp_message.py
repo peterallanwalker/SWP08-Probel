@@ -242,9 +242,7 @@ class Message:
                                                                                             self.level,
                                                                                             self.multiplier,
                                                                                             self.source,
-                                                                                            self.destination),
-             #'{}'.format(source, self.destination, labels),
-             ]
+                                                                                            self.destination)]
         return r
 
 

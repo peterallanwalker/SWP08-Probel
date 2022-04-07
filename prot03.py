@@ -1,7 +1,7 @@
 # testing unpack 2
 # with checksum validation and ACK/NAK handling
 # for Message
-import swp_unpack_02 as unpack
+import swp_unpack as unpack
 import swp_message as message
 
 if __name__ == '__main__':
