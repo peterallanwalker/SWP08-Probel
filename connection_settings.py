@@ -49,7 +49,7 @@ def _validate_ip_address(address):
         except ValueError:
             return False
 
-        if segment not in range(255):
+        if segment not in range(256):
             return False
 
     return True

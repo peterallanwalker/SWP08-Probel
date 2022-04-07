@@ -229,16 +229,21 @@ class Message:
         return bytes(message)
 
     def _get_summary(self):
-        if self.source:
-            source = 'Source: ' + str(self.source) + ','
-        else:
-            source = ''
+
         if self.labels:
             labels = '\n'.join(self.labels)
         else:
             labels = ''
-        r = ['Command: {}, [Matrix, Level, Multiplier: {}, {}, {}]'.format(self.command, self.matrix, self.level, self.multiplier),
-             '{} Destination: {} {}'.format(source, self.destination, labels),
+
+        #source = 'Source: ' + str(self.source) + ','
+
+        r = ['Command: {}, [Matrix:{}, Level:{}, Multiplier:{}] {}, Destination: {}'.format(self.command.upper(),
+                                                                                            self.matrix,
+                                                                                            self.level,
+                                                                                            self.multiplier,
+                                                                                            self.source,
+                                                                                            self.destination),
+             #'{}'.format(source, self.destination, labels),
              ]
         return r
 

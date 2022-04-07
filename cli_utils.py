@@ -32,11 +32,11 @@ def print_block(heading='', rows=None):
     row_width = len(max(rows, key=len))
     if row_width > width:
         width = row_width
-    width *= 2
-    print("\n{}\n -- {} --\n{}".format(width * '=', heading, width * '-'))
+    #width *= 2
+    print("{}\n {}".format(width * '-', heading))
     for row in rows:
         print(" ", row)
-    print(width * '-')
+    print(width * '.')
 
 
 if __name__ == '__main__':

@@ -2,5 +2,5 @@
     "Router IP Address": "127.0.0.1",
     "Port": 61000,
     "Protocol": "SWP08",
-    "Label Length": 8
+    "Label Length": 4
 }

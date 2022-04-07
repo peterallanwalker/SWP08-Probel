@@ -84,22 +84,21 @@ def send_message(connection, message):
     message.print_summary("Sending >>>")
     connection.send(message.encoded)
 
-    # TODO will need to retry until response but seems to be working instantly at the moment
+    # TODO should retry until response but seems to be working instantly at the moment
 
     response = None
-    # TODO PREVENT WAITING FOREVER
-    # TODO, this does not seem to process
+    # TODO PREVENT WAITING FOREVER, (TIMEOUT & RETRIES)
     while not response:
         while len(connection._messages):
             response = connection.get_message()
             response = Message.decode(response)
 
             if response.command == "ACK":
-                print("...ACK received")
+                print(" >>> ACK received")
             elif response.command == "NAK":
-                print("** NAK received! **")
+                print(" >>> ** NAK ** received!")
             else:
-                response.print_summary(">>> Received")
+                response.print_summary(">>> Received Message:")
                 #print("Message received "
                 #      "from router:", response)
 

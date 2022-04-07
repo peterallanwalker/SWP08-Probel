@@ -73,7 +73,7 @@ class Connection:
         while not self.sock:
             if not self.status == 'Connection Lost!':
                 self.status = 'Not Connected'
-            print("[Connection]: {}. Attempting to connect...".format(self.status))
+            print("[Connection]: Attempting to connect...")
             self.connect()
 
         # TODO - test this - if sock.recv timesout does that kill sock, will I still be able to get messages recieved in interim before next call to recv?
