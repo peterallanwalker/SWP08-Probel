@@ -23,7 +23,7 @@ The core of this appplication, provides a Message class with various contructors
 `Message.connect(source, destination)` takes single source and destination IDs as integers and creates an SWP08 "Connect" message (SWP08 message 2)
 
 `Message.push_labels(labels, first_destination)` takes a list of labels (of any character length), and a single integer ID of the first destination. If 
-multiple labels are provided, the receiving device (Calrec Apollo+/Artemis+ audio mixer) will apply them to consecutive IDs. char_len is an optional argument, defaulting to 4. SWP supports 4, 8, 12, 16 or 32 character length labels (this sets what is displayed on the mixer, but the function accepts labels of any length, truncating long ones and padding short ones with spaces). (SWP08 message 107).
+multiple labels are provided, the receiving device (Calrec Apollo+/Artemis+ audio mixer) will apply them to consecutive IDs. char_len is an optional argument, defaulting to 4. SWP supports 4, 8, 12, 16 or 32 character length labels (this sets what is displayed on the mixer, but the function accepts labels of any length, truncating long ones and padding short ones with spaces).... In my tests with Apollo+ it will display 4, 8 or 12 char labels. If you send 16 or 32 character label messages, the mixer will update but only display the first four chars. (SWP08 message 107).
 
 `Message.push_labels_extended(labels, first_destination)` same as `Message.push_labels` but supports a greater number of IDs (? I think - not fully tested). (SWP08 message 235)
 
