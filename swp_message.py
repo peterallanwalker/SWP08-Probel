@@ -237,7 +237,7 @@ class Message:
 
         #source = 'Source: ' + str(self.source) + ','
 
-        r = ['Command: {}, [Matrix:{}, Level:{}, Multiplier:{}] {}, Destination: {}'.format(self.command.upper(),
+        r = ['Command: {}, [Matrix:{}, Level:{}, Multiplier:{}] Source:{}, Destination: {}'.format(self.command.upper(),
                                                                                             self.matrix,
                                                                                             self.level,
                                                                                             self.multiplier,
