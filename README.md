@@ -16,7 +16,6 @@ A main entry point to the application for users - creates a connection (based on
 
 #### TODO
 - [ ] Take csv filename as command line argument to test bulk patching / salvos.
-- [ ] Replace with connectIO_02 for NAK/ACK handling when done and tested (and replace swp_unpack with swp_unpack_02)
 
 ### swp_message.py
 The core of this appplication, provides a Message class with various contructors for encoding and decoding messages using the SWP08 protocol.
@@ -39,9 +38,7 @@ The `Message` class provides a `__str__` method so info can be printed to view t
 - [ ] Provide support for non-zero matrix, level and mulitplier values. 
 - [ ] Test extended commands and mulitpliers for high numbers of sources/destinations.
 - [ ] Support more messages types
-- [ ] Test new ACK/NAK support
-- [ ] Sort either the init or the __str__ so I don't need to populate all values for all message types (think I default init values to None instead of False or other for a reason byt can't remember why offhand.
-- [ ] Provide a print_summary or make __str__ more succint for messages that do not have all connect/connected values
+- [ ] Sort either the init or the \__str__ so I don't need to populate all values for all message types (think I default init values to None instead of False or other for a reason but can't remember why offhand
 
 ### connection.py
 Provides the Connection class `Connection(IP_address, port, protocol=protocol)` to handle an IP socket connection between the application and the mixer/router. IP_address is a string, port is an int, protocol is an optional string - "CSCP" or "SWP08" currently supported, default is CSCP (so pass "SWP08" when instantiating for router control). The instantiated connection object runs a separate thread for receiving and buffering incoming messages without blocking the main application. Provides `Connection.send_message()` & `Connection.get_message()` methods to send (`connection.send(message.encoded)`) and receive messages (`message = connection.receive()` 'pops' off the oldest received message in the buffer - `connection._messages[0]`, so the next call to `receive()` returns the next message). 
@@ -51,30 +48,16 @@ Note, incoming bytes are parsed into separate validated SWP/CSCP messages based 
 #### TODO
 - [ ] Calrec router seems to be dropping the SWP connection at times - check the ping in connection.run, its supposed to prompt for activity when quiet and attempt reconnect if no response (... will need a "benign" swp message that elicits a response without making a state change).
 - [ ] Might be handy to provide receive_buffer_len() and flush_buffer() methods if I feel the need to externally call `len(connection._messages)` or `connection._messages = []` (not needing this outside of early CSCP debug so far, but not currently displaying messages responses nicely inline with the main connectIO.py output so may be handy for that).
-- [ ] Tidy print output or remove and have main thread output status.
-- [ ] Change user input to be 1 based / match the values set in calrec UI and CSV
-- [ ] Now using swp_unpack_02 for ACK/NAK support - untested with real connection
+- [ ] Change user input to be 1 based / match the values set in calrec UI and CSV? (and match in message print output)
 
 ### swp_utils.py
 Provides constants for the SWP08 protocol and a calculate_checksum() function.
 
-#### TODO
-- [x] Ought to move the is_checksum_valid() from swp_unpack.py to here as well... though not using that yet in SWP.
-
 ### swp_unpack.py
 Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a list of separated messages. Handles potential case of a message being split between separate socket receive data chunks.
 
-#### TODO
-- [ ] Validate using checksum.
-- [ ] Process/expose ACK & NAK to the main thread (how to differentiate a SOM+ACK/NAK from potential valid general message content... lookup DLE in the protcol doc, think supposed to pass DLE DLE if DLE within message to differentiate from header? ... so need to check this or may also fail to validate messages (and messages I send containing DLE will not be accepted... test by forcing mixer to return a message with a DLE byte... 
-... page 10 of the protocol doc - generate the payload, byte count and checksum, then check for DLE if found replace with DLE DLE), then add the SOM & EOM, then on incoming, remove SOM/EOM replace any DLE DLE with DLE, check checksum then byte count...  
-
 ### connection_settings.py
 Handles loading of last used settings, user confirm/edit and save as json.
-
-#### TODO
-- [x] Fix label length prompt output
-- [x] changing label len does not seem to work.. must be in the push labels function of connectIO though
 
 ### prot0x.py
 Rough testing/in-progress dev scripts.
