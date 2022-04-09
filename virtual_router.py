@@ -100,11 +100,11 @@ if __name__ == '__main__':
             # - If its in the receive buffer then its already been validated by checksum so let's ACK
             print("Validated message received, sending ACK")
             connection.send(bytes(swp_utils.ACK))  # - TODO provide a better way of creating an ACK message, or just change send to accept bytes
-            try:
-                valid_message = Message.decode(received)
-            except:
-                valid_message = False
-                print("Failed to decode received message: ", received)
+
+            # - TODO - Should not need try/except here, should handle unknown message types better
+            # - INFACT has just caused me a headache function call deep within swputils was failing silently!
+
+            valid_message = Message.decode(received)
 
             if valid_message:
                 print("Parsed received from controller: ", received)
@@ -114,6 +114,12 @@ if __name__ == '__main__':
                     print("...Received message:", valid_message)
                     print("Sending response.")
                     connection.send(Message.connect(valid_message.source, valid_message.destination).encoded)
+
+                elif valid_message.command in ("push_labels", "push_labels_extended"):
+                    print("...Received message:", valid_message)
+
                 else:
                     print("Received message type not currently supported")
 
+            else:
+                print("Failed to decode received message: ", received)

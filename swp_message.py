@@ -58,7 +58,7 @@ class Message:
                  source=None,
                  destination=None,
                  char_len=None,
-                 labels=None,
+                 #labels=False,
                  encoded=None,):
         """
             *** NOT INTENDED TO BE CALLED DIRECTLY, INSTANTIATE USING THE CLASS METHODS... ***
@@ -69,8 +69,9 @@ class Message:
         # the raw byte string of a pre-validated message is passed
         # and we extract the data to populate the class attributes
         if encoded:
-            # - We will be pre-validating received messages so dont want to waste time error checking here
-            self.labels = False
+            # - Encoded messages from Connect.get_message() are pre-validated by header & checksum (by swp_unpack),
+            # - so do not need revalidating here.
+            self.labels = False  # - TODO - sort having to deal with missing attributes better!
             self.encoded = encoded
 
             if encoded == bytes(utils.ACK):
@@ -81,6 +82,7 @@ class Message:
                 self.multiplier = 0
                 self.source = False
                 self.destination = False
+
             elif encoded == bytes(utils.NAK):
                 self.command = "NAK"
                 # TODO HANDLE THIS BETTER - FIX __str__ for None or fix init to replace None with False
@@ -89,6 +91,7 @@ class Message:
                 self.multiplier = 0
                 self.source = False
                 self.destination = False
+
             else:
                 # TODO - this will fail if its a command we don't recognise...
                 self.command = list(utils.COMMANDS.keys())[list(utils.COMMANDS.values()).index(self.encoded[utils.COMMAND_BYTE])]
@@ -98,18 +101,31 @@ class Message:
                     # TODO - handle other message types, labels, ACK & NACK
                     self.matrix = 0
                     self.level = 0
+                    self.multiplier = self.encoded[utils.MULTIPLIER_BYTE]
+                    # TODO - THIS WILL FAIL IF SOURCE/DEST > 128? (need to handle the mod  /multiplier)
+                    #self.source = self.encoded[utils.SOURCE_BYTE]
+                    #self.destination = self.encoded[utils.DESTINATION_BYTE]
+                    self.source, self.destination = utils.decode_source_destination(self.encoded)
+                    print("[swp_message.Message]: DEBUG!")
+
+                elif self.command in ("push_labels", "push_labels_extended"):
+                    self.matrix = 0
+                    self.level = 0
                     self.multiplier = 0
-                    self.source = self.encoded[utils.SOURCE_BYTE]
-                    self.destination = self.encoded[utils.DESTINATION_BYTE]
+                    self.source = False
+                    #self.destination = False  # TODO - figure out how to parse dest DIV & MOD (in swp_utils)
+                    self.destination = utils.get_labels_destination(self.encoded)
+                    self.labels = "TEST"
+                    #self.labels = utils.get_labels()
         else:
             self.command = command
-            # TODO - Handle different matrix/level/multiplier
+            # TODO - Handle different matrix/level
             if not matrix:
                 self.matrix = 0
             if not level:
                 self.level = 0
-            if not multiplier:
-                self.multiplier = 0
+            #if not multiplier:
+            #    self.multiplier = 0
 
             if source is not None:
                 self.source = source
@@ -118,9 +134,14 @@ class Message:
 
             self.destination = destination
 
+            # - NEW - TODO - TEST!
+            if self.command in ("connect", "connected"):
+                self.multiplier = utils.encode_multiplier(self.source, self.destination)
+
             if self.command in ("push_labels", "push_labels_extended"):
                 self._char_len = utils.CHAR_LEN_CODES[char_len]
                 self.labels = set_label_len(labels, char_len)
+                self.multiplier = False
             else:
                 self.labels = False
 
@@ -207,10 +228,11 @@ class Message:
         """
         command = [utils.COMMANDS[self.command], self.matrix]
         if self.command in ("connect", "connected"):
-            data = command + [self.multiplier, self.destination, self.source]
+            #data = command + [self.multiplier, self.destination, self.source]
+            # TODO sort the multiplier!
+            data = command + [self.multiplier, self.destination % 128, self.source % 128]
 
         elif self.command in ("push_labels", "push_labels_extended"):
-            # TODO - deal with the div/mod, else this will only handle low numbered destinations
             start_dest_div = int(self.destination / 256)
             start_dest_mod = self.destination % 256
             label_qty = len(self.labels)
