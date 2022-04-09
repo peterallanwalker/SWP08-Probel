@@ -35,8 +35,8 @@ The `Message` class provides a `__str__` method so info can be printed to view t
 
 ##### TODO
 - [ ] Test different char length labels.
-- [ ] Provide support for non-zero matrix, level and mulitplier values. 
-- [ ] Test extended commands and mulitpliers for high numbers of sources/destinations. (currently will only support source/dest IDs up to 255, need to set the mulitplier and pass source dest as mod!)
+- [ ] Provide support for non-zero matrix & level
+- [ ] Test IDs multiplier support for IDs > 255 up to 1024 
 - [ ] Support more messages types
 - [ ] Sort either the init or the \__str__ so I don't need to populate all values for all message types (think I default init values to None instead of False or other for a reason but can't remember why offhand
 
