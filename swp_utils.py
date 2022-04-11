@@ -134,10 +134,10 @@ def encode_multiplier(source, destination):
     :param destination: int - destination id
     :return: encoded multiplier byte
     """
-    print("[swp_utils.encode_multiplier]:", type(source), type(destination))
 
     if source > 1024 or destination > 1024:
-        print("[swp_utils.encode_multiplier]: Source & Destination IDs must be within range 0 - 1024" 
+        # TODO prevent input or handle > 1024 (should be able to handle much bigger numbers)
+        print("[swp_utils.encode_multiplier]: WARNING! Source & Destination IDs must be within range 0 - 1024" 
               " (received Source:{}, Destination:{})".format(source, destination))
         return False
 
@@ -159,7 +159,8 @@ def decode_source_destination(msg):
     :param msg: bytestring - validated swp message
     :return: int, int, source ID, destination ID
     """
-
+    # TODO - shouldnt need to have this check here
+    #  as I'll only be calling this on message types that have a multiplier byte
     if msg[COMMAND_BYTE] not in (COMMANDS["connect"], COMMANDS["connected"]):
         print("[swp_utils.decode_source_destination]: This function only supports Connect(02)/Connected(04) messages,"
               " {} passed".format(msg[COMMAND_BYTE]))
@@ -168,25 +169,15 @@ def decode_source_destination(msg):
     source = msg[SOURCE_BYTE]
     destination = msg[DESTINATION_BYTE]
     multiplier = format(msg[MULTIPLIER_BYTE], '08b')  # - byte converted to 8 bit binary string using format
-
-    print("[swp_utils.decode_source_destination]: multiplier: {}, source: {}, destination: {}".format(multiplier,
-                                                                                                      source,
-                                                                                                      destination))
     source_mult = multiplier[-3:]  # - 3 LSBs (bits 0-2)
     dest_mult = multiplier[-7:-4]   # - bits 4-6
 
-    print("[swp_utils.decode_source_destination, MULTS]:", source_mult, dest_mult)
     source += int(source_mult, 2) * 128
     destination += int(dest_mult, 2) * 128
 
-    print("[swp_utils.decode_source_destination]: multiplier: {}, source: {}, destination: {}".format(multiplier,
-                                                                                                      source,
-                                                                                                      destination))
-    #bits4_6 = format(int(destination / 128), '03b')
-    #bits0_3 = format(int(source / 128), '03b')
     return source, destination
 
 
 if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
-    print(encode_multiplier(500, 700))
+

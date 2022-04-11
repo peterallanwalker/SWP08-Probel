@@ -58,7 +58,7 @@ class Message:
                  source=None,
                  destination=None,
                  char_len=None,
-                 #labels=False,
+                 labels=None,
                  encoded=None,):
         """
             *** NOT INTENDED TO BE CALLED DIRECTLY, INSTANTIATE USING THE CLASS METHODS... ***
@@ -106,7 +106,6 @@ class Message:
                     #self.source = self.encoded[utils.SOURCE_BYTE]
                     #self.destination = self.encoded[utils.DESTINATION_BYTE]
                     self.source, self.destination = utils.decode_source_destination(self.encoded)
-                    print("[swp_message.Message]: DEBUG!")
 
                 elif self.command in ("push_labels", "push_labels_extended"):
                     self.matrix = 0
@@ -181,7 +180,7 @@ class Message:
         return message
 
     @classmethod
-    def push_labels(cls, labels, first_destination, char_len=4, matrix=0, level=0, multiplier=0 ):
+    def push_labels(cls, labels, first_destination, char_len=4, matrix=0, level=0, multiplier=0):
         """
         Instantiate a label push message object
         :param labels: list of strings
@@ -253,18 +252,18 @@ class Message:
     def _get_summary(self):
 
         if self.labels:
-            labels = '\n'.join(self.labels)
+            labels = '\n  Labels: '
+            labels += ''.join(self.labels)
         else:
             labels = ''
 
-        #source = 'Source: ' + str(self.source) + ','
-
-        r = ['Command: {}, [Matrix:{}, Level:{}, Multiplier:{}] Source:{}, Destination: {}'.format(self.command.upper(),
-                                                                                            self.matrix,
-                                                                                            self.level,
-                                                                                            self.multiplier,
-                                                                                            self.source,
-                                                                                            self.destination)]
+        r = ['Command: {}, [Matrix:{}, Level:{}] '
+             'Source:{}, Destination: {}{}'.format(self.command.upper(),
+                                                     self.matrix,
+                                                     self.level,
+                                                     self.source,
+                                                     self.destination,
+                                                     labels)]
         return r
 
 
