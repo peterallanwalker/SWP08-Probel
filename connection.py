@@ -82,7 +82,7 @@ class Connection:
         while True:
             try:
                 data = self.sock.recv(1024)
-                # TODO - experiment setting value very small to see if I can split messages and test unpack's residual data
+                # TODO - experiment setting value very small to see if I can split messages and test unpack's residual data on a real connection
             except:
                 data = False
 
@@ -107,7 +107,8 @@ class Connection:
     def send(self, message):
         try:
             self.sock.sendall(message)
-        except self.sock.error as e:
+        #except self.sock.error as e:
+        except socket.error as e:
             print("[Connection.send]: Failed to send, error:", e)
             return False
         # TODO - wait for ACK/NAK before returning? (if protocol = swp, will break CSCP doing that... test higher up in connectIO)
@@ -137,6 +138,9 @@ class Connection:
 
     def flush_receive_buffer(self):
         self._messages = []
+
+    def receive_buffer_len(self):
+        return len(self._messages)
 
 
 if __name__ == '__main__':

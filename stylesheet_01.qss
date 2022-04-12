@@ -1,0 +1,230 @@
+
+/* Qt "QSS" style sheet for CSCP_GUI */
+
+/*  Don't seem to be able to use/define constants in qss.
+    ...The solution seems to be to put them in prefixed by '@' or some other unique (for CSS/QSS) char/s,
+    and then have a separate script that defines the values for the constants and parses the custom file,
+    replacing the constants to present valid qss before loading into Qt app.
+
+    ... not going to those efforts right now, so here are some color values to use:
+
+    Dark Grey    -   #121212 - almost black - background theme
+    Lighter grey -   #1e1e1e - slightly lighter - display background color
+    Lighter again -  #2e2e2e - strip background colour
+    white        -   #e1e1e1
+
+    red on - 158,41,39 / 9e2927
+    green - 98, 151, 85 / 629755
+
+*/
+
+
+QMainWindow{
+   background: #2b2b2b;
+}
+
+*[cssClass~="strip"] {
+    background: #313335;
+    color: red;
+    /*border: 1px outset #555555;*/
+    border: 1px solid #555555;
+    border-radius: 5px;
+}
+
+QLabel[cssClass~="strip"] {
+    border: none;
+    font-size: 18pt;
+    color: #E1E1E1;
+}
+
+QPushButton {
+    color: #e1e1e1;
+    /*background: #999;*/
+    /*border-style: outset;*/
+    border-style: solid;
+    border-width: 1%;
+    border-radius: 3px;
+    /*border-color: #e1e1e1;*/
+    border-color: #555555;
+    /*font: bold;*/
+
+    padding:6px;
+    /*border: 10px, #f00;*/
+    /*border-radius: 10%;*/
+}
+
+QPushButton:checked{
+    font:bold;
+    border-color: #e1e1e1;
+}
+
+QPushButton[cssClass~="red"]:checked {
+    background: rgb(158,41,39);
+
+}
+QPushButton[cssClass~="red"] {
+    background: rgba(158,41,39, 100);
+}
+QPushButton[cssClass~="green"]:checked {
+    /*background: rgb(98,151,85);*/
+    /*background: rgb(98,165,85);*/
+    /*background: #19a435;*/
+    background: #178a35;
+}
+QPushButton[cssClass~="green"]{
+    background: rgba(98,151,85, 85);
+}
+
+
+
+/* Hide disabled widgets.
+   Note, widget.setDisabled(True) will set any child widgets disabled as well,
+   but widget.setProperty('cssClass',['<classname'>]) does not seem to get inherited by child widgets.
+   I'm putting these lines below class based properties set above to override them
+
+   ... for some reason though, if the button is checked, then disabled, its clearing text and border but not background???
+   background does clear if unchecked */
+
+QPushButton:disabled{
+    color: rgba(0,0,0,0);
+    background: rgba(0, 0, 0, 0);
+    border: none;
+}
+QLabel:disabled{
+    color: rgba(0,0,0,0);
+}
+
+
+*[cssClass~="display"] {
+
+    background: #1E1E1E;
+    color: #E1E1E1;
+    border: 5px solid #121212;
+
+}
+
+QLabel[cssClass~="display"] {
+    border: 0px;
+    padding:1px;
+
+    color: #E1E1E1;
+    background: #1E1E1E;
+}
+
+
+
+*[cssClass~="routing"] {
+
+    /*background: red;*/
+    /*color: #ffffff;*/
+    /*border: 1px solid green;*/
+    color: #e1e1e1;
+}
+
+
+*[cssClass~="fader"] {
+
+    /*background: green;*/
+    color: #ffffff;
+    /*border: 1px solid red;*/
+}
+
+
+/* FADER STYLINGG */
+
+QSlider{
+    padding-left:center;
+    padding-right:center;
+    padding-top:5px;
+    padding-bottom:5px;
+    margin-left:center;
+    margin-right:center;
+    width: 10px;
+    min-height:300px;
+    /*background: #666;*/
+
+}
+
+
+QSlider::groove:vertical {
+
+    /*border: 1px solid #bbb;*/
+    /*background: red;*/
+    /*height: 10px;*/
+    border-radius: 2px;
+    /*width: 10px;*/
+    /*margin-left: -20px; */  /* adding margin here allows makes the slot narrower than the handle */
+    /*margin-right: -20px; */
+    margin-left: -30%;     /* adding margin here allows makes the slot narrower than the handle */
+    margin-right: -30%;
+    /*padding-top:10%;*/  /* adding padding to top of slider groove seens to stop handle being able to move to the top */
+}
+
+QSlider::sub-page:vertical {
+    /*background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #66e, stop: 1 #bbf);*/
+    /*background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1, stop: 0 #bbf, stop: 1 #55f);*/
+    /*background: #444;*/
+    background: #2b2b2b;
+    border: 1px solid #555555;
+    border-radius: 4px;
+
+}
+
+QSlider::add-page:vertical {
+    /*background: red;*/
+    /*background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #66e, stop: 1 #bbf);*/
+    /*background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1, stop: 0 #bbf, stop: 1 #55f);*/
+    border: 2px solid #444;
+
+    background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1, stop: 0 #7b7, stop: 1 #373);
+    /*border: 1px solid #777;*/
+    /*height: 10px;*/
+    border-radius: 4px;
+
+}
+
+QSlider::handle:vertical {
+    image:url(knob.png);
+
+
+    width: 40px;
+    /*background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #eee, stop:1 #ccc);*/
+
+    /*border: 1px solid #777;*/
+    /*width: 13px;*/
+    height:40px;
+    margin-top: -2px;
+    margin-bottom: -2px;
+    margin-left: -10px;
+    margin-right:-10px; /* negative margins on handle allow it to be wider than the groove */
+                        /* not sure I need that now, sets background handle, I want to set the image width which I've done by adding negative margin on the groove*/
+
+    border-radius: 4px;
+
+
+}
+
+QSlider::handle:vertical:hover {
+    /*background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #fff, stop:1 #ddd);*/
+    /*border: 1px solid #444;*/
+    /*border-radius: 4px;*/
+    /*border: 1px solid #777;*/
+    /*width:60px;*/
+}
+
+QSlider::sub-page:vertical:disabled {
+    background: #bbb;
+    border-color: #999;
+}
+
+QSlider::add-page:vertical:disabled {
+    background: #eee;
+    border-color: #999;
+}
+
+QSlider::handle:vertical:disabled {
+    background: #eee;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+}
+
