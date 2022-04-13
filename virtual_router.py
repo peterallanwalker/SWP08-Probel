@@ -57,6 +57,7 @@ class SwpServer:
                     print('New connection with client:', addr, self.connection)
                     data = self.connection.recv(1024)  # - Receive up to 1MB of data
                     while data:
+                        print("[virtual_router.run]: data received", data)
                         msgs, residual_data = unpack_data(data)
                         # TODO - just do self.messages += msgs rather than looping and appending each one at a time!
                         for msg in msgs:

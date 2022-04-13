@@ -14,7 +14,7 @@
 
 import sys
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QTextEdit
 
 import cli_utils
 import connection_settings as config
@@ -68,7 +68,8 @@ class DestinationCol:
         for source in self.sources:
             #btn = QPushButton('{}-{}'.format(source['group'], source['channel']), checkable=True)
             #btn = QPushButton(source['id'], checkable=True)
-            btn = QPushButton(source['id'], checkable=False)
+            btn = QPushButton(source['id'], checkable=True)
+            #btn = QPushButton(source['id'], checkable=True)
 
             # Quick and dirty test, should probably send info to router to then pack and send over connection.
             #btn.clicked.connect(router.connection.send(Message.connect(int(source['id']), int(self.id))))
@@ -80,6 +81,8 @@ class DestinationCol:
             self.cross_points[source['id']] = btn
             strip_layout.addWidget(btn)
 
+        #print("DESINTATIONS STRIPS, SOURCE BUTTONS:", self.cross_points)
+
         parent_window.addWidget(strip_widget)
 
     def create_cross_point_callback(self, source, destination):
@@ -90,11 +93,27 @@ class DestinationCol:
         return cross_point_callback
 
     def refresh(self):
-        for cross_point in self.cross_points:
-            #print("DEBUG", cross_point)
-            if self.router.destinations[self.id]['connected source'] == str(cross_point):
-                print("CONNECTION")
-                self.cross_points[cross_point].setChecked()
+        #print("DEBUG STRIP: DESTINNATION:", self.router.destinations[self.id]['connected source'])
+        #print("DEBUG SOURCE BUTTONS", self.cross_points)
+        #print("DEBUG REFRESH STRIP")
+
+        # - Set all buttons to unchecked
+        for btn in self.cross_points:
+            self.cross_points[btn].setChecked(False)
+        #    self.cross_points[btn].setProperty('cssClass', ['red'])
+
+        # Look up the connected source for this destination
+        connected_source = self.router.destinations[str(self.id)]['connected source']
+        if connected_source:
+            # - If there is a connected source, mark the appropriate source button as checked
+            self.cross_points[str(connected_source)].setChecked(True)
+            self.cross_points[str(connected_source)].setProperty('cssClass', ['red'])  # - css not working??
+
+        #for cross_point in self.cross_points:
+        #    #print("DEBUG", cross_point)
+        #    if self.router.destinations[self.id]['connected source'] == str(cross_point):
+        #        print("CONNECTION")
+        #        self.cross_points[cross_point].setChecked()
 
         #f.display.refresh()
         #self.input_routing.refresh()
@@ -127,6 +146,27 @@ class SourceLabelCol:
         parent_window.addWidget(strip_widget)
 
 
+class SourceLabelEditCol:
+
+    def __init__(self, sources, parent_window=None):
+        strip_widget = QWidget()
+        strip_widget.setProperty("cssClass", ["strip"])
+
+        strip_layout = QVBoxLayout()
+        strip_widget.setLayout(strip_layout)
+
+        spacer = QLabel("", alignment=Qt.AlignCenter)
+        strip_layout.addWidget(spacer)
+        label_edits = {}
+        for source in sources:
+            label = source['group'] + ' - ' + source['channel']
+            source_label = QTextEdit("test")
+            #source_label = QLabel(label, alignment=Qt.AlignCenter)
+            strip_layout.addWidget(source_label)
+
+        parent_window.addWidget(strip_widget)
+
+
 class CrossPointView(QWidget):
     def __init__(self, router):
         # - Initialise the QWidget base class that this class is inheriting from
@@ -135,7 +175,7 @@ class CrossPointView(QWidget):
         self.router = router
         self.strips_area = QHBoxLayout()
         self.setLayout(self.strips_area)  # - Important else will not display!
-
+        self.sources_edit = SourceLabelEditCol(self.router.sources, parent_window=self.strips_area)
         self.sources = SourceLabelCol(self.router.sources, parent_window=self.strips_area)
 
         self.destinations = []
@@ -201,8 +241,8 @@ class Router:
             # - TODO - optimise data so I dont have to loop to find the right ID, and error check against duplicate IDs,
             # - (on other matrix/level as well as erroneous)
 
-            self.destinations[message.destination]["connected source"] = message.source
-            print("updated data", self.destinations[message.destination])
+            self.destinations[str(message.destination)]["connected source"] = message.source
+            print("updated data", self.destinations[str(message.destination)])
 
             #for d in self.destinations:
             #    print(d)
@@ -300,8 +340,8 @@ if __name__ == '__main__':
 
     cli_utils.print_header(TITLE, VERSION)
 
-    #qss = 'stylesheet_01.qss'  # External style sheet to use
-    qss = 'none'
+    qss = 'stylesheet_01.qss'  # External style sheet to use
+    #qss = 'none'
 
     # - TODO - move settings config into GUI menu
     # - Get last used settings, and prompt user to accept or change

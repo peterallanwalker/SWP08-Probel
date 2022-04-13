@@ -245,6 +245,12 @@ class Message:
         byte_count = len(data)
         data.append(byte_count)
         checksum = utils.calculate_checksum(data)
+
+        # New - should escape any dles in payload.
+        #data = bytes(data)
+        #data = data.replace(b'\x10', b'\x10\x10')
+        #data = list(data)
+
         message = utils.SOM + data + [checksum] + utils.EOM
 
         return bytes(message)

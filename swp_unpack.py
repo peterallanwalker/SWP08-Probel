@@ -113,6 +113,9 @@ def unpack_data(data, previous_insufficient_data=False):
             data = data[next_dle + 1:]  # - Ignore lone DLE
 
         elif dle_type == "SOM":
+
+            # - TODO - if message payload contains false EOM, eg. connect destination 16 to source 3 (\x16\x03)
+            #           then it is not currently being parsed
             #print("[swp_unpack.unpack_data]: SOM found, looking for EOM...")
             eom_index = data.find(bytes([utils.EOM[0], utils.EOM[1]]))
 
@@ -346,6 +349,22 @@ def test_valid_invalid():
         print(msg)
 
 
+def debug_failed_message():
+    # - failing to parse this connect message, 3 - 16... 16 is DLE!
+    # ... so source & dest gets encoded as \x10\x03 ... which is the same as EOM
+    # ... but unpack should fail to validate it as EOM by checksum and continue to look for DLE... but is not working.
+    # ... also, if in message encode I escape the dle, so pass \x10\x10\x03 then unpack should escape it and handle.
+    # ... check how I', unpckaing/escaping
+    failed_message = b'\x10\x02\x02\x00\x00\x10\x03\x05\xe6\x10\x03'
+
+    failed_message = b'\x10\x02\x02\x00\x00\x10\x10\x03\x05\xe6\x10\x03'
+    print("orig", failed_message)
+    print("escaped", _escape_dles(failed_message))
+    data, residual_data = unpack_data(failed_message)
+    print("data", data)
+    print("residual", residual_data)
+
+
 if __name__ == '__main__':
     #test_1()
     #test_2()
@@ -355,6 +374,7 @@ if __name__ == '__main__':
     #test_6()
     #test_7()
     #test_8()
-    test_9()
+    #test_9()
     #test_escaped_dles()
     #test_valid_invalid()
+    debug_failed_message()
