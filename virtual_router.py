@@ -114,7 +114,8 @@ if __name__ == '__main__':
                     # TODO, should provide the proper connected message not just echoing back...
                     print("...Received message:", valid_message)
                     print("Sending response.")
-                    connection.send(Message.connect(valid_message.source, valid_message.destination).encoded)
+                    connection.send(Message.connect(valid_message.source, valid_message.destination,
+                                                    matrix=valid_message.matrix, level=valid_message.level).encoded)
 
                 elif valid_message.command in ("push_labels", "push_labels_extended"):
                     print("...Received message:", valid_message)

@@ -23,6 +23,11 @@ QMainWindow{
    background: #2b2b2b;
 }
 
+QLabel{
+    color: #e1e1e1;
+}
+
+
 *[cssClass~="strip"] {
     background: #313335;
     color: red;
@@ -70,9 +75,11 @@ QPushButton[cssClass~="cross_point"]:hover {
     /*background: rgb(158,41,39);*/
     /*background: rgba(98,151,85, 255);*/
     /*background: rgb(158,41,39);*/ /* red */
-    background: rgba(23,138,53,150);
+    /*background: rgba(23,138,53,150);*/
+    background: rgba(255,0,0,90);
     /*border-color: #e1e1e1;*/
     border-color: rgba(0,0,0,255);
+    /*border-style: inset;*/
 }
 
 QPushButton[cssClass~="cross_point"]:checked {
@@ -106,7 +113,21 @@ QPushButton[cssClass~="green"]{
     background: rgba(98,151,85, 85);
 }
 
-
+QLineEdit {
+    color: #e1e1e1;
+    /*background: #999;*/
+    /*border-style: outset;*/
+    border-style: solid;
+    border-width: 1%;
+    border-radius: 3px;
+    /*border-color: #e1e1e1;*/
+    border-color: #555555;
+    /*font: bold;*/
+    background: rgba(0,0,0,80);
+    padding:6px;
+    /*border: 10px, #f00;*/
+    /*border-radius: 10%;*/
+}
 
 /* Hide disabled widgets.
    Note, widget.setDisabled(True) will set any child widgets disabled as well,

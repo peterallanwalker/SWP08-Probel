@@ -24,7 +24,8 @@ def set_label_len(labels, char_len):
     """
     valid_label_lengths = (4, 8, 12, 16, 32)
     if char_len not in valid_label_lengths:
-        print("[swp_message._format_labels]: Invalid character length: {}, must be one of: {}".format(char_len, valid_label_lengths))
+        print("[swp_message._format_labels]: Invalid character length: {}, must be one of: {}".format(char_len,
+                                                                                                      valid_label_lengths))
         return False
     else:
         fixed_len = []
@@ -49,6 +50,12 @@ def format_labels(labels):
 
 
 class Message:
+    """
+    *** Message() NOT INTENDED TO BE CALLED DIRECTLY, INSTANTIATE USING THE CLASS METHODS... ***
+    - e.g call Message.connect(...) to instantiate a connect message using source/dest values,
+    - or call Message.push_labels(...) to instantiate a label message,
+    - or call Message.decode(msg byte string) to instantiate a message object from its encoded form.
+    """
 
     def __init__(self,
                  command=None,
@@ -59,21 +66,18 @@ class Message:
                  destination=None,
                  char_len=None,
                  labels=None,
-                 encoded=None,):
-        """
-            *** NOT INTENDED TO BE CALLED DIRECTLY, INSTANTIATE USING THE CLASS METHODS... ***
-            - e.g call Message.connect(source, destination) to instantiate a connect message using source/dest values
-            - or call Message.decode(msg byte string) to instantiate a message object from its encoded form.
-        """
-        # If public Message.decode constructor used,
-        # the raw byte string of a pre-validated message is passed
-        # and we extract the data to populate the class attributes
+                 encoded=None, ):
+
+        # If public Message.decode constructor used, it is passed the raw byte string of a pre-validated message
+        # which gets passed to the init as encoded='<raw message byte string>'
+        # ... and the we extract the data to populate the class attributes:
         if encoded:
             # - Encoded messages from Connect.get_message() are pre-validated by header & checksum (by swp_unpack),
             # - so do not need revalidating here.
             self.labels = False  # - TODO - sort having to deal with missing attributes better!
             self.encoded = encoded
 
+            # - Check if the encoded message is a simple ACK/NAK and process accordingly
             if encoded == bytes(utils.ACK):
                 self.command = "ACK"
                 # TODO HANDLE THIS BETTER - FIX __str__ for None or fix init to replace None with False
@@ -92,39 +96,28 @@ class Message:
                 self.source = False
                 self.destination = False
 
+            # - If not ACK/NAK then extract the payload:
             else:
-                # TODO - this will fail if its a command we don't recognise...
+                # TODO - this will fail if it's a command we don't recognise...
                 self.command = list(utils.COMMANDS.keys())[list(utils.COMMANDS.values()).index(self.encoded[utils.COMMAND_BYTE])]
+                self.matrix, self.level = utils.decode_matrix_level(self.encoded)
 
                 if self.command in ("connect", "connected"):
-                    # TODO - handle different matrix, level and multiplier
-                    # TODO - handle other message types, labels, ACK & NACK
-                    self.matrix = 0
-                    self.level = 0
                     self.multiplier = self.encoded[utils.MULTIPLIER_BYTE]
-                    # TODO - THIS WILL FAIL IF SOURCE/DEST > 128? (need to handle the mod  /multiplier)
-                    #self.source = self.encoded[utils.SOURCE_BYTE]
-                    #self.destination = self.encoded[utils.DESTINATION_BYTE]
                     self.source, self.destination = utils.decode_source_destination(self.encoded)
 
                 elif self.command in ("push_labels", "push_labels_extended"):
-                    self.matrix = 0
-                    self.level = 0
                     self.multiplier = 0
                     self.source = False
-                    #self.destination = False  # TODO - figure out how to parse dest DIV & MOD (in swp_utils)
                     self.destination = utils.get_labels_destination(self.encoded)
-                    self.labels = "TEST"
-                    #self.labels = utils.get_labels()
+                    # - TODO parse encoded labels (but only for the benefit of the virtual_router, as we only send,
+                    # -      and do not receive label messages
+                    self.labels = "True"
+                    # self.labels = utils.get_labels()
         else:
             self.command = command
-            # TODO - Handle different matrix/level
-            if not matrix:
-                self.matrix = 0
-            if not level:
-                self.level = 0
-            #if not multiplier:
-            #    self.multiplier = 0
+            print("DEBUG SWP MESSAGE, ENCODE A MESSAGE, matrix:{}, level:{}".format(matrix, level))
+            self.matrix, self.level = matrix, level
 
             if source is not None:
                 self.source = source
@@ -133,7 +126,6 @@ class Message:
 
             self.destination = destination
 
-            # - NEW - TODO - TEST!
             if self.command in ("connect", "connected"):
                 self.multiplier = utils.encode_multiplier(self.source, self.destination)
 
@@ -197,7 +189,7 @@ class Message:
         return message
 
     @classmethod
-    def push_labels_extended(cls, labels, first_destination, char_len=4, matrix=0, level=0, multiplier=0 ):
+    def push_labels_extended(cls, labels, first_destination, char_len=4, matrix=0, level=0, multiplier=0):
         """
         Instantiate an extended label push message object
         # TODO - understand nature of 'extended'... it supports a larger number of IDs?
@@ -210,7 +202,8 @@ class Message:
         :param multiplier: int
         :return: SWP message object for pushing labels
         """
-        message = Message(command="push_labels_extended", labels=labels, destination=first_destination, char_len=char_len,
+        message = Message(command="push_labels_extended", labels=labels, destination=first_destination,
+                          char_len=char_len,
                           matrix=matrix, level=level, multiplier=multiplier)
         return message
 
@@ -225,10 +218,9 @@ class Message:
             SWP08 message format - SOM, DATA, BTC, CHK, EOM
             :return: SWP08 encoded byte string, ready to send to mixer
         """
-        command = [utils.COMMANDS[self.command], self.matrix]
+        matrix_level = utils.encode_matrix_level(self.matrix, self.level)
+        command = [utils.COMMANDS[self.command], matrix_level]
         if self.command in ("connect", "connected"):
-            #data = command + [self.multiplier, self.destination, self.source]
-            # TODO sort the multiplier!
             data = command + [self.multiplier, self.destination % 128, self.source % 128]
 
         elif self.command in ("push_labels", "push_labels_extended"):
@@ -239,7 +231,7 @@ class Message:
             data = command + [self._char_len, start_dest_div, start_dest_mod, label_qty] + labels
 
         else:
-            print("[swp_message._encode]: unsuppported command: {}".format(self.command))
+            print("[swp_message._encode]: unsupported command: {}".format(self.command))
             return False
 
         byte_count = len(data)
@@ -247,9 +239,9 @@ class Message:
         checksum = utils.calculate_checksum(data)
 
         # New - should escape any dles in payload.
-        #data = bytes(data)
-        #data = data.replace(b'\x10', b'\x10\x10')
-        #data = list(data)
+        # data = bytes(data)
+        # data = data.replace(b'\x10', b'\x10\x10')
+        # data = list(data)
 
         message = utils.SOM + data + [checksum] + utils.EOM
 
@@ -265,11 +257,11 @@ class Message:
 
         r = ['Command: {}, [Matrix:{}, Level:{}] '
              'Source:{}, Destination: {}{}'.format(self.command.upper(),
-                                                     self.matrix,
-                                                     self.level,
-                                                     self.source,
-                                                     self.destination,
-                                                     labels)]
+                                                   self.matrix,
+                                                   self.level,
+                                                   self.source,
+                                                   self.destination,
+                                                   labels)]
         return r
 
 

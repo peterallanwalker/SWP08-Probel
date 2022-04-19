@@ -26,6 +26,7 @@ ACK = [0x10, 0x06]  # Returned by router to acknowledge receipt of a valid messa
 NAK = [0x10, 0x15]  # Returned by router if message is not valid (e.g. wrong format/byte-count/checksum)
 
 COMMAND_BYTE = 2    # Command type is set in the 3rd byte of an SWP08 message
+MATRIX_LEVEL_BYTE = 3  # for connect, connected, push labels, push labels extended
 
 # - FOLLOWING ARE ONLY CORRECT FOR CONNECT AND CONNECTED MESSAGES...
 # - TODO - provide a more genric way of looking up source/dest bytes based on message type
@@ -40,6 +41,7 @@ COMMANDS = {"connect": 0x02,    # Send to router to set a connection
             "push_labels_extended": 235,
             }
 
+# keys - num chars, values - coded value
 CHAR_LEN_CODES = {4: 0,
                   8: 1,
                   12: 2,
@@ -176,6 +178,36 @@ def decode_source_destination(msg):
     return source, destination
 
 
+def decode_matrix_level(msg):
+    d = msg[MATRIX_LEVEL_BYTE]
+    d = format(d, '08b')  # converted to 8bit binary
+
+    matrix = d[:4]  # - 4 MSBs
+    level = d[4:]  # - 4 LSBs
+
+    matrix = int(matrix, 2)
+    level = int(level, 2)
+    return matrix, level
+
+
+def encode_matrix_level(matrix, level):
+    if matrix > 15 or level > 15:
+        print("[swp_utils.encode_matrix_level]: ** ERROR ** Matrix: {} & Level: {} passed. "
+              "Values need to be in range 0 - 15, ".format(matrix, level))
+        return False
+    # - Convert values to 4 bit binary
+    matrix = format(matrix, '04b')
+    level = format(level, '04b')
+    return int(matrix + level, 2)
+
+
 if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
 
+    #connected_message = b'\x10\x02\x04\x00\x00\n\x00\x05\xed\x10\x03'
+    connected_message = b'\x10\x02\x04\xf0\x00\n\x00\x05\xed\x10\x03'
+    print(decode_matrix_level(connected_message))
+
+    matrix = 3
+    level = 6
+    print(encode_matrix_level(matrix, level))
