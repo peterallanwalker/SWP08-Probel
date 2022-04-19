@@ -29,6 +29,9 @@
 # - Stop label edit being focused on load.
 # - set a max width on the label edit field.
 
+# - TODO - FIX 0-based offset! (within the import - need to -1 from imported values!, then +1 for GUI display label only
+# - all hardcoded matrix level values will need fixing
+
 import sys
 
 from PyQt5.QtCore import Qt, QTimer, QSize
@@ -39,7 +42,7 @@ from PyQt5.QtGui import QPalette, QColor, QPainter
 import cli_utils
 import connection_settings as config
 from import_io import import_io_from_csv
-from archive.router import Router
+from swp_router import Router
 
 TITLE = "ConnectIO"
 VERSION = 0.4
@@ -49,7 +52,7 @@ REFRESH_RATE = 10
 
 
 #def get_connected_dest(source, router):
-    """
+"""
     TODO DEPRECATED, REMOVE - MOVED TO INTERFACE.. NOT SURE IF I STILL HAVE A RELIANCE ON THIS HERE..
     TODO - should take full source data and return full dest data rather than just the IDs in order to be able
     to work with different Matrix/Level values... but there are quite a few areas that need to change to support
@@ -63,7 +66,7 @@ REFRESH_RATE = 10
               so only need to know one of them... for Calrec implementation at least
     """
 
-    """
+"""
     #print("[get_connected_dest] source", type(source), source)
     for dest in router.io['destinations']['1']['1']:
         #print("dest ", dest, "connected source", router.io['destinations']['1']['1'][dest]['connected source'])
@@ -74,8 +77,8 @@ REFRESH_RATE = 10
 
 
 #def get_heading(label):
-    """ Deprecated as I'm now using a single generic heading spanning the default and user label cols/rows """
-    """
+""" Deprecated as I'm now using a single generic heading spanning the default and user label cols/rows """
+"""
     if label == 'label':
         return 'Default Label'
     elif label == 'ulabel':
@@ -306,7 +309,7 @@ class MainWindow(QMainWindow):
         #grid_layout.addWidget(VerticalLabel("Destinations"), 1, 3, 2, 1)
 
         # - Create source label columns
-        create_source_label_col(self.router.io['sources']['1']['1'], grid_layout, label='id', row=3, col=1)
+        create_source_label_col(self.router.io['matrix'][1]['level'][1]['source'], grid_layout, label='id', row=3, col=1)
         create_source_label_edit_col(self.router, grid_layout, row=3, col=0)
         create_source_label_col(self.router.io['sources']['1']['1'], grid_layout, label='ulabel', row=3, col=2)
         create_source_label_col(self.router.io['sources']['1']['1'], grid_layout, label='label', row=3, col=3)

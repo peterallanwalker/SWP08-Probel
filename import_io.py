@@ -82,45 +82,46 @@ def _update_dict(line, r, io_type):
     else:
         prefix = 'EDIT In SW-P-08 '
 
-    # TODO, this feels hacky, should be a neater way maybe with isInstance recursively
     # Check if keys already exist, create them if not
+    # TODO, this feels hacky, should be a neater way maybe with isInstance recursively
+    # Note minus-ing 1 from each value to align with protocol and what the Calrec router actually uses.
     try:
-        test = r['matrix'][int(line[prefix + 'Matrix'])]
+        test = r['matrix'][int(line[prefix + 'Matrix']) - 1]
     except KeyError:
-        r['matrix'][int(line[prefix + 'Matrix'])] = {'level': {}}
+        r['matrix'][int(line[prefix + 'Matrix']) - 1] = {'level': {}}
     try:
-         test = r['matrix'][int(line[prefix + 'Matrix'])]['level'][int(line[prefix + 'Level'])]
+         test = r['matrix'][int(line[prefix + 'Matrix']) - 1]['level'][int(line[prefix + 'Level']) - 1]
     except KeyError:
-        r['matrix'][int(line[prefix + 'Matrix'])]['level'][int(line[prefix + 'Level'])] = {}
+        r['matrix'][int(line[prefix + 'Matrix']) - 1]['level'][int(line[prefix + 'Level']) - 1] = {}
     try:
-        test = r['matrix'][int(line[prefix + 'Matrix'])]['level'][int(line[prefix + 'Level'])][io_type]
+        test = r['matrix'][int(line[prefix + 'Matrix']) - 1]['level'][int(line[prefix + 'Level']) - 1][io_type]
     except KeyError:
-        r['matrix'][int(line[prefix + 'Matrix'])]['level'][int(line[prefix + 'Level'])][io_type] = {}
+        r['matrix'][int(line[prefix + 'Matrix']) - 1]['level'][int(line[prefix + 'Level']) - 1][io_type] = {}
     try:
-        test = r['matrix'][int(line[prefix + 'Matrix'])]['level'][int(line[prefix + 'Level'])][io_type][int(line[prefix + 'ID'])]
+        test = r['matrix'][int(line[prefix + 'Matrix']) - 1]['level'][int(line[prefix + 'Level']) - 1][io_type][int(line[prefix + 'ID']) - 1]
         print("[import_io.parse_line]: ** WARNING ** - Duplicate Matrix {}, Level {}, ID {} already parsed"
               " - Check your CSV for duplicates.".format(line[prefix + 'Matrix'],
                                                          line[prefix + 'Level'],
                                                          line[prefix + 'ID']))
     except KeyError:
         if io_type == 'source':
-            node = Node.source(int(line[prefix + 'Matrix']),
-                               int(line[prefix + 'Level']),
-                               int(line[prefix + 'ID']),
+            node = Node.source(int(line[prefix + 'Matrix']) - 1,
+                               int(line[prefix + 'Level']) - 1,
+                               int(line[prefix + 'ID']) - 1,
                                line['Virtual Patchbay Name'],
                                line['Patch Point Number'],
                                line['Patch Point Default Label'],
                                line['EDIT Patch Point User Label'])
         else:
-            node = Node.destination(int(line[prefix + 'Matrix']),
-                                    int(line[prefix + 'Level']),
-                                    int(line[prefix + 'ID']),
+            node = Node.destination(int(line[prefix + 'Matrix']) - 1,
+                                    int(line[prefix + 'Level']) - 1,
+                                    int(line[prefix + 'ID']) - 1,
                                     line['Virtual Patchbay Name'],
                                     line['Patch Point Number'],
                                     line['Patch Point Default Label'],
                                     line['EDIT Patch Point User Label'])
 
-        r['matrix'][int(line[prefix + 'Matrix'])]['level'][int(line[prefix + 'Level'])][io_type][int(line[prefix + 'ID'])] = node
+        r['matrix'][int(line[prefix + 'Matrix']) - 1]['level'][int(line[prefix + 'Level']) - 1][io_type][int(line[prefix + 'ID']) - 1] = node
 
     return r
 
@@ -132,5 +133,4 @@ if __name__ == '__main__':
     io = import_io_from_csv(csv_file)
 
     print_io(io)
-
 
