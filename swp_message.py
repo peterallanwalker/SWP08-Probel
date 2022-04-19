@@ -116,7 +116,6 @@ class Message:
                     # self.labels = utils.get_labels()
         else:
             self.command = command
-            print("DEBUG SWP MESSAGE, ENCODE A MESSAGE, matrix:{}, level:{}".format(matrix, level))
             self.matrix, self.level = matrix, level
 
             if source is not None:

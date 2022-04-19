@@ -30,18 +30,18 @@ class Router:
         """
         while self.connection.receive_buffer_len():
 
-            print("[connectIO_prot_gui.process_incoming messages]: Messages in receive buffer:",
+            print("[swp_router.process_incoming messages]: Messages in receive buffer:",
                   self.connection.receive_buffer_len())
 
             msg = Message.decode(self.connection.get_message())
 
             # TODO - push ACK NAK back to sender & have them wait/retry
             if msg.command == 'ACK':
-                print("[connectIO_prot_gui.process_incoming messages]: >>> ACK received")
+                print("[swo_router.process_incoming messages]: >>> ACK received")
             elif msg.command == "NAK":
-                print("[connectIO_prot_gui.process_incoming messages]: >>> ** NAK ** received!")
+                print("[swp_router.process_incoming messages]: >>> ** NAK ** received!")
             else:
-                msg.print_summary("[connectIO_prot_gui.process_incoming messages]: >>> Received Message:")
+                msg.print_summary("[swp_router.process_incoming messages]: >>> Received Message:")
                 # - Update the data model
                 self._update_data(msg)
 
@@ -54,11 +54,11 @@ class Router:
         # but that's what my virtual router returns instead of "connected")
 
         if msg.command in ('connected', 'connect'):
-            print("[interface.update_data]: connect/connected received fo destination:", msg.destination)
-            self.io['matrix'][msg.matrix]['level'][msg.level]['destination'][msg.destination]["connected source"] \
-                = msg.source
-            print("[interface.update_data]: updated destination - {}".format(
-                  self.io['matrix'][msg.matrix]['level'][msg.level]['destination'][msg.destination]["connected source"]))
+            print("[interface.update_data]: connect/connected received for destination:", msg.destination)
+            print("[interface.update_data]: current source:", self.io['matrix'][msg.matrix]['level'][msg.level]['destination'][msg.destination].connected_source)
+            self.io['matrix'][msg.matrix]['level'][msg.level]['destination'][msg.destination].connected_source = msg.source
+            print("[interface.update_data]: updated destination, new source: {}".format(
+                  self.io['matrix'][msg.matrix]['level'][msg.level]['destination'][msg.destination].connected_source))
 
     def _get_first_connected_destination(self, matrix, level, source_id):
         """
@@ -75,18 +75,16 @@ class Router:
         :param level: int
         :return: int
         """
-        for dest in self.io['matrix'][matrix]['level'][level]['destination'].items():
-            if dest.connected_source.id == source_id:
+        for dest in self.io['matrix'][matrix]['level'][level]['destination']:
+            if self.io['matrix'][matrix]['level'][level]['destination'][dest].connected_source == source_id:
                 return dest
+
         return None
 
     # --------------------------------- #
     # - PUBLIC METHODS - #
 
     def connect(self, matrix, level, source_id, destination):
-        print("DEBUG CONNECT matrix", type(matrix), matrix)
-        print("DEBUG CONNECT level", type(level), level)
-        print("DEBUG CONNECT source_id", type(source_id), source_id)
         """
         To be called by the GUI/controller
         :param matrix: int
@@ -123,7 +121,7 @@ class Router:
 if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
 
-    io_data = 'VirtualPatchbays02.csv'  # - Todo - add to settings
+    io_data = 'VirtualPatchbays.csv'  # - Todo - add to settings
     io = import_io_from_csv(io_data)
 
     settings = config.get_settings()  # - present last used settings and prompt for confirm/edit
@@ -144,3 +142,10 @@ if __name__ == '__main__':
     time.sleep(1)
 
     router.process_incoming_messages()
+
+    router.update_source_label(1, 1, 1, "mylabel")
+
+    time.sleep(1)
+
+    router.process_incoming_messages()
+

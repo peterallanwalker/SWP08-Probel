@@ -1,31 +1,22 @@
+# - GUI for SWP08 Router Control
+#
+# - Using PyQT5, some helpful sites:
 # - Ref: https://www.pythonguis.com/tutorials/pyqt-layouts/
 # - Ref: https://www.tutorialspoint.com/pyqt/
-# TODO - refresh crosspoints
-# connect source label edits
+
 # highlight source/dest row on hover
-# formatting & css
-# link levels
 # tabs for matrix/levels
 # setting for label char len
-
-# TODO - should push labels on connect, not just on edit of source
-# ... or have user option to enable that!
-# TODO - getting fed up with issues around IDs being strings not ints
-# ... also should should used named matrix/level in data structure, group by matrix leve
-# create tab for matrix view
-# create tab for lavel
+# settings for connection
+# import csv from gui
 # create option - link levels to connect ID across levels in same matrix
 # (e.g. for stereo/surround route with single x-point switxh
 # Test & handle large numbers of IDs - scrollable, collapse by group heading?
-# user option for char len
-# user options in GUI for connection, loading of CSV etc.
 # When sending a message, should wait up to 1s for ACK/NAK, If NAK or no ACK after 1s, retry 3 times
 # .. report failure if still no ACK, and then continue (do not keep sending messages until all that done)
 # ... so instead of widget call-backs directly sending messages to the router, should have a buffer
 # ... ... all that can/should be handled by the interface/model, or connection, not here in the GUI.
-# I.E. GUI widgets should call handling methods in the model rather than directly call Connection.send!
 #
-# - styling, css, fix padding, etc
 # menu
 #
 # Load/save salvos
@@ -57,7 +48,7 @@ VERSION = 0.4
 REFRESH_RATE = 10
 
 
-def get_connected_dest(source, router):
+#def get_connected_dest(source, router):
     """
     TODO DEPRECATED, REMOVE - MOVED TO INTERFACE.. NOT SURE IF I STILL HAVE A RELIANCE ON THIS HERE..
     TODO - should take full source data and return full dest data rather than just the IDs in order to be able
@@ -71,23 +62,27 @@ def get_connected_dest(source, router):
               from a label pushed to a single dest, so only need to know one of them
               so only need to know one of them... for Calrec implementation at least
     """
+
+    """
     #print("[get_connected_dest] source", type(source), source)
     for dest in router.io['destinations']['1']['1']:
         #print("dest ", dest, "connected source", router.io['destinations']['1']['1'][dest]['connected source'])
         if router.io['destinations']['1']['1'][dest]['connected source'] == source:
             #print("[get_connected_dest]: Source {}, first connected dest: {}".format(source, dest))
             return dest
+    """
 
 
-def get_heading(label):
+#def get_heading(label):
     """ Deprecated as I'm now using a single generic heading spanning the default and user label cols/rows """
+    """
     if label == 'label':
         return 'Default Label'
     elif label == 'ulabel':
         return 'User Label'
     else:
         return 'UNDEFINED'
-
+    """
 
 def create_source_label_edit_col(router, grid_layout, row=0, col=0):
     """
@@ -98,7 +93,7 @@ def create_source_label_edit_col(router, grid_layout, row=0, col=0):
     :param col: int - column within QGridLayout to display them in
     :return: dict, keys = ID, values = QLineEdit widgets
     """
-    # QLineEdit Widget info: https: // www.tutorialspoint.com / pyqt / pyqt_qlineedit_widget.htm
+    # QLineEdit Widget info: https://www.tutorialspoint.com/pyqt/pyqt_qlineedit_widget.htm
 
     # - Add column header to the grid
     grid_layout.addWidget(QLabel("Connected Sources"), row, col)

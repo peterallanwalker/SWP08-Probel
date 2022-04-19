@@ -43,8 +43,8 @@ class Node:
     def __str__(self):
         connected_source = ''
         if self.connected_source:
-            connected_source = 'Connected Source:{}'.format(self.connected_source)
-        return "[swp_node object]:{} - Matrix:{}, Level:{}, ID:{}, Label:{}, User Label:{}".format(self.type,
+            connected_source = ', Connected Source:{}'.format(self.connected_source)
+        return "[swp_node object]:{} - Matrix:{}, Level:{}, ID:{}, Label:{}, User Label:{}{}".format(self.type,
                                                                                                    self.matrix,
                                                                                                    self.level,
                                                                                                    self.id,
