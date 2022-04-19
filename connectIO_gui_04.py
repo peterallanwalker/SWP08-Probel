@@ -100,12 +100,13 @@ def create_source_label_edit_col(router, grid_layout, row=0, col=0):
 
     # - Add column header to the grid
     grid_layout.addWidget(QLabel("Connected Sources"), row, col)
-
-    sources = router.io['sources']['1']['1']
+    matrix, level = 0, 0  # TODO!!
+    sources = router.io['matrix'][matrix]['level'][level]['source']
     #r = {}
     for src in sources:
         row += 1
-        source_label_edit = QLineEdit(sources[src]['ulabel'])
+        #source_label_edit = QLineEdit(sources[src].user_label)
+        source_label_edit = QLineEdit('')
         source_label_edit.editingFinished.connect(create_source_edit_callback(router, src, source_label_edit))
         #r[int(src)] = source_label_edit
         #grid_layout.addWidget(r[int(src)], row, col)
@@ -119,13 +120,14 @@ def create_source_edit_callback(router, source, label):
         In this case, unlike the cross-points, we need to read the input from the text edit each time
         so are passing the QLineEdit to this function to achieve that
     """
-
+    matrix, level = 0, 0  # TODO!!!
     def source_edit_callback():
         print("[connectIO source edit callback]: Source label edited, source {}, label {}".format(source, label.text()))
-        dest = get_connected_dest(source, router)
-        if dest:
+        #dest = get_connected_dest(source, router)
+        #if dest:
             #router.connection.send(Message.push_labels([label.text()], int(dest)).encoded)
-            router.update_source_label(source, label.text())
+        #    router.update_source_label(source, label.text())
+        router.update_source_label(matrix, level, source, label.text())
 
     return source_edit_callback
 
@@ -147,10 +149,11 @@ def create_source_label_col(sources, grid_layout, label='label', row=2, col=1):
     for src in sources:
         row += 1
         if label == 'id':
-            text = QLabel(src)
-        else:
-            text = QLabel(sources[src][label])
-
+            text = QLabel(str(sources[src].id))
+        elif label == 'label':
+            text = QLabel(sources[src].label)
+        elif label == 'ulabel':
+            text = QLabel(sources[src].user_label)
         grid_layout.addWidget(text, row, col)
 
 
@@ -163,10 +166,12 @@ def create_destination_labels(destinations, grid_layout, label='label', row=0, c
     for dst in destinations:
         col += 1
         if label == 'id':
-            text = VerticalLabel(dst)
-        else:
-            text = VerticalLabel(destinations[dst][label])
+            text = VerticalLabel(str(destinations[dst].id))
+        elif label == 'label':
+            text = VerticalLabel(destinations[dst].label)
             #text.setAlignment(Qt.AlignCenter)
+        elif label == 'ulabel':
+            text = VerticalLabel(destinations[dst].user_label)
 
         grid_layout.addWidget(text, row, col)
 
@@ -182,11 +187,11 @@ def create_cross_points(router, grid_layout, row=2, col=4):
     :return: dict, keys =  destination ID, values = QPushButton widgets
     """
     destinations = {}
-
-    for dst in router.io['destinations']['1']['1']:
+    matrix, level = 0, 0  # TODO
+    for dst in router.io['matrix'][matrix]['level'][level]['destination']:
         sources = {}
         curr_row = row
-        for src in router.io['sources']['1']['1']:
+        for src in router.io['matrix'][matrix]['level'][level]['source']:
             btn = QPushButton(checkable=True)
             #btn.setMaximumWidth(btn.height())  # - doesn't work
             #btn.setProperty('cssClass', ['red'])
@@ -221,11 +226,12 @@ def create_cross_point_callback(router, source, destination):
     :param destination:
     :return: function
     """
+    matrix, level = 0, 0  # TODO!!!!
     def cross_point_callback():
         print("[connectIO cross-point callback]:CROSSPOINT CLICKED source:{}, dest:{}".format(source, destination))
         #router.connection.send(Message.connect(int(source), int(destination)).encoded)
         # TODO, pass connected source label
-        router.make_connection(int(source), int(destination), matrix=0, level=0)
+        router.connect(matrix, level, int(source), int(destination))
 
     return cross_point_callback
 
@@ -293,6 +299,8 @@ class MainWindow(QMainWindow):
         background_layout.addWidget(source_header, 1, 0)
 
         # Add the layout for the cross-point grid
+        # TODO, create a separate cross-point grid layout for each matrix & level, set them as stacked and work out
+        # how to switch between them!
         background_layout.addLayout(grid_layout, 1, 1)
 
         grid_layout.addWidget(QLabel("ID"), 3, 1)
@@ -308,16 +316,17 @@ class MainWindow(QMainWindow):
         grid_layout.addWidget(dest_label_header, 1, 4, 2, 1)
         #grid_layout.addWidget(VerticalLabel("Destinations"), 1, 3, 2, 1)
 
+        matrix, level = 0, 0  # - TODO deal with diff/all matrix/levels with a stacked layout (or relaod for specific matrix/level
         # - Create source label columns
-        create_source_label_col(self.router.io['matrix'][1]['level'][1]['source'], grid_layout, label='id', row=3, col=1)
+        create_source_label_col(self.router.io['matrix'][matrix]['level'][level]['source'], grid_layout, label='id', row=3, col=1)
         create_source_label_edit_col(self.router, grid_layout, row=3, col=0)
-        create_source_label_col(self.router.io['sources']['1']['1'], grid_layout, label='ulabel', row=3, col=2)
-        create_source_label_col(self.router.io['sources']['1']['1'], grid_layout, label='label', row=3, col=3)
+        create_source_label_col(self.router.io['matrix'][matrix]['level'][level]['source'], grid_layout, label='ulabel', row=3, col=2)
+        create_source_label_col(self.router.io['matrix'][matrix]['level'][level]['source'], grid_layout, label='label', row=3, col=3)
 
         # - Create dest label rows
-        create_destination_labels(self.router.io['destinations']['1']['1'], grid_layout, label='id', row=0, col=5)
-        create_destination_labels(self.router.io['destinations']['1']['1'], grid_layout, label='ulabel', row=1, col=5)
-        create_destination_labels(self.router.io['destinations']['1']['1'], grid_layout, label='label', row=2, col=5)
+        create_destination_labels(self.router.io['matrix'][matrix]['level'][level]['destination'], grid_layout, label='id', row=0, col=5)
+        create_destination_labels(self.router.io['matrix'][matrix]['level'][level]['destination'], grid_layout, label='ulabel', row=1, col=5)
+        create_destination_labels(self.router.io['matrix'][matrix]['level'][level]['destination'], grid_layout, label='label', row=2, col=5)
 
         # - Create the cross-point grid
         self.cross_points = create_cross_points(self.router, grid_layout, row=4, col=6)
@@ -336,11 +345,12 @@ class MainWindow(QMainWindow):
         self.refresh_timer.start()
 
     def refresh(self):
-
+        # TODO - this hard coded matrix/level will catch me out when I come to wokring with different ones!!!
+        matrix, level = 0, 0
         # Refresh Cross-Point Grid
         for dest, sources in self.cross_points.items():
-            connected_source = router.io['destinations']['1']['1'][dest]['connected source']
-            #print("Dest", dest, " connected source: ", connected_source)
+            #connected_source = router.io['destinations']['1']['1'][dest]['connected source']
+            connected_source = router.io['matrix'][matrix]['level'][level]['destination'][dest].connected_source
             for source, btn in sources.items():
                 if source == connected_source:
                     self.cross_points[dest][source].setChecked(True)
@@ -403,7 +413,7 @@ if __name__ == '__main__':
     # qss = 'none'
 
     # - TODO - add this to settings/save  / add to GUI
-    io_csv = 'VirtualPatchbays.csv'
+    io_csv = 'VirtualPatchbays02e.csv'
     io = import_io_from_csv(io_csv)
 
     # - TODO - move settings config into GUI menu
