@@ -44,8 +44,10 @@
 
 # - TESTING GUI V6 with IMPULSE
 # - Editing labels pushes only 4 chars (connection + label pushes 12 char (or at least impulse applies 12 chars
-# - connect + label not always getting applied though... perhaps wait for ACK after connect before sending label !
 # - connection is being dropped!
+# - set fixed width cols & try to prevent alignment to bottom right
+# - fix router Ip changes
+# - swap out fixed widths for max widths?
 
 import sys
 from pathlib import Path
@@ -78,6 +80,13 @@ CONNECTION_STATES = {"Starting": STATE_STYLES["warning"],
                      "Not Connected": STATE_STYLES["error"]
                      }
 
+#COL_WIDTH = 50
+CROSS_POINT_WIDTH = 50
+#ROW_HEIGHT = 50
+EDIT_LABEL_WIDTH = 160
+#LABEL_WIDTH = 160
+#NUDGE_BUTTON_WIDTH = 100
+
 
 def create_labels(router, matrix, level, io_type, label_type):
     """
@@ -93,8 +102,10 @@ def create_labels(router, matrix, level, io_type, label_type):
     for node in router.io['matrix'][matrix]['level'][level][io_type].values():
         if io_type == 'destination':
             label = VerticalLabel()
+            #label.setFixedHeight(LABEL_WIDTH-100)
         else:
             label = QLabel()
+            #label.setFixedWidth(LABEL_WIDTH)
 
         if label_type == 'id':
             label.setText(str(node.id))
@@ -105,6 +116,7 @@ def create_labels(router, matrix, level, io_type, label_type):
         else:
             print("[connectIO_gui.create_labels]: Unknown label type: {}".format(label_type))
             return False
+
         r.append(label)
     return r
 
@@ -120,7 +132,7 @@ def create_editable_external_source_labels(router, matrix, level):
     for node in router.io['matrix'][matrix]['level'][level]["source"]:
         editable_label = QLineEdit('')
         editable_label.editingFinished.connect(create_source_edit_callback(router, node, editable_label))
-        editable_label.setFixedWidth(160)
+        editable_label.setFixedWidth(EDIT_LABEL_WIDTH)
         r.append(editable_label)
     return r
 
@@ -136,6 +148,7 @@ def create_cross_point_buttons(router, matrix, level):
             tooltip = create_cross_point_tooltip(src, dest)
             btn.setToolTip(tooltip)
             btn.clicked.connect(create_cross_point_callback(router, src, dest))
+            btn.setFixedWidth(CROSS_POINT_WIDTH)
             sources.append(btn)
         destinations.append(sources)
     return destinations
@@ -148,7 +161,7 @@ def create_cross_point_grid(source_labels, source_user_labels, source_id_labels,
     # - BUT GOING TO TRY HIDING THEM INSTEAD OF NOT ADDING THE ONES WE DONT WANT TO SEE FIRST...
     # - TODO, sort the col/row numbering mess
     layout = QGridLayout()
-    top_row, top_col = 0, 0
+    top_row, top_col = 1, 0
 
     source_row = top_row + 3
     source_col = top_col
@@ -183,6 +196,8 @@ def create_cross_point_grid(source_labels, source_user_labels, source_id_labels,
     row = top_row
     col = top_col + 3
     destination_header = VerticalLabel('Destination')
+    #destination_header.setFixedWidth(COL_WIDTH)
+    #destination_header.setFixedHeight(COL_WIDTH-100)
     layout.addWidget(destination_header, row + 1, col, 2, 1)
 
     # - Destination label rows
@@ -206,6 +221,7 @@ def create_cross_point_grid(source_labels, source_user_labels, source_id_labels,
     for dest in cross_point_columns[first_dest: ]:
         row = top_row + 4
         for src in dest[first_src: ]:
+            #src.setFixedWidth(COL_WIDTH)
             layout.addWidget(src, row, col)
             row += 1
         col += 1
@@ -236,7 +252,7 @@ def create_source_label_edit_col(router, grid_layout, row=0, col=0):
         source_label_edit = QLineEdit('')
         source_label_edit.editingFinished.connect(create_source_edit_callback(router, src, source_label_edit))
         # source_label_edit.setMaximumWidth(160)
-        source_label_edit.setFixedWidth(160)
+        #source_label_edit.setFixedWidth(160)
         # r[int(src)] = source_label_edit
         # grid_layout.addWidget(r[int(src)], row, col)
         grid_layout.addWidget(source_label_edit, row, col)
@@ -420,14 +436,6 @@ def create_cross_point_matrix(parent):
         # scroll.setWidgetResizable(True)
         # scroll.setLayout(grid_layout)  # Add the cross-point grid to the scroll area
     return grid_layout
-
-
-def hide_column(parent, column):
-    # TODO - THIS IS A TEST TO TRY AND "SCROLL" BY HIDING COLUMNS/ROWS...
-    # TODO - SORT THIS OUT, MIGHT NEED TO RETHINK HOW IM ADDING THE CP MATRIX IN THE FIRST PLACE
-    for cp in parent.cross_points[0]:
-        #cp.hide()
-        pass
 
 
 def select_io_file(parent):
@@ -678,7 +686,8 @@ class MainWindow(QMainWindow):
 
         # Base GUI Layout
         self.background_layout = QGridLayout()
-
+        self.background_layout.setAlignment(Qt.AlignLeft)
+        self.background_layout.setAlignment(Qt.AlignTop)
         self.cross_point_grid = create_cross_point_grid(self.source_labels,
                                                         self.source_user_labels,
                                                         self.source_id_labels,
@@ -689,34 +698,45 @@ class MainWindow(QMainWindow):
                                                         self.cross_point_columns,
                                                         first_dest=0,
                                                         first_src=0)
+
+
         # - TODO, will need to store position
         self.scroll_h = 0
         self.scroll_v = 0
 
         self.background_layout.addLayout(self.cross_point_grid, 1, 1)
 
-        scroll_controls = QGridLayout()
-        self.background_layout.addLayout(scroll_controls, 0, 0)
+        #scroll_controls = QGridLayout()
+        #self.background_layout.addLayout(scroll_controls, 0, 0)
 
         # - Nudge view buttons
         nudge_right = QPushButton(">")
+        #nudge_right.setFixedWidth(NUDGE_BUTTON_WIDTH)
         nudge_right.clicked.connect(create_nudge_right_callback(self))
         #self.background_layout.addWidget(nudge_right, 0, 1)
-        scroll_controls.addWidget(nudge_right, 0, 1)
+        #scroll_controls.addWidget(nudge_right, 0, 1)
 
         nudge_left = QPushButton("<")
+        #nudge_left.setFixedWidth(NUDGE_BUTTON_WIDTH)
         nudge_left.clicked.connect(create_nudge_left_callback(self))
         #self.background_layout.addWidget(nudge_left, 0, 0)
-        scroll_controls.addWidget(nudge_left, 0, 0)
+        #scroll_controls.addWidget(nudge_left, 0, 0)
 
         nudge_down = QPushButton("V")
+        #nudge_down.setFixedWidth(NUDGE_BUTTON_WIDTH)
         nudge_down.clicked.connect(create_nudge_down_callback(self))
-        scroll_controls.addWidget(nudge_down, 1, 1)
+        #scroll_controls.addWidget(nudge_down, 1, 1)
 
         nudge_up = QPushButton("up")
+        #nudge_up.setFixedWidth(NUDGE_BUTTON_WIDTH)
         nudge_up.clicked.connect(create_nudge_up_callback(self))
-        scroll_controls.addWidget(nudge_up, 1, 0)
+        #scroll_controls.addWidget(nudge_up, 1, 0)
 
+        # - Place nudge buttons
+        self.cross_point_grid.addWidget(nudge_right, 0, 6)
+        self.cross_point_grid.addWidget(nudge_left, 0, 5)
+        self.cross_point_grid.addWidget(nudge_down, 3, 0)
+        self.cross_point_grid.addWidget(nudge_up, 3, 1)
 
         # - Load I/O data file button action
         import_io_action = QAction("&Import IO data", self)
