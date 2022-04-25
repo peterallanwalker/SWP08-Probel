@@ -23,6 +23,10 @@ QMainWindow{
    background: #2b2b2b;
 }
 
+QWidget{
+   background: #2b2b2b;
+}
+
 QLabel{
     color: #e1e1e1;
 }

@@ -40,7 +40,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QPu
 from PyQt5.QtGui import QPalette, QColor, QPainter
 
 import cli_utils
-import connection_settings as config
+import connectIO_cli_settings as config
 from import_io import import_io_from_csv
 from swp_router import Router
 

@@ -7,7 +7,7 @@ import json
 
 import swp_utils
 
-CONFIG_FILE = "connection_settings.json"
+CONFIG_FILE = "connectIO_cli_settings.json"
 
 
 # Intended private, for use by this script

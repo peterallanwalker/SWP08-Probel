@@ -110,6 +110,9 @@ class Connection:
         #except self.sock.error as e:
         except socket.error as e:
             print("[Connection.send]: Failed to send, error:", e)
+            # TODO - check this, not sure this exception will always be a lost connection
+            # ... and should detect lost connection before having to send a message
+            self.status = "Connection Lost!"
             return False
         # TODO - wait for ACK/NAK before returning? (if protocol = swp, will break CSCP doing that... test higher up in connectIO)
 

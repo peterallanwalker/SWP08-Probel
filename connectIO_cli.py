@@ -17,7 +17,7 @@ import time
 
 from string import punctuation  # - used just to parse/sanitise user input.
 
-import connection_settings as config
+import connectIO_cli_settings as config
 from connection import Connection
 from swp_message import Message
 import cli_utils

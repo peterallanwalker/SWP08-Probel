@@ -5,18 +5,26 @@ import time  # - Just for debug
 
 import cli_utils
 from import_io import import_io_from_csv
-import connection_settings as config
+import connectIO_cli_settings as config
 from connection import Connection
 from swp_message import Message
 
 TITLE = 'SWP Router'
-VERSION = 0.3
+VERSION = 0.4
 
 
 class Router:
-    def __init__(self, settings, io):
+    def __init__(self, settings):
+        self.settings = settings
         self.connection = Connection(settings["Router IP Address"], settings["Port"], settings["Protocol"])
-        self.io = io
+
+        if self.settings['IO Config File']:
+            self.source_data = self.settings['IO Config File']
+            self.io = import_io_from_csv(self.source_data)
+        else:
+            self.source_data = ''
+            self.io = None
+
         self.label_len = settings["Label Length"]
         # - TODO - query the router to get the connected source for each desintation
         # - TODO - save/load last entered connected source labels from GUI
@@ -83,28 +91,43 @@ class Router:
 
     # --------------------------------- #
     # - PUBLIC METHODS - #
+    def load_io_config(self, filename):
+        self.source_data = filename
+        try:
+            self.io = import_io_from_csv(filename)
 
-    def connect(self, matrix, level, source_id, destination):
+        except KeyError:
+            print("[swp_router.load_io_config]: failed to parse csv file, check headers match Calrec csv format")
+            # TODO - All tests have been with an Impulse VPB CSV file - check support for Hydra2 based csv files
+            return False
+
+        self.settings["IO Config File"] = filename
+        return True
+
+    def connect(self, source, destination):
         """
         To be called by the GUI/controller
-        :param matrix: int
-        :param level: int
-        :param source_id: int
-        :param destination: int
-        :param label: str (optional)
-        :param char_len int (optional)
-        :return: True if ACK response received, False if no response or NAK
+        :param source_id: Node object with io_type = 'source'
+        :param destination: Node object with io_type = 'destination'
         """
         # - TODO, how to handle ACK/NAK / retry timeout without blocking GUI, and without dumping or missing messages.
         # - ... that should all be handled by Connection, not here!
         # - Send connect message to the external router
-        #self.connection.send(Message.connect(source_id, destination, matrix=matrix, level=level).encoded)
-        self.connection.send(Message.connect(source_id, destination, matrix=matrix, level=level).encoded)
+
+        if source.matrix != destination.matrix or source.level != destination.level:
+            print("[swp_router.connect]: ** ERROR ** "
+                  "- Can only connect sources & destinations that are on the same matrix & level")
+            return False
+
+        self.connection.send(Message.connect(source.id, destination.id,
+                                             matrix=source.matrix, level=source.level).encoded)
+
         # - If there is a connected source label for the source, push that to the destination of the external router
-        if self.io['matrix'][matrix]['level'][level]['source'][source_id].connected_source:
+        #if self.io['matrix'][source.matrix]['level'][source.level]['source'][source.id].connected_source:
+        if source.connected_source:
             self.connection.send(Message.push_labels(
-                [self.io['matrix'][matrix]['level'][level]['source'][source_id].connected_source],
-                destination, self.label_len, matrix, level).encoded)
+                [source.connected_source],
+                destination.id, self.label_len, destination.matrix, destination.level).encoded)
 
     def update_source_label(self, matrix, level, source_id, label):
         # - Update the data model
@@ -122,7 +145,6 @@ if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
 
     io_data = 'VirtualPatchbays.csv'  # - Todo - add to settings
-    io = import_io_from_csv(io_data)
 
     settings = config.get_settings()  # - present last used settings and prompt for confirm/edit
     config.save_settings(settings)  # - Save user confirmed settings for next startup
@@ -130,7 +152,7 @@ if __name__ == '__main__':
     #print(io)
     #print(io['matrix'][1]['level'][1]['source'][1])
 
-    router = Router(settings, io)
+    router = Router(settings, io_data)
 
     while router.connection.status != 'Connected':
         pass

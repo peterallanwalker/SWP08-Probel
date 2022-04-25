@@ -1,9 +1,9 @@
 # - Imports Calrec formatted SWP CSV files,
 # - returns a dict of Node objects sorted by Matrix, Level, Sources & Destinations:
-#       {'matrices': {<n> :
+#       {'matrix': {<n> :
 #           {'level': {<n>:
-#               {'sources': {'<id>': Node object}
-#               {'destinations': {'<id>': Node object}
+#               {'source': {'<id>': Node object}
+#               {'destination': {'<id>': Node object}
 #           }
 #       }
 # - Peter Walker, April 2022
