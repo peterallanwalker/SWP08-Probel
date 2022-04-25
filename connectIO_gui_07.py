@@ -42,6 +42,11 @@
 # - TODO - fix when changing io data, getting residual labels displayed in background still
 # - TODO - load /query connection state on connection. Test with randomly made connections in virtual router
 
+# - TESTING GUI V6 with IMPULSE
+# - Editing labels pushes only 4 chars (connection + label pushes 12 char (or at least impulse applies 12 chars
+# - connect + label not always getting applied though... perhaps wait for ACK after connect before sending label !
+# - connection is being dropped!
+
 import sys
 from pathlib import Path
 
@@ -139,6 +144,9 @@ def create_cross_point_buttons(router, matrix, level):
 def create_cross_point_grid(source_labels, source_user_labels, source_id_labels, source_external_labels,
                             destination_labels, destination_user_labels, destination_id_labels, cross_point_columns,
                             first_dest=0, first_src=0):
+    # - NOT USING THE FIRST DEST/SRC AT MO... THE INTENTION OF THAT IS TO ONLY ADD THE CPS WE WANT TO VIEW
+    # - BUT GOING TO TRY HIDING THEM INSTEAD OF NOT ADDING THE ONES WE DONT WANT TO SEE FIRST...
+    # - TODO, sort the col/row numbering mess
     layout = QGridLayout()
     top_row, top_col = 0, 0
 
@@ -148,44 +156,59 @@ def create_cross_point_grid(source_labels, source_user_labels, source_id_labels,
     heading_1 = QLabel('External Source')
     heading_2 = QLabel('Local Source')
 
+    # - Source label column headings
     layout.addWidget(heading_1, source_row, source_col)
     layout.addWidget(heading_2, source_row, source_col + 1, 1, 2)
 
+    # - Source label columns
     source_row += 1
-    for label in source_external_labels:
+    for label in source_external_labels[first_src: ]:
         layout.addWidget(label, source_row, source_col)
         source_row += 1
     source_row = top_row + 4
-    for label in source_user_labels:
+    for label in source_user_labels[first_src: ]:
         layout.addWidget(label, source_row, source_col + 1)
         source_row += 1
     source_row = top_row + 4
-    for label in source_labels:
+    for label in source_labels[first_src: ]:
         layout.addWidget(label, source_row, source_col + 2)
         source_row += 1
     source_row = top_row + 4
-    for label in source_id_labels:
+    for label in source_id_labels[first_src: ]:
         layout.addWidget(label, source_row, source_col + 3)
         source_row += 1
 
+
+    # - Destination row headings
     row = top_row
     col = top_col + 3
-
     destination_header = VerticalLabel('Destination')
     layout.addWidget(destination_header, row + 1, col, 2, 1)
+
+    # - Destination label rows
     col += 1
-    for label in destination_user_labels:
+    for label in destination_user_labels[first_dest: ]:
         layout.addWidget(label, row, col)
         col += 1
     col = top_col + 4
-    for label in destination_labels:
+    for label in destination_labels[first_dest: ]:
         layout.addWidget(label, row + 1, col)
         col += 1
     col = top_col + 4
-    for label in destination_id_labels:
+    for label in destination_id_labels[first_dest: ]:
         layout.addWidget(label, row + 2, col)
         col += 1
     col = top_col + 4
+
+    # - Cross-points
+    # - TODO set max col width, not sure if that should be here though/
+    col = source_col + 4
+    for dest in cross_point_columns[first_dest: ]:
+        row = top_row + 4
+        for src in dest[first_src: ]:
+            layout.addWidget(src, row, col)
+            row += 1
+        col += 1
 
     return layout
 
@@ -499,6 +522,68 @@ def alert(text, info='', title=TITLE):
     # msg.exec()
 
 
+def create_nudge_right_callback(parent):
+    def nudge_right_callback():
+
+        # - hide destination headings
+        parent.destination_labels[parent.scroll_h].hide()
+        parent.destination_user_labels[parent.scroll_h].hide()
+        parent.destination_id_labels[parent.scroll_h].hide()
+
+        # - hide cross-points
+        for cp in parent.cross_point_columns[parent.scroll_h]:
+            # - Hide the first visible column
+            cp.hide()
+        # - Update the reference to which columns are visible / "scroll position"
+        parent.scroll_h += 1
+
+    return nudge_right_callback
+
+
+def create_nudge_left_callback(parent):
+    def nudge_left_callback():
+        # - first decrement the scroll offset
+        parent.scroll_h -= 1
+        # - show destination headings
+        parent.destination_labels[parent.scroll_h].show()
+        parent.destination_user_labels[parent.scroll_h].show()
+        parent.destination_id_labels[parent.scroll_h].show()
+
+        # - hide cross-points
+        for cp in parent.cross_point_columns[parent.scroll_h]:
+            # - Hide the first visible column
+            cp.show()
+
+    return nudge_left_callback
+
+
+def create_nudge_down_callback(parent):
+    def nudge_down_callback():
+        parent.source_external_labels[parent.scroll_v].hide()
+        parent.source_labels[parent.scroll_v].hide()
+        parent.source_user_labels[parent.scroll_v].hide()
+        parent.source_id_labels[parent.scroll_v].hide()
+        for dest in parent.cross_point_columns:
+            dest[parent.scroll_v].hide()
+
+        parent.scroll_v += 1
+    return nudge_down_callback
+
+
+def create_nudge_up_callback(parent):
+    def nudge_up_callback():
+        parent.scroll_v -= 1
+        parent.source_external_labels[parent.scroll_v].show()
+        parent.source_labels[parent.scroll_v].show()
+        parent.source_user_labels[parent.scroll_v].show()
+        parent.source_id_labels[parent.scroll_v].show()
+        for dest in parent.cross_point_columns:
+            dest[parent.scroll_v].show()
+
+
+    return nudge_up_callback
+
+
 class Color(QWidget):
     def __init__(self, color):
         super(Color, self).__init__()
@@ -601,9 +686,37 @@ class MainWindow(QMainWindow):
                                                         self.destination_labels,
                                                         self.destination_user_labels,
                                                         self.destination_id_labels,
-                                                        self.cross_point_columns)
+                                                        self.cross_point_columns,
+                                                        first_dest=0,
+                                                        first_src=0)
+        # - TODO, will need to store position
+        self.scroll_h = 0
+        self.scroll_v = 0
 
         self.background_layout.addLayout(self.cross_point_grid, 1, 1)
+
+        scroll_controls = QGridLayout()
+        self.background_layout.addLayout(scroll_controls, 0, 0)
+
+        # - Nudge view buttons
+        nudge_right = QPushButton(">")
+        nudge_right.clicked.connect(create_nudge_right_callback(self))
+        #self.background_layout.addWidget(nudge_right, 0, 1)
+        scroll_controls.addWidget(nudge_right, 0, 1)
+
+        nudge_left = QPushButton("<")
+        nudge_left.clicked.connect(create_nudge_left_callback(self))
+        #self.background_layout.addWidget(nudge_left, 0, 0)
+        scroll_controls.addWidget(nudge_left, 0, 0)
+
+        nudge_down = QPushButton("V")
+        nudge_down.clicked.connect(create_nudge_down_callback(self))
+        scroll_controls.addWidget(nudge_down, 1, 1)
+
+        nudge_up = QPushButton("up")
+        nudge_up.clicked.connect(create_nudge_up_callback(self))
+        scroll_controls.addWidget(nudge_up, 1, 0)
+
 
         # - Load I/O data file button action
         import_io_action = QAction("&Import IO data", self)
@@ -628,7 +741,7 @@ class MainWindow(QMainWindow):
         # - Button to change IO file
         self.io_data = QPushButton(Path(router.source_data).stem)  # - Path(path\filename.extension) returns filename
         self.io_data.clicked.connect(create_select_io_file_callback(self))
-
+        # - TODO... find where this button is actually being added to the layout, is it part of the grid build?
 
 
         # Add the layout for the cross-point grid
