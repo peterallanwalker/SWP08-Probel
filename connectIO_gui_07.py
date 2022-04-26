@@ -80,11 +80,22 @@ CONNECTION_STATES = {"Starting": STATE_STYLES["warning"],
                      "Not Connected": STATE_STYLES["error"]
                      }
 
+# - Row/Col references for positioning within the cross-point grid layout
+HEADER_ROW = 0
+SOURCE_HEADER_ROW = HEADER_ROW + 3
+FIRST_SOURCE_ROW = SOURCE_HEADER_ROW + 1
+
+DEST_HEADER_ROW = HEADER_ROW + 1
+DEST_HEADER_COL = 4
+FIRST_DEST_COL = DEST_HEADER_COL + 1
+
+FIRST_CP_COL = 5
+
 #COL_WIDTH = 50
 CROSS_POINT_WIDTH = 50
 #ROW_HEIGHT = 50
 EDIT_LABEL_WIDTH = 160
-#LABEL_WIDTH = 160
+LABEL_WIDTH = 160
 #NUDGE_BUTTON_WIDTH = 100
 
 
@@ -102,13 +113,14 @@ def create_labels(router, matrix, level, io_type, label_type):
     for node in router.io['matrix'][matrix]['level'][level][io_type].values():
         if io_type == 'destination':
             label = VerticalLabel()
-            #label.setFixedHeight(LABEL_WIDTH-100)
+            label.setFixedHeight(LABEL_WIDTH)
         else:
             label = QLabel()
-            #label.setFixedWidth(LABEL_WIDTH)
+            label.setFixedWidth(LABEL_WIDTH)
 
         if label_type == 'id':
             label.setText(str(node.id))
+            #label.setFixedWidth(30)
         elif label_type == 'label':
             label.setText(str(node.label))
         elif label_type == 'ulabel':
@@ -155,75 +167,75 @@ def create_cross_point_buttons(router, matrix, level):
 
 
 def create_cross_point_grid(source_labels, source_user_labels, source_id_labels, source_external_labels,
-                            destination_labels, destination_user_labels, destination_id_labels, cross_point_columns,
-                            first_dest=0, first_src=0):
-    # - NOT USING THE FIRST DEST/SRC AT MO... THE INTENTION OF THAT IS TO ONLY ADD THE CPS WE WANT TO VIEW
-    # - BUT GOING TO TRY HIDING THEM INSTEAD OF NOT ADDING THE ONES WE DONT WANT TO SEE FIRST...
-    # - TODO, sort the col/row numbering mess
+                            destination_labels, destination_user_labels, destination_id_labels, cross_point_columns):
+
     layout = QGridLayout()
-    top_row, top_col = 1, 0
-
-    source_row = top_row + 3
-    source_col = top_col
-
-    heading_1 = QLabel('External Source')
-    heading_2 = QLabel('Local Source')
 
     # - Source label column headings
-    layout.addWidget(heading_1, source_row, source_col)
-    layout.addWidget(heading_2, source_row, source_col + 1, 1, 2)
+    heading_1 = QLabel('External Source')
+    heading_2 = QLabel('Local Source')
+    layout.addWidget(heading_1, SOURCE_HEADER_ROW, 0)
+    layout.addWidget(heading_2, SOURCE_HEADER_ROW, 1, 1, 2)  # - this one spans 2 cols (5th arg)
 
     # - Source label columns
-    source_row += 1
-    for label in source_external_labels[first_src: ]:
-        layout.addWidget(label, source_row, source_col)
-        source_row += 1
-    source_row = top_row + 4
-    for label in source_user_labels[first_src: ]:
-        layout.addWidget(label, source_row, source_col + 1)
-        source_row += 1
-    source_row = top_row + 4
-    for label in source_labels[first_src: ]:
-        layout.addWidget(label, source_row, source_col + 2)
-        source_row += 1
-    source_row = top_row + 4
-    for label in source_id_labels[first_src: ]:
-        layout.addWidget(label, source_row, source_col + 3)
-        source_row += 1
+    row = FIRST_SOURCE_ROW
+    col = 0
+    for label in source_external_labels:
+        layout.addWidget(label, row, col)
+        row += 1
 
+    row = FIRST_SOURCE_ROW
+    col += 1
+    for label in source_user_labels:
+        layout.addWidget(label, row, col)
+        row += 1
 
-    # - Destination row headings
-    row = top_row
-    col = top_col + 3
+    row = FIRST_SOURCE_ROW
+    col += 1
+    for label in source_labels:
+        layout.addWidget(label, row, col)
+        row += 1
+
+    row = FIRST_SOURCE_ROW
+    col += 1
+    for label in source_id_labels:
+        layout.addWidget(label, row, col)
+        row += 1
+
+    # - Destinations heading
     destination_header = VerticalLabel('Destination')
     #destination_header.setFixedWidth(COL_WIDTH)
     #destination_header.setFixedHeight(COL_WIDTH-100)
-    layout.addWidget(destination_header, row + 1, col, 2, 1)
+    layout.addWidget(destination_header, DEST_HEADER_ROW, DEST_HEADER_COL, 2, 1)
 
-    # - Destination label rows
-    col += 1
-    for label in destination_user_labels[first_dest: ]:
+    # - Destination labels
+    row = DEST_HEADER_ROW
+    col = DEST_HEADER_COL + 1
+    for label in destination_user_labels:
         layout.addWidget(label, row, col)
         col += 1
-    col = top_col + 4
-    for label in destination_labels[first_dest: ]:
-        layout.addWidget(label, row + 1, col)
+
+    row += 1
+    col = DEST_HEADER_COL + 1
+    for label in destination_labels:
+        layout.addWidget(label, row, col)
         col += 1
-    col = top_col + 4
-    for label in destination_id_labels[first_dest: ]:
-        layout.addWidget(label, row + 2, col)
+
+    row += 1
+    col = DEST_HEADER_COL + 1
+    for label in destination_id_labels:
+        layout.addWidget(label, row, col)
         col += 1
-    col = top_col + 4
 
     # - Cross-points
-    # - TODO set max col width, not sure if that should be here though/
-    col = source_col + 4
-    for dest in cross_point_columns[first_dest: ]:
-        row = top_row + 4
-        for src in dest[first_src: ]:
+    row = FIRST_SOURCE_ROW
+    col = FIRST_CP_COL
+    for dest in cross_point_columns:
+        for src in dest:
             #src.setFixedWidth(COL_WIDTH)
             layout.addWidget(src, row, col)
             row += 1
+        row = FIRST_SOURCE_ROW
         col += 1
 
     return layout
@@ -544,6 +556,11 @@ def create_nudge_right_callback(parent):
             cp.hide()
         # - Update the reference to which columns are visible / "scroll position"
         parent.scroll_h += 1
+        # - move nudge button to keep it over the first visible column
+        parent.nudge_right.setParent(None)
+        parent.nudge_right.setParent(None)
+        parent.cross_point_grid.addWidget(parent.nudge_left, HEADER_ROW, DEST_HEADER_COL + 1 + parent.scroll_h)
+        parent.cross_point_grid.addWidget(parent.nudge_right, HEADER_ROW, DEST_HEADER_COL + 2 + parent.scroll_h)
 
     return nudge_right_callback
 
@@ -561,6 +578,12 @@ def create_nudge_left_callback(parent):
         for cp in parent.cross_point_columns[parent.scroll_h]:
             # - Hide the first visible column
             cp.show()
+
+        # - move nudge button to keep it over the first visible column
+        parent.nudge_right.setParent(None)
+        parent.nudge_right.setParent(None)
+        parent.cross_point_grid.addWidget(parent.nudge_left, HEADER_ROW, DEST_HEADER_COL + 1 + parent.scroll_h)
+        parent.cross_point_grid.addWidget(parent.nudge_right, HEADER_ROW, DEST_HEADER_COL + 2 + parent.scroll_h)
 
     return nudge_left_callback
 
@@ -666,7 +689,6 @@ class MainWindow(QMainWindow):
         self.matrix = 0
         self.level = 0
 
-
         # - Lists of QLabels for source row headings
         self.source_labels = create_labels(self.router, self.matrix, self.level, 'source', 'label')
         self.source_user_labels = create_labels(self.router, self.matrix, self.level, 'source', 'ulabel')
@@ -695,48 +717,45 @@ class MainWindow(QMainWindow):
                                                         self.destination_labels,
                                                         self.destination_user_labels,
                                                         self.destination_id_labels,
-                                                        self.cross_point_columns,
-                                                        first_dest=0,
-                                                        first_src=0)
+                                                        self.cross_point_columns)
 
+        #self.cross_point_grid.setAlignment(Qt.AlignLeft)
+        self.background_layout.addLayout(self.cross_point_grid, 1, 1)
 
-        # - TODO, will need to store position
+        # - Current view "scroll" position
+        # - (index of first element being displayed top and left)
         self.scroll_h = 0
         self.scroll_v = 0
 
-        self.background_layout.addLayout(self.cross_point_grid, 1, 1)
-
-        #scroll_controls = QGridLayout()
-        #self.background_layout.addLayout(scroll_controls, 0, 0)
-
         # - Nudge view buttons
-        nudge_right = QPushButton(">")
-        #nudge_right.setFixedWidth(NUDGE_BUTTON_WIDTH)
-        nudge_right.clicked.connect(create_nudge_right_callback(self))
+        self.nudge_left = QPushButton("<")  # - TODO get arrow icons or unicode
+        self.nudge_right = QPushButton(">")
+        nudge_up = QPushButton("up")
+        nudge_down = QPushButton("Dwn")
+
+        self.nudge_left.clicked.connect(create_nudge_left_callback(self))
+        self.nudge_right.clicked.connect(create_nudge_right_callback(self))
+        nudge_up.clicked.connect(create_nudge_up_callback(self))
+        nudge_down.clicked.connect(create_nudge_down_callback(self))
+
+        self.nudge_left.setFixedWidth(CROSS_POINT_WIDTH)
+        self.nudge_right.setFixedWidth(CROSS_POINT_WIDTH)
+        nudge_up.setFixedWidth(CROSS_POINT_WIDTH)
+        nudge_down.setFixedWidth(CROSS_POINT_WIDTH)
         #self.background_layout.addWidget(nudge_right, 0, 1)
         #scroll_controls.addWidget(nudge_right, 0, 1)
-
-        nudge_left = QPushButton("<")
-        #nudge_left.setFixedWidth(NUDGE_BUTTON_WIDTH)
-        nudge_left.clicked.connect(create_nudge_left_callback(self))
         #self.background_layout.addWidget(nudge_left, 0, 0)
         #scroll_controls.addWidget(nudge_left, 0, 0)
-
-        nudge_down = QPushButton("V")
-        #nudge_down.setFixedWidth(NUDGE_BUTTON_WIDTH)
-        nudge_down.clicked.connect(create_nudge_down_callback(self))
         #scroll_controls.addWidget(nudge_down, 1, 1)
 
-        nudge_up = QPushButton("up")
-        #nudge_up.setFixedWidth(NUDGE_BUTTON_WIDTH)
-        nudge_up.clicked.connect(create_nudge_up_callback(self))
         #scroll_controls.addWidget(nudge_up, 1, 0)
 
         # - Place nudge buttons
-        self.cross_point_grid.addWidget(nudge_right, 0, 6)
-        self.cross_point_grid.addWidget(nudge_left, 0, 5)
-        self.cross_point_grid.addWidget(nudge_down, 3, 0)
-        self.cross_point_grid.addWidget(nudge_up, 3, 1)
+        self.cross_point_grid.addWidget(nudge_up, SOURCE_HEADER_ROW - 2, 2)
+        self.cross_point_grid.addWidget(nudge_down, SOURCE_HEADER_ROW - 1, 2)
+        self.cross_point_grid.addWidget(self.nudge_left, HEADER_ROW, DEST_HEADER_COL + 1)
+        self.cross_point_grid.addWidget(self.nudge_right, HEADER_ROW, DEST_HEADER_COL + 2)
+
 
         # - Load I/O data file button action
         import_io_action = QAction("&Import IO data", self)
