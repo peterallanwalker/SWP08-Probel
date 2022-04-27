@@ -84,7 +84,6 @@ CONNECTION_STATES = {"Starting": STATE_STYLES["warning"],
 HEADER_ROW = 0
 SOURCE_HEADER_ROW = HEADER_ROW + 3
 FIRST_SOURCE_ROW = SOURCE_HEADER_ROW + 1
-
 DEST_HEADER_ROW = HEADER_ROW + 1
 DEST_HEADER_COL = 4
 FIRST_DEST_COL = DEST_HEADER_COL + 1
@@ -95,8 +94,13 @@ FIRST_CP_COL = 5
 CROSS_POINT_WIDTH = 50
 #ROW_HEIGHT = 50
 EDIT_LABEL_WIDTH = 160
-LABEL_WIDTH = 160
+#LABEL_WIDTH = 160
+#ID_LABEL_WIDTH = 30
 #NUDGE_BUTTON_WIDTH = 100
+
+LABEL_WIDTH = {"id": 30,
+               "label": 100,
+               "ulabel": 100}
 
 
 def create_labels(router, matrix, level, io_type, label_type):
@@ -113,10 +117,12 @@ def create_labels(router, matrix, level, io_type, label_type):
     for node in router.io['matrix'][matrix]['level'][level][io_type].values():
         if io_type == 'destination':
             label = VerticalLabel()
-            label.setFixedHeight(LABEL_WIDTH)
+            #label.setFixedHeight(LABEL_WIDTH[label_type]) # THIS IS FORCING THE WIDTH OF THE COLUMN, NOT THE HEIGHT
+            label.setFixedWidth(CROSS_POINT_WIDTH)
         else:
             label = QLabel()
-            label.setFixedWidth(LABEL_WIDTH)
+            label.setFixedWidth(LABEL_WIDTH[label_type])
+
 
         if label_type == 'id':
             label.setText(str(node.id))
@@ -204,13 +210,13 @@ def create_cross_point_grid(source_labels, source_user_labels, source_id_labels,
 
     # - Destinations heading
     destination_header = VerticalLabel('Destination')
-    #destination_header.setFixedWidth(COL_WIDTH)
+    destination_header.setFixedWidth(LABEL_WIDTH['id'])
     #destination_header.setFixedHeight(COL_WIDTH-100)
     layout.addWidget(destination_header, DEST_HEADER_ROW, DEST_HEADER_COL, 2, 1)
 
     # - Destination labels
     row = DEST_HEADER_ROW
-    col = DEST_HEADER_COL + 1
+    col = FIRST_DEST_COL
     for label in destination_user_labels:
         layout.addWidget(label, row, col)
         col += 1
@@ -556,6 +562,11 @@ def create_nudge_right_callback(parent):
             cp.hide()
         # - Update the reference to which columns are visible / "scroll position"
         parent.scroll_h += 1
+
+        if parent.scroll_h > 0:
+            parent.nudge_left.show()
+
+
         # - move nudge button to keep it over the first visible column
         parent.nudge_right.setParent(None)
         parent.nudge_right.setParent(None)
@@ -569,6 +580,9 @@ def create_nudge_left_callback(parent):
     def nudge_left_callback():
         # - first decrement the scroll offset
         parent.scroll_h -= 1
+        if parent.scroll_h <= 0:
+            parent.nudge_left.hide() # TODO use CSS to display inactive instead of hiding
+            parent.scroll_offest = 0
         # - show destination headings
         parent.destination_labels[parent.scroll_h].show()
         parent.destination_user_labels[parent.scroll_h].show()
