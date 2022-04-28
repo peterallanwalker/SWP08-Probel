@@ -48,6 +48,7 @@
 # - set fixed width cols & try to prevent alignment to bottom right
 # - fix router Ip changes
 # - swap out fixed widths for max widths?
+# - provide a messaging view
 
 import sys
 from pathlib import Path
@@ -568,6 +569,10 @@ def create_nudge_right_callback(parent):
         # - Update the reference to which columns are visible / "scroll position"
         parent.scroll_h += 1
 
+        if parent.scroll_h >= len(parent.cross_point_columns):
+            parent.scroll_h = len(parent.cross_point_columns)
+            parent.nudge_right.hide()
+
         if parent.scroll_h > 0:
             parent.nudge_left.show()
 
@@ -594,9 +599,10 @@ def create_nudge_left_callback(parent):
         parent.destination_id_labels[parent.scroll_h].show()
 
         # - hide cross-points
-        for cp in parent.cross_point_columns[parent.scroll_h]:
+        for i, cp in enumerate(parent.cross_point_columns[parent.scroll_h]):
             # - Hide the first visible column
-            cp.show()
+            if i >= parent.scroll_v:
+                cp.show()
 
         # - move nudge button to keep it over the first visible column
         parent.nudge_right.setParent(None)
@@ -617,19 +623,29 @@ def create_nudge_down_callback(parent):
             dest[parent.scroll_v].hide()
 
         parent.scroll_v += 1
+        if parent.scroll_v >= len(parent.cross_point_columns[0]):
+            parent.scroll_v = len(parent.cross_point_columns[0])
+            parent.nudge_down.hide()
     return nudge_down_callback
 
+
+# TODO - prevent nudge exceeding range, to point where no cols/rows are in view.
 
 def create_nudge_up_callback(parent):
     def nudge_up_callback():
         parent.scroll_v -= 1
+        if parent.scroll_v < 0:
+            parent.scroll_v = 0
+        if parent.scroll_v < len(parent.cross_point_columns):
+            parent.nudge_down.show()
         parent.source_external_labels[parent.scroll_v].show()
         parent.source_labels[parent.scroll_v].show()
         parent.source_user_labels[parent.scroll_v].show()
         parent.source_id_labels[parent.scroll_v].show()
 
         # TODO when scrolling, need to check opposie axis pos not just show/hide all in row/col
-        for dest in parent.cross_point_columns:
+        for i, dest in enumerate(parent.cross_point_columns):
+            if i >= parent.scroll_h:
                 dest[parent.scroll_v].show()
     return nudge_up_callback
 
@@ -749,18 +765,18 @@ class MainWindow(QMainWindow):
         # - Nudge view buttons
         self.nudge_left = QPushButton("<")  # - TODO get arrow icons or unicode
         self.nudge_right = QPushButton(">")
-        nudge_up = QPushButton("up")
-        nudge_down = QPushButton("Dwn")
+        self.nudge_up = QPushButton("up")
+        self.nudge_down = QPushButton("Dwn")
 
         self.nudge_left.clicked.connect(create_nudge_left_callback(self))
         self.nudge_right.clicked.connect(create_nudge_right_callback(self))
-        nudge_up.clicked.connect(create_nudge_up_callback(self))
-        nudge_down.clicked.connect(create_nudge_down_callback(self))
+        self.nudge_up.clicked.connect(create_nudge_up_callback(self))
+        self.nudge_down.clicked.connect(create_nudge_down_callback(self))
 
         self.nudge_left.setFixedWidth(CROSS_POINT_WIDTH)
         self.nudge_right.setFixedWidth(CROSS_POINT_WIDTH)
-        nudge_up.setFixedWidth(CROSS_POINT_WIDTH)
-        nudge_down.setFixedWidth(CROSS_POINT_WIDTH)
+        self.nudge_up.setFixedWidth(CROSS_POINT_WIDTH)
+        self.nudge_down.setFixedWidth(CROSS_POINT_WIDTH)
         #self.background_layout.addWidget(nudge_right, 0, 1)
         #scroll_controls.addWidget(nudge_right, 0, 1)
         #self.background_layout.addWidget(nudge_left, 0, 0)
@@ -770,8 +786,8 @@ class MainWindow(QMainWindow):
         #scroll_controls.addWidget(nudge_up, 1, 0)
 
         # - Place nudge buttons
-        self.cross_point_grid.addWidget(nudge_up, SOURCE_HEADER_ROW - 2, 2)
-        self.cross_point_grid.addWidget(nudge_down, SOURCE_HEADER_ROW - 1, 2)
+        self.cross_point_grid.addWidget(self.nudge_up, SOURCE_HEADER_ROW - 2, 2)
+        self.cross_point_grid.addWidget(self.nudge_down, SOURCE_HEADER_ROW - 1, 2)
         self.cross_point_grid.addWidget(self.nudge_left, HEADER_ROW, DEST_HEADER_COL + 1)
         self.cross_point_grid.addWidget(self.nudge_right, HEADER_ROW, DEST_HEADER_COL + 2)
 
