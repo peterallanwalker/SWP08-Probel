@@ -103,6 +103,10 @@ LABEL_WIDTH = {"id": 20,
                "label": 100,
                "ulabel": 100}
 
+# - NUMBER OF ROWS / COLS TO SKIP WHEN NUDGING GRID
+NUDGE_STEP_SIZE = 10
+
+
 
 def create_labels(router, matrix, level, io_type, label_type):
     """
@@ -552,6 +556,21 @@ def alert(text, info='', title=TITLE):
     # - 'exec' is a python keyword in Python 2, so PyQT4 'uses exec_', with Python3, PyQT supports either exec_ or exec
     msg.exec_()
     # msg.exec()
+
+
+def refresh_nudge_buttons(parent):
+    print("[connectIO_gui.refresh_nudge_buttons]: scroll v (row): {}, h (col): {}".format(
+                                                                                          parent.scroll_v,
+                                                                                          parent.scroll_h,))
+    if parent.scroll_v <= NUDGE_STEP_SIZE:
+        parent.nudge_left.hide()
+    else:
+        parent.nudge_left.show()
+
+    if parent.scroll_v >= len(parent.cross_point_columns) - NUDGE_STEP_SIZE:
+        parent.nudge_right.hide()
+    else:
+        parent.nudge_right.show()
 
 
 def create_nudge_right_callback(parent):
