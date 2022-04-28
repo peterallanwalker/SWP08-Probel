@@ -85,20 +85,20 @@ HEADER_ROW = 0
 SOURCE_HEADER_ROW = HEADER_ROW + 3
 FIRST_SOURCE_ROW = SOURCE_HEADER_ROW + 1
 DEST_HEADER_ROW = HEADER_ROW + 1
-DEST_HEADER_COL = 4
+DEST_HEADER_COL = 3
 FIRST_DEST_COL = DEST_HEADER_COL + 1
 
-FIRST_CP_COL = 5
+FIRST_CP_COL = FIRST_DEST_COL
 
 #COL_WIDTH = 50
 CROSS_POINT_WIDTH = 50
 #ROW_HEIGHT = 50
-EDIT_LABEL_WIDTH = 160
+EDIT_LABEL_WIDTH = 150
 #LABEL_WIDTH = 160
 #ID_LABEL_WIDTH = 30
 #NUDGE_BUTTON_WIDTH = 100
 
-LABEL_WIDTH = {"id": 30,
+LABEL_WIDTH = {"id": 20,
                "label": 100,
                "ulabel": 100}
 
@@ -150,7 +150,9 @@ def create_editable_external_source_labels(router, matrix, level):
     for node in router.io['matrix'][matrix]['level'][level]["source"]:
         editable_label = QLineEdit('')
         editable_label.editingFinished.connect(create_source_edit_callback(router, node, editable_label))
-        editable_label.setFixedWidth(EDIT_LABEL_WIDTH)
+        #editable_label.setFixedWidth(EDIT_LABEL_WIDTH)  # - For some reason this limits size but overlaps into next column
+        editable_label.setMaximumSize(EDIT_LABEL_WIDTH, 30)
+
         r.append(editable_label)
     return r
 
@@ -180,6 +182,9 @@ def create_cross_point_grid(source_labels, source_user_labels, source_id_labels,
     # - Source label column headings
     heading_1 = QLabel('External Source')
     heading_2 = QLabel('Local Source')
+    heading_1.setFixedWidth(EDIT_LABEL_WIDTH)
+    heading_1.setAlignment(Qt.AlignBottom)
+    heading_2.setAlignment(Qt.AlignBottom)
     layout.addWidget(heading_1, SOURCE_HEADER_ROW, 0)
     layout.addWidget(heading_2, SOURCE_HEADER_ROW, 1, 1, 2)  # - this one spans 2 cols (5th arg)
 
@@ -622,10 +627,10 @@ def create_nudge_up_callback(parent):
         parent.source_labels[parent.scroll_v].show()
         parent.source_user_labels[parent.scroll_v].show()
         parent.source_id_labels[parent.scroll_v].show()
+
+        # TODO when scrolling, need to check opposie axis pos not just show/hide all in row/col
         for dest in parent.cross_point_columns:
-            dest[parent.scroll_v].show()
-
-
+                dest[parent.scroll_v].show()
     return nudge_up_callback
 
 
