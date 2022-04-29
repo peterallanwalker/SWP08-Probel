@@ -107,7 +107,6 @@ LABEL_WIDTH = {"id": 20,
 NUDGE_STEP_SIZE = 10
 
 
-
 def create_labels(router, matrix, level, io_type, label_type):
     """
     :param router: Router object
@@ -255,6 +254,37 @@ def create_cross_point_grid(source_labels, source_user_labels, source_id_labels,
         col += 1
 
     return layout
+
+
+def reposition_lr_nudge_buttons(parent):
+
+
+
+def refresh_nudge_buttons(parent):
+    print("[connectIO_gui.refresh_nudge_buttons]: scroll v (row): {}, h (col): {}".format(
+        parent.scroll_v,
+        parent.scroll_h, ))
+    if parent.scroll_v <= NUDGE_STEP_SIZE:
+        parent.nudge_left.hide()
+    else:
+        parent.nudge_left.show()
+
+    if parent.scroll_v >= len(parent.cross_point_columns) - NUDGE_STEP_SIZE:
+        parent.nudge_right.hide()
+    else:
+        parent.nudge_right.show()
+
+    # -
+
+    if parent.scroll_h <= NUDGE_STEP_SIZE:
+        parent.nudge_up.hide()
+    else:
+        parent.nudge_up.show()
+
+    if parent.scroll_h >= len(parent.cross_point_columns[0]) - NUDGE_STEP_SIZE:
+        parent.nudge_down.hide()
+    else:
+        parent.nudge_down.show()
 
 
 # - NEW ABOVE, DEPRECATED BELOW
@@ -556,21 +586,6 @@ def alert(text, info='', title=TITLE):
     # - 'exec' is a python keyword in Python 2, so PyQT4 'uses exec_', with Python3, PyQT supports either exec_ or exec
     msg.exec_()
     # msg.exec()
-
-
-def refresh_nudge_buttons(parent):
-    print("[connectIO_gui.refresh_nudge_buttons]: scroll v (row): {}, h (col): {}".format(
-                                                                                          parent.scroll_v,
-                                                                                          parent.scroll_h,))
-    if parent.scroll_v <= NUDGE_STEP_SIZE:
-        parent.nudge_left.hide()
-    else:
-        parent.nudge_left.show()
-
-    if parent.scroll_v >= len(parent.cross_point_columns) - NUDGE_STEP_SIZE:
-        parent.nudge_right.hide()
-    else:
-        parent.nudge_right.show()
 
 
 def create_nudge_right_callback(parent):
