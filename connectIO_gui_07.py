@@ -49,6 +49,8 @@
 # - fix router Ip changes
 # - swap out fixed widths for max widths?
 # - provide a messaging view
+# - get current connections on start
+# - handle router IP changes during runtime
 
 import sys
 from pathlib import Path
@@ -104,7 +106,7 @@ LABEL_WIDTH = {"id": 20,
                "ulabel": 100}
 
 # - NUMBER OF ROWS / COLS TO SKIP WHEN NUDGING GRID
-NUDGE_STEP_SIZE = 10
+NUDGE_STEP_SIZE = 2
 
 
 def create_labels(router, matrix, level, io_type, label_type):
@@ -161,7 +163,7 @@ def create_editable_external_source_labels(router, matrix, level):
     return r
 
 
-def create_cross_point_buttons(router, matrix, level):
+def create_cross_point_buttons2(router, matrix, level):
     destinations = []
     for dest in router.io['matrix'][matrix]['level'][level]["destination"].values():
         sources = []
@@ -176,6 +178,27 @@ def create_cross_point_buttons(router, matrix, level):
             sources.append(btn)
         destinations.append(sources)
     return destinations
+
+
+def create_cross_point_buttons(router, matrix, level):
+    destinations = []
+    for dest in router.io['matrix'][matrix]['level'][level]["destination"].values():
+        sources = []
+        for src in router.io['matrix'][matrix]['level'][level]["source"].values():
+            btn = CrossPointButton(str(dest.id) + "-" + str(src.id), src.id, dest.id)  # Label is for debug TODO - REMOVE LABEL ONCE DEBUGGED!
+            btn.setCheckable(True)
+            btn.setProperty('cssClass', ['cross_point'])
+            tooltip = create_cross_point_tooltip(src, dest)
+            btn.setToolTip(tooltip)
+            btn.clicked.connect(create_cross_point_callback(router, src, dest))
+            btn.setFixedWidth(CROSS_POINT_WIDTH)
+            sources.append(btn)
+        destinations.append(sources)
+    return destinations
+
+
+
+
 
 
 def create_cross_point_grid(source_labels, source_user_labels, source_id_labels, source_external_labels,
@@ -256,32 +279,33 @@ def create_cross_point_grid(source_labels, source_user_labels, source_id_labels,
     return layout
 
 
-def reposition_lr_nudge_buttons(parent):
-
+def position_lr_nudge_buttons(parent):
+    parent.nudge_left.setParent(None)
+    parent.nudge_right.setParent(None)
+    parent.cross_point_grid.addWidget(parent.nudge_left, HEADER_ROW, DEST_HEADER_COL + 1 + parent.scroll_h)
+    parent.cross_point_grid.addWidget(parent.nudge_right, HEADER_ROW, DEST_HEADER_COL + 2 + parent.scroll_h)
 
 
 def refresh_nudge_buttons(parent):
-    print("[connectIO_gui.refresh_nudge_buttons]: scroll v (row): {}, h (col): {}".format(
-        parent.scroll_v,
-        parent.scroll_h, ))
-    if parent.scroll_v <= NUDGE_STEP_SIZE:
+
+    if parent.scroll_h < NUDGE_STEP_SIZE:
         parent.nudge_left.hide()
     else:
         parent.nudge_left.show()
 
-    if parent.scroll_v >= len(parent.cross_point_columns) - NUDGE_STEP_SIZE:
+    if parent.scroll_h >= len(parent.cross_point_columns) - NUDGE_STEP_SIZE:
         parent.nudge_right.hide()
     else:
         parent.nudge_right.show()
 
     # -
 
-    if parent.scroll_h <= NUDGE_STEP_SIZE:
+    if parent.scroll_v < NUDGE_STEP_SIZE:
         parent.nudge_up.hide()
     else:
         parent.nudge_up.show()
 
-    if parent.scroll_h >= len(parent.cross_point_columns[0]) - NUDGE_STEP_SIZE:
+    if parent.scroll_v >= len(parent.cross_point_columns[0]) - NUDGE_STEP_SIZE:
         parent.nudge_down.hide()
     else:
         parent.nudge_down.show()
@@ -514,17 +538,22 @@ def select_io_file(parent):
         if valid:
             # - Remove existing cross-point widgets
             # - https://stackoverflow.com/questions/4528347/clear-all-widgets-in-a-layout-in-pyqt
-            for cp in reversed(range(parent.cp_matrix.count())):
-                parent.cp_matrix.itemAt(cp).widget().setParent(None)
+            for cp in reversed(range(parent.cross_point_grid.count())):
+                parent.cross_point_grid.itemAt(cp).widget().setParent(None)
 
-            parent.cp_matrix.setParent(None)  # Not sure this is needed
-            parent.cp_widget.setParent(None)
+            parent.cross_point_grid.setParent(None)  # Not sure this is needed
 
-            # Create new cross-point widget/layout
-            cp_widget = QWidget()
-            cp_matrix = create_cross_point_matrix(parent)
-            cp_widget.setLayout(cp_matrix)
-            parent.background_layout.addWidget(cp_widget, 1, 1)
+            parent.cross_point_grid = create_cross_point_grid(parent.source_labels,
+                                                              parent.source_user_labels,
+                                                              parent.source_id_labels,
+                                                              parent.source_external_labels,
+                                                              parent.destination_labels,
+                                                              parent.destination_user_labels,
+                                                              parent.destination_id_labels,
+                                                              parent.cross_point_columns)
+
+            # self.cross_point_grid.setAlignment(Qt.AlignLeft)
+            parent.background_layout.addLayout(parent.cross_point_grid, 1, 1)
 
             # - TODO Resize
             # - TODO, I'm still seeing labels from the previous cp grid!!
@@ -588,99 +617,83 @@ def alert(text, info='', title=TITLE):
     # msg.exec()
 
 
+def refresh_cp_view(parent):
+    """
+    in lieu of working out how to get scroll bars on the matrix that keep source/dest label headers within view,
+    instead using widget.show() & widget.hide() set which rows/columns are being displayed
+    :param parent: The GUIs MainWindow
+    """
+    top_row = parent.scroll_v
+    left_col = parent.scroll_h
+
+    destination_labels = (parent.destination_labels, parent.destination_user_labels, parent.destination_id_labels)
+    source_labels = (parent.source_external_labels, parent.source_labels, parent.source_user_labels,
+                     parent.source_id_labels)
+
+    # - Show/Hide destination labels based on horizontal "scroll" position
+    for heading in destination_labels:
+        for i, label in enumerate(heading):
+            if i >= left_col:
+                label.show()
+            else:
+                label.hide()
+
+    # - Show/Hide source labels based on vertical "scroll" position
+    for heading in source_labels:
+        for i, label in enumerate(heading):
+            if i >= top_row:
+                label.show()
+            else:
+                label.hide()
+
+    # - Show cross-points based on horizontal and vertical view scroll position
+    for col, dest in enumerate(parent.cross_point_columns):
+        for row, cp in enumerate(dest):
+            if row >= top_row and col >= left_col:
+                cp.show()
+            else:
+                cp.hide()
+
+
 def create_nudge_right_callback(parent):
     def nudge_right_callback():
-
-        # - hide destination headings
-        parent.destination_labels[parent.scroll_h].hide()
-        parent.destination_user_labels[parent.scroll_h].hide()
-        parent.destination_id_labels[parent.scroll_h].hide()
-
-        # - hide cross-points
-        for cp in parent.cross_point_columns[parent.scroll_h]:
-            # - Hide the first visible column
-            cp.hide()
-        # - Update the reference to which columns are visible / "scroll position"
-        parent.scroll_h += 1
-
+        parent.scroll_h += NUDGE_STEP_SIZE
         if parent.scroll_h >= len(parent.cross_point_columns):
             parent.scroll_h = len(parent.cross_point_columns)
-            parent.nudge_right.hide()
-
-        if parent.scroll_h > 0:
-            parent.nudge_left.show()
-
-
-        # - move nudge button to keep it over the first visible column
-        parent.nudge_right.setParent(None)
-        parent.nudge_right.setParent(None)
-        parent.cross_point_grid.addWidget(parent.nudge_left, HEADER_ROW, DEST_HEADER_COL + 1 + parent.scroll_h)
-        parent.cross_point_grid.addWidget(parent.nudge_right, HEADER_ROW, DEST_HEADER_COL + 2 + parent.scroll_h)
-
+        refresh_cp_view(parent)
+        refresh_nudge_buttons(parent)
+        position_lr_nudge_buttons(parent)
     return nudge_right_callback
 
 
 def create_nudge_left_callback(parent):
     def nudge_left_callback():
-        # - first decrement the scroll offset
-        parent.scroll_h -= 1
+        parent.scroll_h -= NUDGE_STEP_SIZE
         if parent.scroll_h <= 0:
-            parent.nudge_left.hide() # TODO use CSS to display inactive instead of hiding
-            parent.scroll_offest = 0
-        # - show destination headings
-        parent.destination_labels[parent.scroll_h].show()
-        parent.destination_user_labels[parent.scroll_h].show()
-        parent.destination_id_labels[parent.scroll_h].show()
-
-        # - hide cross-points
-        for i, cp in enumerate(parent.cross_point_columns[parent.scroll_h]):
-            # - Hide the first visible column
-            if i >= parent.scroll_v:
-                cp.show()
-
-        # - move nudge button to keep it over the first visible column
-        parent.nudge_right.setParent(None)
-        parent.nudge_right.setParent(None)
-        parent.cross_point_grid.addWidget(parent.nudge_left, HEADER_ROW, DEST_HEADER_COL + 1 + parent.scroll_h)
-        parent.cross_point_grid.addWidget(parent.nudge_right, HEADER_ROW, DEST_HEADER_COL + 2 + parent.scroll_h)
-
+            parent.scroll_h = 0
+        refresh_cp_view(parent)
+        refresh_nudge_buttons(parent)
+        position_lr_nudge_buttons(parent)
     return nudge_left_callback
 
 
 def create_nudge_down_callback(parent):
     def nudge_down_callback():
-        parent.source_external_labels[parent.scroll_v].hide()
-        parent.source_labels[parent.scroll_v].hide()
-        parent.source_user_labels[parent.scroll_v].hide()
-        parent.source_id_labels[parent.scroll_v].hide()
-        for dest in parent.cross_point_columns:
-            dest[parent.scroll_v].hide()
-
-        parent.scroll_v += 1
+        parent.scroll_v += NUDGE_STEP_SIZE
         if parent.scroll_v >= len(parent.cross_point_columns[0]):
             parent.scroll_v = len(parent.cross_point_columns[0])
-            parent.nudge_down.hide()
+        refresh_cp_view(parent)
+        refresh_nudge_buttons(parent)
     return nudge_down_callback
 
 
-# TODO - prevent nudge exceeding range, to point where no cols/rows are in view.
-
 def create_nudge_up_callback(parent):
     def nudge_up_callback():
-        parent.scroll_v -= 1
+        parent.scroll_v -= NUDGE_STEP_SIZE
         if parent.scroll_v < 0:
             parent.scroll_v = 0
-        if parent.scroll_v < len(parent.cross_point_columns):
-            parent.nudge_down.show()
-        parent.source_external_labels[parent.scroll_v].show()
-        parent.source_labels[parent.scroll_v].show()
-        parent.source_user_labels[parent.scroll_v].show()
-        parent.source_id_labels[parent.scroll_v].show()
-
-        # TODO when scrolling, need to check opposie axis pos not just show/hide all in row/col
-        for i, dest in enumerate(parent.cross_point_columns):
-            if i >= parent.scroll_h:
-                dest[parent.scroll_v].show()
+        refresh_cp_view(parent)
+        refresh_nudge_buttons(parent)
     return nudge_up_callback
 
 
@@ -719,6 +732,14 @@ class VerticalLabel(QLabel):
     def sizeHint(self):
         size = QLabel.sizeHint(self)
         return QSize(size.height(), size.width())
+
+
+class CrossPointButton(QPushButton):
+    def __init__(self, label, source, destination):
+        QPushButton.__init__(self, label)
+        #super(CrossPointButton, self, label).__init__()
+        self.source = source
+        self.destination = destination
 
 
 class Settings(QDialog):
@@ -811,20 +832,15 @@ class MainWindow(QMainWindow):
         self.nudge_right.setFixedWidth(CROSS_POINT_WIDTH)
         self.nudge_up.setFixedWidth(CROSS_POINT_WIDTH)
         self.nudge_down.setFixedWidth(CROSS_POINT_WIDTH)
-        #self.background_layout.addWidget(nudge_right, 0, 1)
-        #scroll_controls.addWidget(nudge_right, 0, 1)
-        #self.background_layout.addWidget(nudge_left, 0, 0)
-        #scroll_controls.addWidget(nudge_left, 0, 0)
-        #scroll_controls.addWidget(nudge_down, 1, 1)
 
-        #scroll_controls.addWidget(nudge_up, 1, 0)
+        #self.nudge_right.setAlignment(Qt.AlignBottom)
+        #self.nudge_left.setAlignment(Qt.AlignBottom)
 
         # - Place nudge buttons
         self.cross_point_grid.addWidget(self.nudge_up, SOURCE_HEADER_ROW - 2, 2)
         self.cross_point_grid.addWidget(self.nudge_down, SOURCE_HEADER_ROW - 1, 2)
-        self.cross_point_grid.addWidget(self.nudge_left, HEADER_ROW, DEST_HEADER_COL + 1)
-        self.cross_point_grid.addWidget(self.nudge_right, HEADER_ROW, DEST_HEADER_COL + 2)
-
+        position_lr_nudge_buttons(self)
+        refresh_nudge_buttons(self)
 
         # - Load I/O data file button action
         import_io_action = QAction("&Import IO data", self)
@@ -883,7 +899,7 @@ class MainWindow(QMainWindow):
         self.refresh_timer = QTimer()
         self.refresh_timer.setInterval(REFRESH_RATE)
         self.refresh_timer.timeout.connect(self.refresh)
-        #self.refresh_timer.start()
+        self.refresh_timer.start()
 
     def update_status_orig(self):
         # TODO - FIX TEXT DISPLAYED IN STATUS BAR BUT ALSO FIX CONNECTION TO HANDLE LOSS AND RETRIES
@@ -926,15 +942,15 @@ class MainWindow(QMainWindow):
         # TODO - this hard coded matrix/level will catch me out when I come to wokring with different ones!!!
         matrix, level = 0, 0
         # Refresh Cross-Point Grid
-        for dest, sources in self.cross_points.items():
-            connected_source = router.io['matrix'][matrix]['level'][level]['destination'][dest].connected_source
-            for source, btn in sources.items():
-                if source == connected_source:
-                    self.cross_points[dest][source].setChecked(True)
+        for dest in self.cross_point_columns:
+            connected_source = router.io['matrix'][matrix]['level'][level]['destination'][dest[0].destination].connected_source
+            for cp in dest:
+                if cp.source == connected_source:
+                    cp.setChecked(True)
                 else:
-                    self.cross_points[dest][source].setChecked(False)
+                    cp.setChecked(False)
 
-                if btn.underMouse():
+                if cp.underMouse():
                     # I'm already highlighting the crosspoint button on hover using simple qss
                     # but wanting to highlight the source/dest labels as well (and possibly the button row/col
                     # print("HOVER over source {}, dest {}".format(source, dest))
@@ -987,8 +1003,8 @@ if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
 
     # - External css-like style-sheet
-    #qss = 'stylesheet_02.qss'
-    qss = 'none'  # - For debugging
+    qss = 'stylesheet_02.qss'
+    #qss = 'none'  # - For debugging
 
     # - Get last used settings
     # - Note my router is 192.169.1.201
