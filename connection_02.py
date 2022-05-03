@@ -3,19 +3,29 @@
 # Peter Walker, June 2021
 # Based on CSCP_connection, let's aim to keep it generic, with SWP08 specific handling external to this file.
 
+import time
 import socket
 import threading
 
 import swp_unpack as swp
 #import CSCP_unpack_1_1 as cscp
 
+# - V02 - add timestamps to messaging
+# - and a log, though that should maybe be in the router
+# - router holds msg objects, connection currently only the byte strings, could just convert them again when accessing
+# - from the log vs storing msg objects... connection should call back to the router with a confirmed timestamp,
+# - have the router then log it, in a separate class.
+
+
+TITLE = "Connection"
+VERSION = 0.2
 TIMEOUT = 3  # how long to wait when starting connection and receiving data.
 RECEIVE_TIMEOUT = 10
 
 
 class Connection:
 
-    def __init__(self, address, port, protocol="CSCP"):
+    def __init__(self, address, port, protocol="SWP08", log=None):
 
         self._protocol = protocol
 
@@ -28,17 +38,24 @@ class Connection:
         self.address = address
         self.port = port
 
-        # self.sock = False
         self.sock = None
         self.status = 'Starting'
 
+        # Received message buffer
         self._messages = []
-        self._residual_data = False  # Residual data that cannot be parsed but might be the beginning of a message
-        # whose remainder is in the next data to be received
+        self._residual_data = False  #
+        # Residual data is received data that cannot be parsed but might be the beginning of a message
+        # whose remainder is in the next chunk of data to be received
 
-        # self.connect()
-        self.receiver = threading.Thread(target=self.run)
-        self.receiver.daemon = True  # trying this, should cause thread to stop if main program stops, I.E. control+C to release the terminal
+        self.log = log
+
+        self.receiver = threading.Thread(target=self._run)
+
+        # TODO, check the following...
+        # Think setting as daemon not necessary but
+        # causes thread to stop if main program stops, I.E. control+C to release the terminal
+        self.receiver.daemon = True
+
         self.receiver.start()
 
     def __str__(self):
@@ -46,7 +63,7 @@ class Connection:
                                                                                                self._protocol,
                                                                                                self.status)
 
-    def connect(self):
+    def _connect(self):
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.settimeout(TIMEOUT)
@@ -64,14 +81,14 @@ class Connection:
             # self.sock = False
             self.sock = None
 
-    def run(self):
+    def _run(self):
 
         # if not connected, try to create a socket connection.
         while not self.sock:
             if not self.status == 'Connection Lost!':
                 self.status = 'Not Connected'
             print("[Connection]: Attempting to connect...")
-            self.connect()
+            self._connect()
 
         # TODO - test this - if sock.recv timesout does that kill sock, will I still be able to get messages recieved in interim before next call to recv?
         # - this might be causing messages to be missed, faders seem a bit jittery since doing this.
@@ -96,25 +113,15 @@ class Connection:
 
                 if messages:
                     for msg in messages:
-                        self._messages.append(msg)
+                        timestamp = time.time()
+                        self._messages.append((timestamp, msg))
+
 
             elif self.pinged:
                 self.status = "Connection Lost!"
                 self.close()
-                self.connect()
-                self.run()
-
-    def send(self, message):
-        try:
-            self.sock.sendall(message)
-        #except self.sock.error as e:
-        except socket.error as e:
-            print("[Connection.send]: Failed to send, error:", e)
-            # TODO - check this, not sure this exception will always be a lost connection
-            # ... and should detect lost connection before having to send a message
-            self.status = "Connection Lost!"
-            return False
-        # TODO - wait for ACK/NAK before returning? (if protocol = swp, will break CSCP doing that... test higher up in connectIO)
+                self._connect()
+                self._run()
 
     # TODO - dont think I'm using this? - JUST BEEN CALLING BY ACCIDENT INSTEAD OF GET_MESSAGE!!!!!
     #def receive(self):
@@ -131,11 +138,28 @@ class Connection:
         except:
             pass
 
+    # - PUBLIC METHODS
+    def send(self, message):
+        try:
+            self.sock.sendall(message)
+            # TODO - wait 1s for ACK/NAK & retry 3 times before returning?
+            #  (if protocol = swp, will break CSCP doing that... test higher up in connectIO)
+            #self._sent_log.append((time.time(), message))
+            self.log.log(time.time(), message, 'sent')
+            return True
+        except socket.error as e:
+            print("[Connection.send]: Failed to send, error:", e)
+            # TODO - check this, not sure this exception will always be a lost connection
+            # ... and should detect lost connection before having to send a message
+            self.status = "Connection Lost!"
+            return False
+
     def get_message(self):
         if len(self._messages):
-            oldest_message = self._messages[0]
+            timestamp, oldest_message = self._messages[0]
             self._messages = self._messages[1:]
-            return oldest_message
+            #self._received_log.append((timestamp, oldest_message))
+            return timestamp, oldest_message
         else:
             return None
 
@@ -150,6 +174,19 @@ class Connection:
         :return: int - number of messages in the receive buffer
         """
         return len(self._messages)
+
+    # TODO - instead of flushing, keep n entries... might need a Log class?
+    #def flush_received_log(self):
+    #    self._received_log = []
+
+    #def flush_sent_log(self):
+    #    self._sent_log = []
+
+    #def sent_log_len(self):
+    #    return len(self._sent_log)
+
+    #def received_log_len(self):
+    #    return len(self._received_log)
 
 
 if __name__ == '__main__':

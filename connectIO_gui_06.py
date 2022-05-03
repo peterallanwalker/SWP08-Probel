@@ -225,7 +225,7 @@ def create_cross_point_callback(router, source, destination):
     def cross_point_callback():
         print("[connectIO cross-point callback]:CROSSPOINT CLICKED source:{}, dest:{}".format(source, destination))
 
-        router.connect(source, destination)
+        router._connect(source, destination)
 
     return cross_point_callback
 

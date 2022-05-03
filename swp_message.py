@@ -76,9 +76,9 @@ class Message:
             # - so do not need revalidating here.
             self.labels = False  # - TODO - sort having to deal with missing attributes better!
             self.encoded = encoded
-
+            #print("DEBUG MESSAGE DECODE", self.encoded, bytes(utils.ACK))
             # - Check if the encoded message is a simple ACK/NAK and process accordingly
-            if encoded == bytes(utils.ACK):
+            if self.encoded == bytes(utils.ACK):
                 self.command = "ACK"
                 # TODO HANDLE THIS BETTER - FIX __str__ for None or fix init to replace None with False
                 self.matrix = 0
@@ -87,7 +87,7 @@ class Message:
                 self.source = False
                 self.destination = False
 
-            elif encoded == bytes(utils.NAK):
+            elif self.encoded == bytes(utils.NAK):
                 self.command = "NAK"
                 # TODO HANDLE THIS BETTER - FIX __str__ for None or fix init to replace None with False
                 self.matrix = 0

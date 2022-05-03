@@ -18,7 +18,7 @@ import time
 from string import punctuation  # - used just to parse/sanitise user input.
 
 import connectIO_cli_settings as config
-from connection import Connection
+from connection_02 import Connection
 from swp_message import Message
 import cli_utils
 
@@ -28,7 +28,7 @@ TIMEOUT = 1
 MAX_SEND_ATTEMPTS = 5
 
 TITLE = "ConnectIO"
-VERSION = 0.2
+VERSION = 0.3
 
 
 def get_user_input():
@@ -81,26 +81,25 @@ def send_message(connection, message):
         #    else:
         #        print(Message.decode(response))
 
-    message.print_summary("Sending >>>")
     connection.send(message.encoded)
+
+    message.print_summary("Sending >>>")
 
     # TODO should retry until response but seems to be working instantly at the moment
 
     response = None
     # TODO PREVENT WAITING FOREVER, (TIMEOUT & RETRIES)
     while not response:
-        while len(connection._messages):
+        while connection.receive_buffer_len():
             response = connection.get_message()
             response = Message.decode(response)
 
             if response.command == "ACK":
-                print(" >>> ACK received")
+                print(" <<< ACK received")
             elif response.command == "NAK":
-                print(" >>> ** NAK ** received!")
+                print(" <<< ** NAK ** received!")
             else:
-                response.print_summary(">>> Received Message:")
-                #print("Message received "
-                #      "from router:", response)
+                response.print_summary("<<< Received Message:")
 
 
 def get_received_messages(conn):

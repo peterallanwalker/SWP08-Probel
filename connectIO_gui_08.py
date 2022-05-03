@@ -45,19 +45,20 @@
 # - TESTING GUI V6 with IMPULSE
 # - Editing labels pushes only 4 chars (connection + label pushes 12 char (or at least impulse applies 12 chars
 # - connection is being dropped!
-# - set fixed width cols & try to prevent alignment to bottom right
 # - fix router Ip changes
-# - swap out fixed widths for max widths?
 # - provide a messaging view
 # - get current connections on start
 # - handle router IP changes during runtime
 
+# DISPLAY LOOP COUNT AND FPS
+
 import sys
+import time
 from pathlib import Path
 
 from PyQt5.QtCore import Qt, QTimer, QSize
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QScrollArea, QGridLayout, QVBoxLayout, QPushButton, \
-    QLabel, QLineEdit, QTextEdit, QDialog, QDialogButtonBox, QFileDialog, QMessageBox, QStatusBar, QAction
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QScrollArea, QGridLayout, QVBoxLayout, QHBoxLayout,\
+    QPushButton, QLabel, QLineEdit, QTextEdit, QDialog, QDialogButtonBox, QFileDialog, QMessageBox, QStatusBar, QAction
 from PyQt5.QtGui import QPalette, QColor, QPainter
 
 import cli_utils
@@ -83,6 +84,22 @@ CONNECTION_STATES = {"Starting": STATE_STYLES["warning"],
                      "Not Connected": STATE_STYLES["error"]
                      }
 
+# - Color palette from:
+# - https://www.sketchappsources.com/free-source/1049-flat-ui-color-pallete-sketch-freebie-resource.html
+COLOR_PALETTE = {"clouds": "#ecf0f1",
+                 "silver": "#bdc3c7",
+                 "concrete": "#95a5a6",
+                 "dark green": "#27ae60",
+                 "dark red": "#c0392b",
+                 }
+
+CSS = {"message even": "background-color: {};"
+                       "border: None;".format(COLOR_PALETTE['concrete']),
+       "message odd": "background-color: {};".format(COLOR_PALETTE['silver']),
+       "ACK": "background-color: {};".format(COLOR_PALETTE['dark green']),
+       "NAK": "background-color: {};".format(COLOR_PALETTE['dark red']),
+       }
+
 # - Row/Col references for positioning within the cross-point grid layout
 HEADER_ROW = 0
 SOURCE_HEADER_ROW = HEADER_ROW + 3
@@ -107,6 +124,15 @@ LABEL_WIDTH = {"id": 20,
 
 # - NUMBER OF ROWS / COLS TO SKIP WHEN NUDGING GRID
 NUDGE_STEP_SIZE = 2
+
+
+def format_timestamp(timestamp):
+    """
+    :param timestamp: float - time in s from epoch (from time.localtime())
+    :return: str - formatted date/time
+    """
+    print("DEBUG", timestamp, type(timestamp))
+    return time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(timestamp))
 
 
 def create_labels(router, matrix, level, io_type, label_type):
@@ -190,7 +216,7 @@ def create_cross_point_buttons(router, matrix, level):
             btn.setProperty('cssClass', ['cross_point'])
             tooltip = create_cross_point_tooltip(src, dest)
             btn.setToolTip(tooltip)
-            btn.clicked._connect(create_cross_point_callback(router, src, dest))
+            btn.clicked.connect(create_cross_point_callback(router, src, dest))
             btn.setFixedWidth(CROSS_POINT_WIDTH)
             sources.append(btn)
         destinations.append(sources)
@@ -307,37 +333,6 @@ def refresh_nudge_buttons(parent):
         parent.nudge_down.show()
 
 
-# - NEW ABOVE, DEPRECATED BELOW
-def create_source_label_edit_col_OLD(router, grid_layout, row=0, col=0):
-    """
-    Creates text input fields for source labels, and places them into a column of a grid layout
-    :param sources: Dict of sources, as supplied by import_io's sources{matrix{level{id{data}}}}
-    :param grid_layout: A pyQt QGridLayout
-    :param row: int - Grid row for first source label to be displayed (top rows will get used for headers)
-    :param col: int - column within QGridLayout to display them in
-    :return: dict, keys = ID, values = QLineEdit widgets
-    """
-    # QLineEdit Widget info: https://www.tutorialspoint.com/pyqt/pyqt_qlineedit_widget.htm
-
-    # - Add column header to the grid
-    grid_layout.addWidget(QLabel("External Source Labels"), row, col)
-    matrix, level = 0, 0  # TODO!!
-    sources = router.io['matrix'][matrix]['level'][level]['source']
-    # r = {}
-    for src in sources:
-        row += 1
-        # source_label_edit = QLineEdit(sources[src].user_label)
-        source_label_edit = QLineEdit('')
-        source_label_edit.editingFinished.connect(create_source_edit_callback(router, src, source_label_edit))
-        # source_label_edit.setMaximumWidth(160)
-        #source_label_edit.setFixedWidth(160)
-        # r[int(src)] = source_label_edit
-        # grid_layout.addWidget(r[int(src)], row, col)
-        grid_layout.addWidget(source_label_edit, row, col)
-
-    # return r
-
-
 def create_source_edit_callback(router, source, label):
     """ see create_cross_point_callback docstring for info on why and how this works
         In this case, unlike the cross-points, we need to read the input from the text edit each time
@@ -356,49 +351,6 @@ def create_source_edit_callback(router, source, label):
     return source_edit_callback
 
 
-def create_source_label_col(sources, grid_layout, label='label', row=2, col=1):
-    """
-    Create a column of labels and insert into a grid_layout
-    :param sources: Dict of sources, as supplied by import_io's sources{matrix{level{id{data}}}}
-    :param grid_layout: A pyQt QGridLayout
-    :param label: Str - label to use, default='label', or user-label 'ulabel', or 'id'
-    :param row: int - Grid row of QGridLayout for heading
-    :param col: int - column within QGridLayout to display them in
-    :return:
-    """
-    # heading = get_heading(label)
-    # - Add column header to the grid, 3rd & 4th Args specify how many cells within the grid to take up (merges cells)
-    # grid_layout.addWidget(QLabel(heading, alignment=Qt.AlignBottom), row, col, 1, 2)
-
-    for src in sources:
-        row += 1
-        if label == 'id':
-            text = QLabel(str(sources[src].id))
-        elif label == 'label':
-            text = QLabel(sources[src].label)
-        elif label == 'ulabel':
-            text = QLabel(sources[src].user_label)
-        grid_layout.addWidget(text, row, col)
-
-
-def create_destination_labels(destinations, grid_layout, label='label', row=0, col=2):
-    # - Add column header to the grid
-    # heading = get_heading(label)
-    # grid_layout.addWidget(VerticalLabel(heading), row, col)
-
-    for dst in destinations:
-        col += 1
-        if label == 'id':
-            text = VerticalLabel(str(destinations[dst].id))
-        elif label == 'label':
-            text = VerticalLabel(destinations[dst].label)
-            # text.setAlignment(Qt.AlignCenter)
-        elif label == 'ulabel':
-            text = VerticalLabel(destinations[dst].user_label)
-
-        grid_layout.addWidget(text, row, col)
-
-
 def create_cross_point_tooltip(src, dst):
     src_u_label = ''
     dst_u_label = ''
@@ -408,36 +360,6 @@ def create_cross_point_tooltip(src, dst):
         dst_u_label = f' - {dst.user_label}'
 
     return f'Source ID: {src.id} - {src.label}{src_u_label}\n    --->\nDest:  ID: {dst.id} - {dst.label}{dst_u_label}'
-
-
-def create_cross_points(router, grid_layout, row=2, col=4):
-    """
-    Creates a cross-point routing grid
-    :param sources: Dict of sources, as supplied by import_io's sources{matrix{level{id{data}}}}
-    :param destinations: Dict of destinations, as supplied by import_io's destinations{matrix{level{id{data}}}}
-    :param grid_layout: A pyQt QGridLayout
-    :param row: int - Grid row for first source label to be displayed (top rows will get used for headers)
-    :param col: int - column within QGridLayout to display them in
-    :return: dict, keys =  destination ID, values = QPushButton widgets
-    """
-    destinations = {}
-    matrix, level = 0, 0  # TODO
-    for dst_id, dst_node in router.io['matrix'][matrix]['level'][level]['destination'].items():
-        sources = {}
-        curr_row = row
-        for src_id, src_node in router.io['matrix'][matrix]['level'][level]['source'].items():
-            btn = QPushButton(checkable=True)
-            btn.setProperty('cssClass', ['cross_point'])
-            tooltip = create_cross_point_tooltip(src_node, dst_node)
-            btn.setToolTip(tooltip)
-            btn.clicked.connect(create_cross_point_callback(router, src_node, dst_node))
-            grid_layout.addWidget(btn, curr_row, col)
-            sources[src_node.id] = btn
-            curr_row += 1
-        destinations[dst_node.id] = sources
-        col += 1
-
-    return destinations
 
 
 def create_cross_point_callback(router, source, destination):
@@ -460,60 +382,9 @@ def create_cross_point_callback(router, source, destination):
     def cross_point_callback():
         print("[connectIO cross-point callback]:CROSSPOINT CLICKED source:{}, dest:{}".format(source, destination))
 
-        router._connect(source, destination)
+        router.connect(source, destination)
 
     return cross_point_callback
-
-
-def create_cross_point_matrix(parent):
-    grid_layout = QGridLayout()
-
-    if parent.router.io:
-        grid_layout.addWidget(parent.io_data, 0, 0, 3, 3)  # - Display name of source csv data in top-left.
-        grid_layout.addWidget(QLabel("ID"), 3, 1)  # - Source ID column header
-        grid_layout.addWidget(VerticalLabel("ID"), 0, 4)  # - Dest ID column header
-
-        # - Apply source label column header, spanning 2 cols (4th arg)
-        grid_layout.addWidget(QLabel("Sources"), 3, 2, 1, 2)
-        # - Apply destination label row header, spanning 2 rows (3rd arg)
-        dest_label_header = VerticalLabel("Destinations")
-        # - Don't seem to be able to set alignment on vertical labels here
-        # - ... need to look at the paint stuff in the vertical labels class
-        # dest_label_header.setAlignment(Qt.AlignLeft)
-        grid_layout.addWidget(dest_label_header, 1, 4, 2, 1)
-        # grid_layout.addWidget(VerticalLabel("Destinations"), 1, 3, 2, 1)
-
-        matrix, level = 0, 0  # - TODO deal with diff/all matrix/levels with a stacked layout (or relaod for specific matrix/level
-        # - Create source label columns
-        create_source_label_col(parent.router.io['matrix'][matrix]['level'][level]['source'], grid_layout, label='id',
-                                row=3,
-                                col=1)
-        create_source_label_edit_col(parent.router, grid_layout, row=3, col=0)
-        create_source_label_col(parent.router.io['matrix'][matrix]['level'][level]['source'], grid_layout,
-                                label='ulabel',
-                                row=3, col=2)
-        create_source_label_col(parent.router.io['matrix'][matrix]['level'][level]['source'], grid_layout,
-                                label='label',
-                                row=3, col=3)
-
-        # - Create dest label rows
-        create_destination_labels(parent.router.io['matrix'][matrix]['level'][level]['destination'], grid_layout,
-                                  label='id',
-                                  row=0, col=5)
-        create_destination_labels(parent.router.io['matrix'][matrix]['level'][level]['destination'], grid_layout,
-                                  label='ulabel', row=1, col=5)
-        create_destination_labels(parent.router.io['matrix'][matrix]['level'][level]['destination'], grid_layout,
-                                  label='label', row=2, col=5)
-
-        # - Create the cross-point grid
-        parent.cross_points = create_cross_points(parent.router, grid_layout, row=4, col=6)
-
-        # scroll = QScrollArea()
-        # scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        # scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        # scroll.setWidgetResizable(True)
-        # scroll.setLayout(grid_layout)  # Add the cross-point grid to the scroll area
-    return grid_layout
 
 
 def select_io_file(parent):
@@ -539,20 +410,7 @@ def select_io_file(parent):
 
             parent.cross_point_grid.setParent(None)  # Not sure this is needed
 
-            parent.cross_point_grid = create_cross_point_grid(parent.source_labels,
-                                                              parent.source_user_labels,
-                                                              parent.source_id_labels,
-                                                              parent.source_external_labels,
-                                                              parent.destination_labels,
-                                                              parent.destination_user_labels,
-                                                              parent.destination_id_labels,
-                                                              parent.cross_point_columns)
-
-            # self.cross_point_grid.setAlignment(Qt.AlignLeft)
-            parent.background_layout.addLayout(parent.cross_point_grid, 1, 1)
-
-            # - TODO Resize
-            # - TODO, I'm still seeing labels from the previous cp grid!!
+            parent.initialise_cross_point_grid()
 
             # - Update main window title
             parent.setWindowTitle(TITLE + ", v" + str(VERSION) + " - " + parent.router.source_data)
@@ -600,6 +458,95 @@ def create_settings_callback(parent):
             print("Cancel!")
 
     return settings_callback
+
+
+class MessagingView(QWidget):
+    """
+    https://www.pythonguis.com/tutorials/creating-multiple-windows/
+    This "window" is a QWidget. If it has no parent, it
+    will appear as a free-floating window as we want.
+    # - TODO make window always on top
+    # - TODO close window when parent closed
+    # - TODO provide a clear button/s
+    # - TODO separate view for sent and received, color coded labels rather than textedit
+    """
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+        self.setWindowTitle(TITLE + " Communications")
+        self.label = QLabel("Messaging")
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setMaximumHeight(30)
+
+        #self.messages_window = QTextEdit()
+        #self.messages_window.setText("Messages...")
+
+        self.background_layout = QVBoxLayout()
+        self.messages_layout = QHBoxLayout()
+
+        self.sent_window = QVBoxLayout()
+        self.received_window = QVBoxLayout()
+
+        self.background_layout.addWidget(self.label)
+        self.background_layout.addLayout(self.messages_layout)
+        self.messages_layout.addLayout(self.sent_window)
+        self.messages_layout.addLayout(self.received_window)
+
+        self.sent_message_quantity = 0
+        self.received_message_quantity = 0
+
+        #self.layout.addWidget(self.messages_window)
+        self.setLayout(self.background_layout)
+
+    def add_sent(self, message):
+        self.sent_message_quantity += 1
+        timestamp = format_timestamp(message[0])
+        message = QLabel(">>> SENT at " + timestamp + ": " + message[1].__str__())
+        if self.sent_message_quantity % 2:
+            message.setStyleSheet(CSS['message even'])
+        else:
+            message.setStyleSheet(CSS['message odd'])
+        self.sent_window.addWidget(message)
+
+    def add_received(self, message):
+        self.received_message_quantity += 1
+        timestamp = format_timestamp(message[0])
+
+        message_container = QLabel("RECEIVED at " + timestamp + ":\n" + message[1].__str__())
+
+        if message[1].command == "ACK" or message[1].command == "NAK":
+            # - Apply CSS['ACK'] or CSS['NAK'] style
+            message_container.setStyleSheet(CSS[message[1].command])
+
+        # band messages / alternate the colour each row (unless ACK/NAK)
+        elif self.received_message_quantity % 2:
+            message_container.setStyleSheet(CSS['message even'])
+        else:
+            message_container.setStyleSheet(CSS['message odd'])
+        self.received_window.addWidget(message_container)
+
+    def closeEvent(self, event):
+        print("CLOSING WINDOW", event)
+        self.parent.message_view = None
+
+    def refresh(self):
+        while self.parent.router.log.sent:
+            self.add_sent(self.parent.router.log.get_message('sent'))
+        while self.parent.router.log.received:
+            self.add_received(self.parent.router.log.get_message('received'))
+
+
+def create_messaging_view_callback(parent):
+
+    def messaging_view_callback():
+        if not parent.message_view:
+            parent.message_view = MessagingView(parent)
+            parent.message_view.show()
+        else:
+            parent.message_view.close()
+            parent.message_view = None
+
+    return messaging_view_callback
 
 
 def alert(text, info='', title=TITLE):
@@ -733,7 +680,6 @@ class VerticalLabel(QLabel):
 class CrossPointButton(QPushButton):
     def __init__(self, label, source, destination):
         QPushButton.__init__(self, label)
-        #super(CrossPointButton, self, label).__init__()
         self.source = source
         self.destination = destination
 
@@ -771,47 +717,15 @@ class MainWindow(QMainWindow):
 
         self.router = router
         self.setWindowTitle(TITLE + " v" + str(VERSION) + " - " + self.router.source_data)
+        self.message_view = None
 
         self.matrix = 0
         self.level = 0
-
-        # - Lists of QLabels for source row headings
-        self.source_labels = create_labels(self.router, self.matrix, self.level, 'source', 'label')
-        self.source_user_labels = create_labels(self.router, self.matrix, self.level, 'source', 'ulabel')
-        self.source_id_labels = create_labels(self.router, self.matrix, self.level, 'source', 'id')
-
-        # - List of QLineEdits for source row external/connected source labels
-        # -  (editing will update the external/connected source label)
-        self.source_external_labels = create_editable_external_source_labels(router, self.matrix, self.level)
-
-        # - Lists of QLabels for destination column headings
-        self.destination_labels = create_labels(self.router, self.matrix, self.level, 'destination', 'label')
-        self.destination_user_labels = create_labels(self.router, self.matrix, self.level, 'destination', 'ulabel')
-        self.destination_id_labels = create_labels(self.router, self.matrix, self.level, 'destination', 'id')
-
-        # - list of lists per destination of source cross-point buttons
-        self.cross_point_columns = create_cross_point_buttons(self.router, self.matrix, self.level)
 
         # Base GUI Layout
         self.background_layout = QGridLayout()
         self.background_layout.setAlignment(Qt.AlignLeft)
         self.background_layout.setAlignment(Qt.AlignTop)
-        self.cross_point_grid = create_cross_point_grid(self.source_labels,
-                                                        self.source_user_labels,
-                                                        self.source_id_labels,
-                                                        self.source_external_labels,
-                                                        self.destination_labels,
-                                                        self.destination_user_labels,
-                                                        self.destination_id_labels,
-                                                        self.cross_point_columns)
-
-        #self.cross_point_grid.setAlignment(Qt.AlignLeft)
-        self.background_layout.addLayout(self.cross_point_grid, 1, 1)
-
-        # - Current view "scroll" position
-        # - (index of first element being displayed top and left)
-        self.scroll_h = 0
-        self.scroll_v = 0
 
         # - Nudge view buttons
         self.nudge_left = QPushButton("<")  # - TODO get arrow icons or unicode
@@ -829,14 +743,7 @@ class MainWindow(QMainWindow):
         self.nudge_up.setFixedWidth(CROSS_POINT_WIDTH)
         self.nudge_down.setFixedWidth(CROSS_POINT_WIDTH)
 
-        #self.nudge_right.setAlignment(Qt.AlignBottom)
-        #self.nudge_left.setAlignment(Qt.AlignBottom)
-
-        # - Place nudge buttons
-        self.cross_point_grid.addWidget(self.nudge_up, SOURCE_HEADER_ROW - 2, 2)
-        self.cross_point_grid.addWidget(self.nudge_down, SOURCE_HEADER_ROW - 1, 2)
-        position_lr_nudge_buttons(self)
-        refresh_nudge_buttons(self)
+        #self.initialise_cross_point_grid()
 
         # - Load I/O data file button action
         import_io_action = QAction("&Import IO data", self)
@@ -848,11 +755,24 @@ class MainWindow(QMainWindow):
         connection_settings_action.setStatusTip("Router connection settings")
         connection_settings_action.triggered.connect(create_settings_callback(self))
 
+        # - View messages action
+        view_messages_action = QAction("&View Messaging", self)
+        view_messages_action.setStatusTip("View protocol communications")
+        view_messages_action.triggered.connect(create_messaging_view_callback(self))
+
         # - Menu
         menu = self.menuBar()
+
         file_menu = menu.addMenu("&File")
+        view_menu = menu.addMenu("&View")
+
         file_menu.addAction(import_io_action)
         file_menu.addAction(connection_settings_action)
+
+        # TODO - ADD MATRIX/LEVEL VIEWS
+        view_menu.addMenu("&Matrix")
+        view_menu.addMenu("&Level")
+        view_menu.addAction(view_messages_action)
 
         # - Add status bars in footer
         self.statusBar = QStatusBar()
@@ -861,20 +781,9 @@ class MainWindow(QMainWindow):
         # - Button to change IO file
         self.io_data = QPushButton(Path(router.source_data).stem)  # - Path(path\filename.extension) returns filename
         self.io_data.clicked.connect(create_select_io_file_callback(self))
-        # - TODO... find where this button is actually being added to the layout, is it part of the grid build?
+        #self.io_data.addAction(import_io_action)
 
-
-        # Add the layout for the cross-point grid
-        # TODO, create a separate cross-point grid layout for each matrix & level, set them as stacked and work out
-        # how to switch between them!
-
-        # TODO Create scrollable grid
-        # - Struggling to get this right, had scroll bars in the right place at one point
-        # - but the contents were still scaling to fit within and no handles/bars in the scroll"gutters"
-
-        #self.cp_widget = QWidget()
-        #self.cp_matrix = create_cross_point_matrix(self)
-        #self.background_layout.addLayout(self.cp_matrix, 1, 1)
+        self.initialise_cross_point_grid()
 
         if not router.source_data:
             select_io_file(self)
@@ -883,7 +792,8 @@ class MainWindow(QMainWindow):
         widget = QWidget()
         widget.setLayout(self.background_layout)
 
-        # - the following works but makes the whole gui scrollable, want to only scroll the cp grid
+        # - the following works but makes the whole gui scrollable, want to only scroll the cp grid really
+        #   (but keep source & dest labels in view)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(widget)
@@ -896,6 +806,50 @@ class MainWindow(QMainWindow):
         self.refresh_timer.setInterval(REFRESH_RATE)
         self.refresh_timer.timeout.connect(self.refresh)
         self.refresh_timer.start()
+
+    def _get_io_labels(self):
+        # - Lists of QLabels for source row headings
+        self.source_labels = create_labels(self.router, self.matrix, self.level, 'source', 'label')
+        self.source_user_labels = create_labels(self.router, self.matrix, self.level, 'source', 'ulabel')
+        self.source_id_labels = create_labels(self.router, self.matrix, self.level, 'source', 'id')
+
+        # - List of QLineEdits for source row external/connected source labels
+        # -  (editing will update the external/connected source label)
+        self.source_external_labels = create_editable_external_source_labels(router, self.matrix, self.level)
+
+        # - Lists of QLabels for destination column headings
+        self.destination_labels = create_labels(self.router, self.matrix, self.level, 'destination', 'label')
+        self.destination_user_labels = create_labels(self.router, self.matrix, self.level, 'destination', 'ulabel')
+        self.destination_id_labels = create_labels(self.router, self.matrix, self.level, 'destination', 'id')
+
+    def initialise_cross_point_grid(self):
+        # - Current view "scroll" position
+        # - (index of first element being displayed top and left)
+        self.scroll_h = 0
+        self.scroll_v = 0
+
+        self._get_io_labels()
+
+        # - list of lists per destination of source cross-point buttons
+        self.cross_point_columns = create_cross_point_buttons(self.router, self.matrix, self.level)
+
+        self.cross_point_grid = create_cross_point_grid(self.source_labels,
+                                                        self.source_user_labels,
+                                                        self.source_id_labels,
+                                                        self.source_external_labels,
+                                                        self.destination_labels,
+                                                        self.destination_user_labels,
+                                                        self.destination_id_labels,
+                                                        self.cross_point_columns)
+
+        self.cross_point_grid.addWidget(self.io_data, 0, 0, 1, 2)
+        # - Place nudge buttons
+        self.cross_point_grid.addWidget(self.nudge_up, SOURCE_HEADER_ROW - 2, 2)
+        self.cross_point_grid.addWidget(self.nudge_down, SOURCE_HEADER_ROW - 1, 2)
+        position_lr_nudge_buttons(self)
+        refresh_nudge_buttons(self)
+
+        self.background_layout.addLayout(self.cross_point_grid, 1, 1)
 
     def update_status_orig(self):
         # TODO - FIX TEXT DISPLAYED IN STATUS BAR BUT ALSO FIX CONNECTION TO HANDLE LOSS AND RETRIES
@@ -935,6 +889,11 @@ class MainWindow(QMainWindow):
         self.statusBar.showMessage(status_text)
 
     def refresh(self):
+
+        if self.message_view:
+            #self.message_view.add_message(str(self.timer_tick))
+            self.message_view.refresh()
+
         # TODO - this hard coded matrix/level will catch me out when I come to wokring with different ones!!!
         matrix, level = 0, 0
         # Refresh Cross-Point Grid
@@ -999,8 +958,8 @@ if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
 
     # - External css-like style-sheet
-    qss = 'stylesheet_02.qss'
-    #qss = 'none'  # - For debugging
+    #qss = 'stylesheet_02.qss'
+    qss = 'none'  # - For debugging
 
     # - Get last used settings
     # - Note my router is 192.169.1.201

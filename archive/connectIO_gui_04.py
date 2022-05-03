@@ -231,7 +231,7 @@ def create_cross_point_callback(router, source, destination):
         print("[connectIO cross-point callback]:CROSSPOINT CLICKED source:{}, dest:{}".format(source, destination))
         #router.connection.send(Message.connect(int(source), int(destination)).encoded)
         # TODO, pass connected source label
-        router.connect(matrix, level, int(source), int(destination))
+        router._connect(matrix, level, int(source), int(destination))
 
     return cross_point_callback
 

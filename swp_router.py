@@ -6,8 +6,9 @@ import time  # - Just for debug
 import cli_utils
 from import_io import import_io_from_csv
 import connectIO_cli_settings as config
-from connection import Connection
+from connection_02 import Connection
 from swp_message import Message
+from message_log import MessageLog
 
 TITLE = 'SWP Router'
 VERSION = 0.4
@@ -16,7 +17,9 @@ VERSION = 0.4
 class Router:
     def __init__(self, settings):
         self.settings = settings
-        self.connection = Connection(settings["Router IP Address"], settings["Port"], settings["Protocol"])
+        self.log = MessageLog()
+        self.connection = Connection(settings["Router IP Address"], settings["Port"],
+                                     settings["Protocol"], log=self.log)
 
         if self.settings['IO Config File']:
             self.source_data = self.settings['IO Config File']
@@ -40,16 +43,18 @@ class Router:
 
             print("[swp_router.process_incoming messages]: Messages in receive buffer:",
                   self.connection.receive_buffer_len())
-
-            msg = Message.decode(self.connection.get_message())
+            timestamp, msg = self.connection.get_message()
+            msg = Message.decode(msg)
 
             # TODO - push ACK NAK back to sender & have them wait/retry
+
+            self.log.log(timestamp, msg, 'received')
             if msg.command == 'ACK':
-                print("[swo_router.process_incoming messages]: >>> ACK received")
+                print("[swo_router.process_incoming messages]:{} >>> ACK received".format(timestamp))
             elif msg.command == "NAK":
-                print("[swp_router.process_incoming messages]: >>> ** NAK ** received!")
+                print("[swp_router.process_incoming messages]:{} >>> ** NAK ** received!".format(timestamp))
             else:
-                msg.print_summary("[swp_router.process_incoming messages]: >>> Received Message:")
+                msg.print_summary("[swp_router.process_incoming messages]:{} >>> Received Message:".format(timestamp))
                 # - Update the data model
                 self._update_data(msg)
 
