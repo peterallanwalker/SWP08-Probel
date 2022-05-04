@@ -501,7 +501,7 @@ class MessagingView(QWidget):
     def add_sent(self, message):
         self.sent_message_quantity += 1
         timestamp = format_timestamp(message[0])
-        message = QLabel(">>> SENT at " + timestamp + ": " + message[1].__str__())
+        message = QLabel(">>> SENT at " + timestamp + ":\n" + message[1].__str__())
         if self.sent_message_quantity % 2:
             message.setStyleSheet(CSS['message even'])
         else:
@@ -511,18 +511,22 @@ class MessagingView(QWidget):
     def add_received(self, message):
         self.received_message_quantity += 1
         timestamp = format_timestamp(message[0])
+        message = message[1]
+        message_log = "<<< RECEIVED at " + timestamp + "\n"
+        #message_container = QLabel("RECEIVED at " + timestamp + ":\n" + message[1].__str__())
+        message_container = QLabel()
 
-        message_container = QLabel("RECEIVED at " + timestamp + ":\n" + message[1].__str__())
-
-        if message[1].command == "ACK" or message[1].command == "NAK":
+        if message.command == "ACK" or message.command == "NAK":
             # - Apply CSS['ACK'] or CSS['NAK'] style
-            message_container.setStyleSheet(CSS[message[1].command])
-
-        # band messages / alternate the colour each row (unless ACK/NAK)
-        elif self.received_message_quantity % 2:
-            message_container.setStyleSheet(CSS['message even'])
+            message_container.setStyleSheet(CSS[message.command])
+            message_container.setText(message_log + message.command)
         else:
-            message_container.setStyleSheet(CSS['message odd'])
+            message_container.setText(message_log + message.__str__())
+            # band messages / alternate the colour each row (unless ACK/NAK)
+            if self.received_message_quantity % 2:
+                message_container.setStyleSheet(CSS['message even'])
+            else:
+                message_container.setStyleSheet(CSS['message odd'])
         self.received_window.addWidget(message_container)
 
     def closeEvent(self, event):
