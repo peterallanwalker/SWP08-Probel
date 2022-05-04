@@ -73,7 +73,7 @@ class Router:
             print("[interface.update_data]: updated destination, new source: {}".format(
                   self.io['matrix'][msg.matrix]['level'][msg.level]['destination'][msg.destination].connected_source))
 
-    def _get_first_connected_destination(self, matrix, level, source_id):
+    def _get_first_connected_destination(self, source_node):
         """
         Used when a connected source label is changed, to push the label to the connected destination.
         ... Only currently getting & sending the first connected destination of the given source
@@ -88,8 +88,11 @@ class Router:
         :param level: int
         :return: int
         """
-        for dest in self.io['matrix'][matrix]['level'][level]['destination']:
-            if self.io['matrix'][matrix]['level'][level]['destination'][dest].connected_source == source_id:
+
+        for dest in self.io['matrix'][source_node.matrix]['level'][source_node.level]['destination'].values():
+
+            if dest.connected_source == source_node:
+                print("FIRST CONNECTED DEST:")
                 return dest
 
         return None
@@ -125,25 +128,26 @@ class Router:
             return False
 
         self.connection.send(Message.connect(source.id, destination.id,
-                                             matrix=source.matrix, level=source.level).encoded)
+                                             matrix=source.matrix, level=source.level))
 
         # - If there is a connected source label for the source, push that to the destination of the external router
         #if self.io['matrix'][source.matrix]['level'][source.level]['source'][source.id].connected_source:
         if source.connected_source:
             self.connection.send(Message.push_labels(
                 [source.connected_source],
-                destination.id, self.label_len, destination.matrix, destination.level).encoded)
+                destination.id, self.label_len, destination.matrix, destination.level))
 
-    def update_source_label(self, matrix, level, source_id, label):
+    def update_source_label(self, source_node, label):
         # - Update the data model
-        self.io['matrix'][matrix]['level'][level]['source'][source_id].connected_source = label
-        print('[swp_router.update_source_label]: updated source:',
-              self.io['matrix'][matrix]['level'][level]['source'][source_id])
+        #self.io['matrix'][matrix]['level'][level]['source'][source_node.id].connected_source = label
+        print("ROUTER update source label", source_node)
+        source_node.connected_source = label
 
         # - Get the first destination connected to the source if there is one
-        dest = self._get_first_connected_destination(matrix, level, source_id)
-        if dest:
-            self.connection.send(Message.push_labels([label], int(dest)).encoded)
+        destination_node = self._get_first_connected_destination(source_node)
+
+        if destination_node:
+            self.connection.send(Message.push_labels([label], destination_node))
 
 
 if __name__ == '__main__':

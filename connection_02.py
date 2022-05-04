@@ -140,8 +140,13 @@ class Connection:
 
     # - PUBLIC METHODS
     def send(self, message):
+        # - Check if the passed message is raw message bytes or Message object
+        if type(message) != bytes:
+            message_bytes = message.encoded
+        else:
+            message_bytes = message
         try:
-            self.sock.sendall(message)
+            self.sock.sendall(message_bytes)
             # TODO - wait 1s for ACK/NAK & retry 3 times before returning?
             #  (if protocol = swp, will break CSCP doing that... test higher up in connectIO)
             #self._sent_log.append((time.time(), message))

@@ -171,7 +171,7 @@ class Message:
         return message
 
     @classmethod
-    def push_labels(cls, labels, first_destination, char_len=4, matrix=0, level=0, multiplier=0):
+    def push_labels(cls, labels, first_destination, char_len=4, multiplier=0):
         """
         Instantiate a label push message object
         :param labels: list of strings
@@ -183,8 +183,8 @@ class Message:
         :param multiplier: int
         :return: SWP message object for pushing labels
         """
-        message = Message(command="push_labels", labels=labels, destination=first_destination, char_len=char_len,
-                          matrix=matrix, level=level, multiplier=multiplier)
+        message = Message(command="push_labels", labels=labels, destination=first_destination.id, char_len=char_len,
+                          matrix=first_destination.matrix, level=first_destination.level, multiplier=multiplier)
         return message
 
     @classmethod

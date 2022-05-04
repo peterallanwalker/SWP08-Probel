@@ -51,6 +51,7 @@
 # - handle router IP changes during runtime
 
 # DISPLAY LOOP COUNT AND FPS
+# now getting small window when first opening - is that the message view window?
 
 import sys
 import time
@@ -179,7 +180,7 @@ def create_editable_external_source_labels(router, matrix, level):
     :return: list of QLineEdits with callbacks to update the router model when edited
     """
     r = []
-    for node in router.io['matrix'][matrix]['level'][level]["source"]:
+    for node in router.io['matrix'][matrix]['level'][level]["source"].values():
         editable_label = QLineEdit('')
         editable_label.editingFinished.connect(create_source_edit_callback(router, node, editable_label))
         #editable_label.setFixedWidth(EDIT_LABEL_WIDTH)  # - For some reason this limits size but overlaps into next column
@@ -333,7 +334,7 @@ def refresh_nudge_buttons(parent):
         parent.nudge_down.show()
 
 
-def create_source_edit_callback(router, source, label):
+def create_source_edit_callback(router, source_node, label):
     """ see create_cross_point_callback docstring for info on why and how this works
         In this case, unlike the cross-points, we need to read the input from the text edit each time
         so are passing the QLineEdit to this function to achieve that
@@ -341,12 +342,12 @@ def create_source_edit_callback(router, source, label):
     matrix, level = 0, 0  # TODO!!!
 
     def source_edit_callback():
-        print("[connectIO source edit callback]: Source label edited, source {}, label {}".format(source, label.text()))
+        print("[connectIO source edit callback]: Source label edited, source {}, label {}".format(source_node, label.text()))
         # dest = get_connected_dest(source, router)
         # if dest:
         # router.connection.send(Message.push_labels([label.text()], int(dest)).encoded)
         #    router.update_source_label(source, label.text())
-        router.update_source_label(matrix, level, source, label.text())
+        router.update_source_label(source_node, label.text())
 
     return source_edit_callback
 
@@ -460,6 +461,29 @@ def create_settings_callback(parent):
     return settings_callback
 
 
+class MessageItem(QWidget):
+    def __init__(self, message):
+        """
+        Widget that presents an individual message (to be added to the message view)
+        :param message: tuple - (timestamp, message)
+        """
+        super().__init__()
+        timestamp = message[0]
+        message = message[1]
+
+        timestamp_field = QLabel(format_timestamp(timestamp))
+        timestamp_field.setFixedWidth(100)
+        message_field = QLabel(message.__str__())  # TODO, provde a method summary atrribute
+
+        self.layout = QHBoxLayout()
+        self.layout.addWidget(timestamp_field)
+        self.layout.addWidget(message_field)
+
+        # TODO - set style to differentiate odd/even rows. COlor code ACK/NAK (color code other?)
+        self.setLayout(self.layout)
+
+
+
 class MessagingView(QWidget):
     """
     https://www.pythonguis.com/tutorials/creating-multiple-windows/
@@ -492,12 +516,9 @@ class MessagingView(QWidget):
         self.messages_layout.addLayout(self.sent_window)
         self.messages_layout.addLayout(self.received_window)
 
-        self.sent_message_quantity = 0
-        self.received_message_quantity = 0
-
         #self.layout.addWidget(self.messages_window)
         self.setLayout(self.background_layout)
-
+    """
     def add_sent(self, message):
         self.sent_message_quantity += 1
         timestamp = format_timestamp(message[0])
@@ -508,7 +529,7 @@ class MessagingView(QWidget):
             message.setStyleSheet(CSS['message odd'])
         self.sent_window.addWidget(message)
 
-    def add_received(self, message):
+    def add_received2(self, message):
         self.received_message_quantity += 1
         timestamp = format_timestamp(message[0])
         message = message[1]
@@ -528,6 +549,15 @@ class MessagingView(QWidget):
             else:
                 message_container.setStyleSheet(CSS['message odd'])
         self.received_window.addWidget(message_container)
+    """
+
+    def add_received(self, message):
+        item = MessageItem(message)
+        self.received_window.addWidget(item)
+
+    def add_sent(self, message):
+        item = MessageItem(message)
+        self.sent_window.addWidget(item)
 
     def closeEvent(self, event):
         print("CLOSING WINDOW", event)

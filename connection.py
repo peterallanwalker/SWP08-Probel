@@ -105,6 +105,11 @@ class Connection:
                 self.run()
 
     def send(self, message):
+
+        # Check if we have been passed a raw byte string or a Message object
+        if type(message) != bytes:
+            message = message.encoded
+
         try:
             self.sock.sendall(message)
         #except self.sock.error as e:
