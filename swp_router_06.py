@@ -4,25 +4,29 @@
 import time  # - Just for debug
 
 import cli_utils
-from import_io import import_io_from_csv
+from import_io_05 import import_io_from_csv
 import connectIO_cli_settings as config
 from connection_02 import Connection
 from swp_message import Message
 from message_log import MessageLog
 
 TITLE = 'SWP Router'
-VERSION = 0.4
+VERSION = 0.5
 
 
 class Router:
-    def __init__(self, settings):
+    # TODO - Added a temporary optional io+config argument as not part of settings in this version
+    def __init__(self, settings, io_config=None):
         self.settings = settings
         self.log = MessageLog()
         self.connection = Connection(settings["Router IP Address"], settings["Port"],
                                      settings["Protocol"], log=self.log)
 
-        if self.settings['IO Config File']:
+        if 'IO Config File' in self.settings:
             self.source_data = self.settings['IO Config File']
+            self.io = import_io_from_csv(self.source_data)
+        elif io_config:
+            self.source_data = io_config
             self.io = import_io_from_csv(self.source_data)
         else:
             self.source_data = ''
@@ -149,7 +153,7 @@ class Router:
         if destination_node:
             self.connection.send(Message.push_labels([label], destination_node))
 
-
+        
 
 if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
@@ -157,7 +161,10 @@ if __name__ == '__main__':
     settings = config.get_settings()  # - present last used settings and prompt for confirm/edit
     config.save_settings(settings)  # - Save user confirmed settings for next startup
 
-    router = Router(settings)
+    io_config = 'VirtualPatchbays.csv'
+    router = Router(settings, io_config=io_config)
+
+    print(router.io)
 
     while router.connection.status != 'Connected':
         pass
