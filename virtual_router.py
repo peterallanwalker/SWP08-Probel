@@ -16,8 +16,9 @@ import socket
 import threading
 import time
 
-from swp_message import Message
+from swp_message_02 import Message
 from swp_unpack import unpack_data
+from swp_node_02 import Node
 import swp_utils
 import cli_utils
 
@@ -114,6 +115,7 @@ if __name__ == '__main__':
                     # TODO, should provide the proper connected message not just echoing back...
                     print("...Received message:", valid_message)
                     print("Sending response.")
+
                     connection.send(Message.connect(valid_message.source, valid_message.destination,
                                                     matrix=valid_message.matrix, level=valid_message.level).encoded)
 

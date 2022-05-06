@@ -75,8 +75,8 @@ def _load_settings():
     if not r:
         r = {"Router IP Address": None,
              "Port": 61000,
-             "Protocol": "swp08",
-             "label length": 4
+             "Protocol": "SWP08",
+             "Label Length": 4
              }
     return r
 

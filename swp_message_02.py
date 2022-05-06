@@ -22,25 +22,6 @@ def is_same_matrix_and_level(source, destination):
         return False
 
 
-class ConnectMessage:
-    def __init__(self, source, destination):
-        if not is_same_matrix_and_level(source, destination):
-            print("[swp_message.ConnectMessage]: Cannot connect sources to destinations on different matrix or level: " \
-                  "\n  Source: {}\n  Destination: {}".format(source, destination))
-        else:
-            multiplier = utils.encode_multiplier(source.id, destination.id)
-            self.command = "Connect"
-            self.matrix = source.matrix
-            self.level = source.level
-            self.source_id = source.id
-            self.destination_id = destination.id
-            self.encoded = self._encode()
-
-    def _encode(self):
-
-
-        return encoded
-
 def set_label_len(labels, char_len):
     """
     Check label lengths and truncate if necessary
@@ -75,9 +56,6 @@ def format_labels(labels):
     return r
 
 
-class BaseMessage:
-    def __init__(self):
-
 class Message:
     """
     *** Message() NOT INTENDED TO BE CALLED DIRECTLY, INSTANTIATE USING THE CLASS METHODS... ***
@@ -92,7 +70,7 @@ class Message:
                  destination=None,
                  char_len=None,
                  labels=None,
-                 encoded=None, ):
+                 encoded=None):
 
         # If public Message.decode constructor used, it is passed the raw byte string of a pre-validated message
         # which gets passed to the init as encoded='<raw message byte string>'
@@ -140,7 +118,10 @@ class Message:
                     # -      and do not receive label messages
                     self.labels = "True"
                     # self.labels = utils.get_labels()
+
+
         else:
+            print("[swp_message.__init__]: command = {}, source = {}, destination = {}".format(command, source, destination))
             self.command = command
             self.matrix, self.level = source.matrix, source.level
 
@@ -152,7 +133,7 @@ class Message:
             self.destination = destination
 
             if self.command in ("connect", "connected"):
-                self.multiplier = utils.encode_multiplier(self.source, self.destination)
+                self.multiplier = utils.encode_multiplier(self.source.id, self.destination.id)
 
             if self.command in ("push_labels", "push_labels_extended"):
                 self._char_len = utils.CHAR_LEN_CODES[char_len]
@@ -241,12 +222,13 @@ class Message:
         """
         matrix_level = utils.encode_matrix_level(self.matrix, self.level)
         command = [utils.COMMANDS[self.command], matrix_level]
+
         if self.command in ("connect", "connected"):
-            data = command + [self.multiplier, self.destination % 128, self.source % 128]
+            data = command + [self.multiplier, self.destination.id % 128, self.source.id % 128]
 
         elif self.command in ("push_labels", "push_labels_extended"):
-            start_dest_div = int(self.destination / 256)
-            start_dest_mod = self.destination % 256
+            start_dest_div = int(self.destination.id / 256)
+            start_dest_mod = self.destination.id % 256
             label_qty = len(self.labels)
             labels = format_labels(self.labels)
             data = command + [self._char_len, start_dest_div, start_dest_mod, label_qty] + labels

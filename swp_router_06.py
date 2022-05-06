@@ -7,7 +7,7 @@ import cli_utils
 from import_io_06 import import_io_from_csv
 import connectIO_cli_settings as config
 from connection_02 import Connection
-from _02 import Message
+from swp_message_02 import Message
 from message_log import MessageLog
 
 TITLE = 'SWP Router'
@@ -130,8 +130,10 @@ class Router:
                   "- Can only connect sources & destinations that are on the same matrix & level")
             return False
 
-        self.connection.send(Message.connect(source.id, destination.id,
-                                             matrix=source.matrix, level=source.level))
+        #self.connection.send(Message.connect(source.id, destination.id,
+        #                                     matrix=source.matrix, level=source.level))
+
+        self.connection.send(Message.connect(source, destination))
 
         # - If there is a connected source label for the source, push that to the destination of the external router
         #if self.io['matrix'][source.matrix]['level'][source.level]['source'][source.id].connected_source:
