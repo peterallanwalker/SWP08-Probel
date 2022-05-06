@@ -4,14 +4,14 @@
 import time  # - Just for debug
 
 import cli_utils
-from import_io_05 import import_io_from_csv
+from import_io_06 import import_io_from_csv
 import connectIO_cli_settings as config
 from connection_02 import Connection
-from swp_message import Message
+from _02 import Message
 from message_log import MessageLog
 
 TITLE = 'SWP Router'
-VERSION = 0.5
+VERSION = 0.6
 
 
 class Router:
@@ -24,13 +24,14 @@ class Router:
 
         if 'IO Config File' in self.settings:
             self.source_data = self.settings['IO Config File']
-            self.io = import_io_from_csv(self.source_data)
+            self.sources, self.destinations = import_io_from_csv(self.source_data)
         elif io_config:
             self.source_data = io_config
-            self.io = import_io_from_csv(self.source_data)
+            self.sources, self.destinations = import_io_from_csv(self.source_data)
         else:
             self.source_data = ''
-            self.io = None
+            self.sources = None
+            self.destinations = None
 
         self.label_len = settings["Label Length"]
         # - TODO - query the router to get the connected source for each desintation
@@ -45,12 +46,10 @@ class Router:
         """
         while self.connection.receive_buffer_len():
 
-            print("[swp_router.process_incoming messages]: Messages in receive buffer:",
-                  self.connection.receive_buffer_len())
+            #print("[swp_router.process_incoming messages]: Messages in receive buffer:",
+            #      self.connection.receive_buffer_len())
             timestamp, msg = self.connection.get_message()
             msg = Message.decode(msg)
-
-            # TODO - push ACK NAK back to sender & have them wait/retry
 
             self.log.log(timestamp, msg, 'received')
             if msg.command == 'ACK':
@@ -153,7 +152,15 @@ class Router:
         if destination_node:
             self.connection.send(Message.push_labels([label], destination_node))
 
-        
+
+def print_io(router):
+    print("Sources:")
+    for i, node in enumerate(router.sources):
+        print(i, node)
+    print("Destinations:")
+    for i, node in enumerate(router.destinations):
+        print(i, node)
+
 
 if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
@@ -164,22 +171,21 @@ if __name__ == '__main__':
     io_config = 'VirtualPatchbays.csv'
     router = Router(settings, io_config=io_config)
 
-    print(router.io)
+    src = router.sources[0]
+    dst = router.destinations[0]
 
+    # - Wait for connection
     while router.connection.status != 'Connected':
         pass
 
-    matrix = 1
-    level = 1
-    router.connect(matrix, level, 1, 11)
+    router.connect(src, dst)
 
     time.sleep(1)
 
-    router.process_incoming_messages()
+    print_io(router)
 
-    router.update_source_label(1, 1, 1, "mylabel")
+    print("\n", router.destinations[0].connected_source)
+    #while router.connection.status == 'Connected':
+    #    router.process_incoming_messages()
 
-    time.sleep(1)
-
-    router.process_incoming_messages()
 

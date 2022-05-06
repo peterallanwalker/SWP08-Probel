@@ -10,10 +10,10 @@
 import csv
 
 import cli_utils
-from swp_node import Node
+from swp_node_02 import Node
 
 TITLE = "Import IO"
-VERSION = 0.5
+VERSION = 0.6
 
 
 # - PRIVATE FUNCTIONS USED BY import_io_from_csv

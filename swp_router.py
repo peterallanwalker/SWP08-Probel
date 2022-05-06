@@ -4,13 +4,13 @@
 import time  # - Just for debug
 
 import cli_utils
-from import_io import import_io_from_csv
+from import_io_02 import import_io_from_csv
 import connectIO_cli_settings as config
 from connection_02 import Connection
 from swp_message import Message
 from message_log import MessageLog
 
-TITLE = 'SWP Router'
+TITLE = 'SWP Router -  Data Model and Comms Interface'
 VERSION = 0.4
 
 
@@ -21,7 +21,8 @@ class Router:
         self.connection = Connection(settings["Router IP Address"], settings["Port"],
                                      settings["Protocol"], log=self.log)
 
-        if self.settings['IO Config File']:
+        if 'IO Config File' in self.settings:
+        #if self.settings['IO Config File']:
             self.source_data = self.settings['IO Config File']
             self.io = import_io_from_csv(self.source_data)
         else:
@@ -112,17 +113,17 @@ class Router:
         self.settings["IO Config File"] = filename
         return True
 
-    def connect(self, source, destination):
+    def connect(self, source_node, destination_node):
         """
         To be called by the GUI/controller
-        :param source_id: Node object with io_type = 'source'
-        :param destination: Node object with io_type = 'destination'
+        :param source_node: Node object with io_type = 'source'
+        :param destination_node: Node object with io_type = 'destination'
         """
         # - TODO, how to handle ACK/NAK / retry timeout without blocking GUI, and without dumping or missing messages.
         # - ... that should all be handled by Connection, not here!
         # - Send connect message to the external router
 
-        if source.matrix != destination.matrix or source.level != destination.level:
+        if source_node.matrix != destination_node.matrix or source_node.level != destination_node.level:
             print("[swp_router.connect]: ** ERROR ** "
                   "- Can only connect sources & destinations that are on the same matrix & level")
             return False
