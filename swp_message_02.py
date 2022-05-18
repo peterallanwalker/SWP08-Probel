@@ -123,7 +123,9 @@ class Message:
                 elif self.command in ("cross-point tally dump (byte)",
                                       "cross-point tally dump (word/extended)"):
                     # TODO, jsut focusing on the word/extended, will have to do the short one separately
-                    self.matrix, self.level = utils.decode_matrix_level(self.encoded)
+                    self.matrix, self.level = utils.decode_matrix_level(self.encoded) # - TODO dont need to do this here, set above
+
+                    # TODO need to set multiplier, check its the same byte as connect command or adjust
 
                     self.tallies = self.encoded[utils.COMMAND_BYTE + 2]
 

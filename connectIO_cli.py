@@ -34,14 +34,21 @@ VERSION = 1.0
 
 
 def format_timestamp(t):
-    return t.strftime('%H:%M:%S.%f')[:-3]
+    # takes a datetime.datetime object and returns as formatted string
+    return t.strftime('%H:%M:%S.%f')[:-3]  # - truncated to millisecond / 3 decimal places on the seconds field.
 
 
 def get_number(prompt='number'):
+    """
+    cli prompt user until they input a number
+    :param prompt: optional string for the prompt to describe the number being asked for
+    :return: int, from user input.
+    """
+    # - prompt user to input a number, repeat until they do and return the number as an int
     while True:
         n = input("Enter " + prompt + ": ").split()
         if len(n) == 1 and n[0].strip(punctuation).isnumeric():
-            return int(n[0])
+            return int(n[0].strip(punctuation))
 
 
 def prompt_matrix_level():
@@ -52,6 +59,14 @@ def prompt_matrix_level():
         mtx = get_number("matrix") - 1
         lvl = get_number("level") - 1
         return mtx, lvl
+
+
+def prompt_for_tally_dump(matrix, level):
+    confirm = input("Get current connection state for matrix {}, level {} (y/n)?".format(matrix + 1, level + 1))
+    if confirm.lower() in ("y", "yes", ""):
+        msg = Message.cross_point_tally_dump_request(matrix, level)
+        print("DEBUG prompt for tally dump", msg, msg.summary)
+        send_message(connection, msg)
 
 
 def prompt_source_dest_label():
@@ -106,7 +121,7 @@ if __name__ == '__main__':
     # - Save user confirmed settings for next time
     config.save_settings(settings)
 
-    # - Open a TCP connection with the router
+    # - Open a TCP client connection with the router
     connection = Connection(settings["Router IP Address"], settings["Port"], settings["Protocol"])
 
     # - Wait for connection status to be Connected
@@ -114,10 +129,7 @@ if __name__ == '__main__':
         pass
 
     matrix, level = prompt_matrix_level()
-
-    # request tally dump for matrix 1 level 1
-    msg = Message.cross_point_tally_dump_request(1, 1)
-    send_message(connection, msg)
+    prompt_for_tally_dump(matrix, level)
 
     while True:
         # - Check connection and wait for reconnect if down
@@ -134,3 +146,5 @@ if __name__ == '__main__':
         if label:
             label_msg = Message.push_labels([label], destination, char_len=settings["Label Length"])
             send_message(connection, label_msg)
+
+        prompt_for_tally_dump(matrix, level)
