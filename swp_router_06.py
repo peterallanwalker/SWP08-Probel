@@ -1,10 +1,11 @@
 # - Data model & comms interface to sit between UI and router.
 # - Peter Walker, April 2022
-
+import random
 import time  # - Just for debug
 
 import cli_utils
 from import_io_06 import import_io_from_csv
+from swp_node_02 import Node
 import connectIO_cli_settings as config
 from connection_02 import Connection
 from swp_message_02 import Message
@@ -12,6 +13,18 @@ from message_log import MessageLog
 
 TITLE = 'SWP Router'
 VERSION = 0.6
+
+
+def match_destination(msg, destinations):
+    for dest in destinations:
+        if dest.matrix == msg.matrix and dest.level == msg.level and dest.id == msg.destination:
+            return dest
+
+
+def match_source(msg, sources):
+    for src in sources:
+        if src.matrix == msg.matrix and src.level == msg.level and src.id == msg.source:
+            return src
 
 
 class Router:
@@ -55,9 +68,10 @@ class Router:
             if msg.command == 'ACK':
                 print("[swo_router.process_incoming messages]:{} >>> ACK received".format(timestamp))
             elif msg.command == "NAK":
-                print("[swp_router.process_incoming messages]:{} >>> ** NAK ** received!".format(timestamp))
+                print("[swp_router.process_incoming messages]:{} >>> ** NAK received! **".format(timestamp))
             else:
-                msg.print_summary("[swp_router.process_incoming messages]:{} >>> Received Message:".format(timestamp))
+                print("[swp_router.process_incoming messages]:{} >>> Received Message:{}".format(timestamp,
+                                                                                                 msg.summary))
                 # - Update the data model
                 self._update_data(msg)
 
@@ -70,11 +84,9 @@ class Router:
         # but that's what my virtual router returns instead of "connected")
 
         if msg.command in ('connected', 'connect'):
-            print("[interface.update_data]: connect/connected received for destination:", msg.destination)
-            print("[interface.update_data]: current source:", self.io['matrix'][msg.matrix]['level'][msg.level]['destination'][msg.destination].connected_source)
-            self.io['matrix'][msg.matrix]['level'][msg.level]['destination'][msg.destination].connected_source = msg.source
-            print("[interface.update_data]: updated destination, new source: {}".format(
-                  self.io['matrix'][msg.matrix]['level'][msg.level]['destination'][msg.destination].connected_source))
+            destination = match_destination(msg, self.destinations)
+            source = match_source(msg, self.sources)
+            destination.connected_source = source
 
     def _get_first_connected_destination(self, source_node):
         """
@@ -86,14 +98,9 @@ class Router:
             implementations... As many labels & destinations can be passed in a single SWP message,
             it may be more efficient to periodically push labels to all destinations rather than selectively on change
             & connection as we are currently.
-        :param source: int
-        :param matrix: int
-        :param level: int
-        :return: int
         """
 
-        for dest in self.io['matrix'][source_node.matrix]['level'][source_node.level]['destination'].values():
-
+        for dest in self.destinations:
             if dest.connected_source == source_node:
                 print("FIRST CONNECTED DEST:")
                 return dest
@@ -138,14 +145,11 @@ class Router:
         # - If there is a connected source label for the source, push that to the destination of the external router
         #if self.io['matrix'][source.matrix]['level'][source.level]['source'][source.id].connected_source:
         if source.connected_source:
-            self.connection.send(Message.push_labels(
-                [source.connected_source],
-                destination.id, self.label_len, destination.matrix, destination.level))
+            self.connection.send(Message.push_labels([source.connected_source], destination, self.label_len))
 
     def update_source_label(self, source_node, label):
+        # print("ROUTER update source label", source_node)
         # - Update the data model
-        #self.io['matrix'][matrix]['level'][level]['source'][source_node.id].connected_source = label
-        print("ROUTER update source label", source_node)
         source_node.connected_source = label
 
         # - Get the first destination connected to the source if there is one
@@ -156,10 +160,11 @@ class Router:
 
 
 def print_io(router):
-    print("Sources:")
+    print(40 * "-" + "\nSources:")
     for i, node in enumerate(router.sources):
         print(i, node)
-    print("Destinations:")
+
+    print(40 * "-" + "\nDestinations:")
     for i, node in enumerate(router.destinations):
         print(i, node)
 
@@ -173,21 +178,22 @@ if __name__ == '__main__':
     io_config = 'VirtualPatchbays.csv'
     router = Router(settings, io_config=io_config)
 
-    src = router.sources[0]
-    dst = router.destinations[0]
-
     # - Wait for connection
     while router.connection.status != 'Connected':
         pass
 
+    src = router.sources[0]
+    dst = router.destinations[0]
+
     router.connect(src, dst)
 
     time.sleep(1)
-
+    router.process_incoming_messages()
     print_io(router)
 
+    if router.destinations[0].connected_source == router.sources[0]:
+        print("Connect test passed")
+
     print("\n", router.destinations[0].connected_source)
-    #while router.connection.status == 'Connected':
-    #    router.process_incoming_messages()
 
 

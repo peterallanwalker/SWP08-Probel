@@ -10,12 +10,10 @@
 # todo - provide a version that outputs all response, including what we cant parse, and ACK/NAK
 #      ... should really wait for ack and retry if none before sending next message.
 
-import time
-
 from string import punctuation  # - used just to parse/sanitise user input.
 
 import connectIO_cli_settings as config
-from connection import Connection
+from archive.connection import Connection
 from swp_message import Message
 
 

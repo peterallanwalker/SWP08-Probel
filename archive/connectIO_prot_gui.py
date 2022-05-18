@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVB
 
 import cli_utils
 import connectIO_cli_settings as config
-from connection import Connection
+from archive.connection import Connection
 from swp_message import Message  # - TODO not sure I should have this in here, or send direct to router, move the router model into seperate file like mixer was
 from import_io import import_io_from_csv
 

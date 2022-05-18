@@ -18,7 +18,7 @@ class Node:
     Represents an SWP node - an individual Source OR Destination.
     (note an entity with both source and destination IDs should be represented as two separate nodes)
     """
-    def __init__(self, matrix, level, swp_id, group, ch, label, user_label, io_type):
+    def __init__(self, matrix, level, swp_id, io_type, group="", ch="", label="", user_label=""):
         self.matrix = matrix
         self.level = level
         self.id = swp_id
@@ -32,12 +32,14 @@ class Node:
     """ PUBLIC CONSTRUCTORS """
     @classmethod
     def source(cls, swp_id, matrix, level, group, ch, label, user_label):
-        node = Node(swp_id, matrix, level, group, ch, label, user_label, 'source')
+        #node = Node(swp_id, matrix, level, group, ch, label, user_label, 'source')
+        node = Node(matrix, level, swp_id, 'source', group=group, ch=ch, label=label, user_label=user_label)
         return node
 
     @classmethod
     def destination(cls, swp_id, matrix, level, group, ch, label, user_label):
-        node = Node(swp_id, matrix, level, group, ch, label, user_label, 'destination')
+        #node = Node(swp_id, matrix, level, group, ch, label, user_label, 'destination')
+        node = Node(matrix, level, swp_id, 'destination', group=group, ch=ch, label=label, user_label=user_label)
         return node
 
     def __str__(self):

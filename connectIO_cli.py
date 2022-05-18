@@ -14,13 +14,15 @@
 
 
 import time
-
+import datetime
 from string import punctuation  # - used just to parse/sanitise user input.
 
+import cli_utils
 import connectIO_cli_settings as config
 from connection_02 import Connection
-from swp_message import Message
-import cli_utils
+from swp_message_02 import Message
+from swp_node_02 import Node
+
 
 # Time to wait for ACK before retry.
 TIMEOUT = 1
@@ -28,32 +30,48 @@ TIMEOUT = 1
 MAX_SEND_ATTEMPTS = 5
 
 TITLE = "ConnectIO"
-VERSION = 0.3
+VERSION = 1.0
 
 
-def get_user_input():
-    r = input("\nEnter source, destination & optional label: ")
-    r = r.split()
-    invalid_input_response = (-1, -1, False)
+def format_timestamp(t):
+    return t.strftime('%H:%M:%S.%f')[:-3]
 
-    if len(r) < 2:
-        print("Not enough values passed")
-        return invalid_input_response
 
-    source = r[0].strip(punctuation)
-    destination = r[1].strip(punctuation)
+def get_number(prompt='number'):
+    while True:
+        n = input("Enter " + prompt + ": ").split()
+        if len(n) == 1 and n[0].strip(punctuation).isnumeric():
+            return int(n[0])
 
-    if not source.isnumeric() or not destination.isnumeric():
-        print("Source and destination values need to be numbers")
-        return invalid_input_response
 
-    # - If more arguments supplied, concatenate into a label
-    if len(r) > 2:
-        label = " ".join(r[2:])
+def prompt_matrix_level():
+    ok = input("Matrix: 1, Level: 1 (y/n?): ")
+    if ok.lower() in ("y", "yes", ""):
+        return 0, 0
     else:
-        label = False
+        mtx = get_number("matrix") - 1
+        lvl = get_number("level") - 1
+        return mtx, lvl
 
-    return int(source), int(destination), label
+
+def prompt_source_dest_label():
+    while True:
+        s = input("\nEnter source ID, destination ID & optional label: ").split()
+
+        if len(s) > 1:
+            if s[0].strip(punctuation).isnumeric() and s[1].strip(punctuation).isnumeric():
+                # - get src/dest and offset gui/csv 1 based to protocol 0 based
+                src = int(s[0].strip(punctuation)) - 1
+                dest = int(s[1].strip(punctuation)) - 1
+                if src >= 0 and dest >= 0:
+                    if len(s) > 2:
+                        # Concatenate remaining args into a single label
+                        # (user supplied label with one or more spaces)
+                        lbl = " ".join(s[2:])
+                    else:
+                        lbl = None
+
+                    return src, dest, lbl
 
 
 def send_message(connection, message):
@@ -61,57 +79,25 @@ def send_message(connection, message):
 
     ack = False
     tries = 0
-    #while tries < MAX_SEND_ATTEMPTS or not ack:
-        #connection.send(message.encoded)
-        #tries += 1
-        #t = time.time()
-        #t2 = time.time()
-        #response = False
-        #while t2 < t + TIMEOUT:
-        #    print(t2)
-        #    response = connection.receive()
-        #    t2 = time.time()
 
-        #if response:
-        #    response = Message.decode(response)
-        #    print("Message received from router:", response)
-        #    if response.command == "ACK":
-        #        ack = True
-        #        print("ACK received")
-        #    else:
-        #        print(Message.decode(response))
+    print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending:",
+          message.summary, ", Encoded:", message.encoded)
 
-    connection.send(message.encoded)
-
-    message.print_summary("Sending >>>")
-
-    # TODO should retry until response but seems to be working instantly at the moment
-
+    connection.send(message)
+    time.sleep(1)
     response = None
-    # TODO PREVENT WAITING FOREVER, (TIMEOUT & RETRIES)
+    # TODO PREVENT WAITING FOREVER, (TIMEOUT & RETRIES!)
     while not response:
         while connection.receive_buffer_len():
-            response = connection.get_message()
+            timestamp, response = connection.get_message()
             response = Message.decode(response)
 
-            if response.command == "ACK":
-                print(" <<< ACK received")
-            elif response.command == "NAK":
-                print(" <<< ** NAK ** received!")
-            else:
-                response.print_summary("<<< Received Message:")
-
-
-def get_received_messages(conn):
-
-    while len(connection._messages):
-        message = conn.get_message()
-        #print("Message Recieved", Message.decode(message))
-        print("Message Received:", message)
+            print("[" + format_timestamp(timestamp) + "] <<< Received:",
+                  response.summary,
+                  ", Encoded:", response.encoded)
 
 
 if __name__ == '__main__':
-
     cli_utils.print_header(TITLE, VERSION)
 
     # - Get last used settings, and prompt user to accept or change
@@ -127,29 +113,24 @@ if __name__ == '__main__':
     while connection.status != "Connected":
         pass
 
-    # TODO - change to use 1 based input so user is entering same numbers as shown in Calrec UI/CSV
-    print("\nNote, values are 0 based, (I.E. Calrec GUI/CSV values-1)")
+    matrix, level = prompt_matrix_level()
+
+    # request tally dump for matrix 1 level 1
+    msg = Message.cross_point_tally_dump_request(1, 1)
+    send_message(connection, msg)
 
     while True:
+        # - Check connection and wait for reconnect if down
         while connection.status != "Connected":
-            # TODO: put a timer in and print every n secs
             print("connection status:", connection.status)
 
-        source, destination, label = get_user_input()
+        source_id, destination_id, label = prompt_source_dest_label()
+        source = Node(matrix, level, source_id, "source")
+        destination = Node(matrix, level, destination_id, "destination")
 
         patch_msg = Message.connect(source, destination)
-
-        #print("Sending:", patch_msg)
-        #cli_utils.print_block("Sending...", patch_msg.summary)
-        #patch_msg.print_summary("Sending >>>")
-        #connection.send(patch_msg.encoded)
         send_message(connection, patch_msg)
 
         if label:
             label_msg = Message.push_labels([label], destination, char_len=settings["Label Length"])
-            #print("Sending", label_msg)
-            #label_msg.print_summary("Sending >>>")
-            #connection.send(label_msg.encoded)
             send_message(connection, label_msg)
-            #get_received_messages(connection)
-        print("\n")

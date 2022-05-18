@@ -2,7 +2,7 @@
 # - Peter Walker, April 2022
 
 import cli_utils
-from connection import Connection
+from archive.connection import Connection
 from swp_message import Message
 
 TITLE = 'Router'

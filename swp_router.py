@@ -16,6 +16,13 @@ VERSION = 0.4
 
 class Router:
     def __init__(self, settings):
+        # when instantiated as the data model for a client side controller, settings includes connection config
+        # which we use within the init to create a client side connection using the Connection class (which is intended
+        # to be robust production quality).
+        # For use with the virtual router for testing, we want to pass is a simple server side connection to use
+        #
+        # We also need to be able to change the IP address when working with real systems and have it auto connect,
+        # so might be worth providing a Set_connection method here for that as well
         self.settings = settings
         self.log = MessageLog()
         self.connection = Connection(settings["Router IP Address"], settings["Port"],

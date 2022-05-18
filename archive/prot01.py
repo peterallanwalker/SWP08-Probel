@@ -15,13 +15,8 @@
 #  (and save the output from the mixer so I can test fixing it offline )
 
 
-import time
-
-from connection import Connection
+from archive.connection import Connection
 from swp_message import Message
-
-import swp_utils as utils
-
 
 if __name__ == '__main__':
 

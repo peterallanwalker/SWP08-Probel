@@ -15,6 +15,7 @@
 import socket
 import threading
 import time
+import datetime
 
 from swp_message_02 import Message
 from swp_unpack import unpack_data
@@ -25,6 +26,10 @@ import cli_utils
 TITLE = "Virtual Router"
 VERSION = 0.1
 SWP_PORT = 61000
+
+
+def format_timestamp(t):
+    return t.strftime('%H:%M:%S.%f')[:-3]
 
 
 class SwpServer:
@@ -58,12 +63,12 @@ class SwpServer:
                     print('New connection with client:', addr, self.connection)
                     data = self.connection.recv(1024)  # - Receive up to 1MB of data
                     while data:
-                        print("[virtual_router.run]: data received", data)
+                        #print("[virtual_router.run]: data received", data)
                         msgs, residual_data = unpack_data(data)
                         # TODO - just do self.messages += msgs rather than looping and appending each one at a time!
                         for msg in msgs:
                             if msg:
-                                self.messages.append(msg)
+                                self.messages.append((datetime.datetime.now(), msg))
 
                         try:
                             data = self.connection.recv(1024)
@@ -76,7 +81,7 @@ class SwpServer:
             self.messages = self.messages[1:]  # - 'pop' the processed message off the buffer
             return r
         except IndexError:
-            return None
+            return None, None
 
     def send(self, msg):
         """
@@ -97,33 +102,36 @@ if __name__ == '__main__':
     connection = SwpServer(server_address, port)
 
     while True:
-        received = connection.get_message()
+        timestamp, received = connection.get_message()
         if received:
-            # - If its in the receive buffer then its already been validated by checksum so let's ACK
-            print("Validated message received, sending ACK")
-            connection.send(bytes(swp_utils.ACK))  # - TODO provide a better way of creating an ACK message, or just change send to accept bytes
+            msg = Message.decode(received)
 
-            # - TODO - Should not need try/except here, should handle unknown message types better
-            # - INFACT has just caused me a headache function call deep within swputils was failing silently!
+            if msg:
+                # - If its in the receive buffer then its already been validated by checksum so let's ACK
+                print("[" + format_timestamp(timestamp) + "] <<< Received:", msg.summary, "\nEncoded:",
+                      msg.encoded)
 
-            valid_message = Message.decode(received)
+                print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending: ACK\nEncoded", bytes(swp_utils.ACK))
 
-            if valid_message:
-                print("Parsed received from controller: ", received)
+                connection.send(bytes(swp_utils.ACK))  # - TODO provide a better way of creating an ACK message, or just change send to accept bytes
 
-                if valid_message.command == "connect":
-                    # TODO, should provide the proper connected message not just echoing back...
-                    print("...Received message:", valid_message)
-                    print("Sending response.")
+                if msg.command == "connect":
+                    source = Node(msg.matrix, msg.level, msg.source,
+                                  "test", "x", "test x", "test", "source")
+                    destination = Node(msg.matrix, msg.level, msg.destination,
+                                       "test", "x", "test x", "test", "source")
+                    # TODO, response should be a "connected" message,
+                    #  but responding with a "connect" works fine for testing
+                    response = Message.connect(source, destination)
 
-                    connection.send(Message.connect(valid_message.source, valid_message.destination,
-                                                    matrix=valid_message.matrix, level=valid_message.level).encoded)
+                    print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending:", response.summary,
+                          "\nEncoded", response.encoded)
 
-                elif valid_message.command in ("push_labels", "push_labels_extended"):
-                    print("...Received message:", valid_message)
-
-                else:
-                    print("Received message type not currently supported")
+                    connection.send(response.encoded)
 
             else:
-                print("Failed to decode received message: ", received)
+                print("[" + format_timestamp(timestamp) + "] <<< Received: Cannot Decode - ", received)
+                print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending: NAK\n", bytes(swp_utils.ACK))
+                connection.send(bytes(swp_utils.NAK))
+
+

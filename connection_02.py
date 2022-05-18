@@ -2,7 +2,7 @@
 # IP connection manager, buffers incoming messages, provides send and receive methods
 # Peter Walker, June 2021
 # Based on CSCP_connection, let's aim to keep it generic, with SWP08 specific handling external to this file.
-
+import datetime
 import time
 import socket
 import threading
@@ -113,7 +113,7 @@ class Connection:
 
                 if messages:
                     for msg in messages:
-                        timestamp = time.time()
+                        timestamp = datetime.datetime.now()
                         self._messages.append((timestamp, msg))
 
 
@@ -140,6 +140,7 @@ class Connection:
 
     # - PUBLIC METHODS
     def send(self, message):
+        #print("[connection.send]: sending", message.summary)
         # - Check if the passed message is raw message bytes or Message object
         if type(message) != bytes:
             message_bytes = message.encoded
@@ -149,8 +150,8 @@ class Connection:
             self.sock.sendall(message_bytes)
             # TODO - wait 1s for ACK/NAK & retry 3 times before returning?
             #  (if protocol = swp, will break CSCP doing that... test higher up in connectIO)
-            #self._sent_log.append((time.time(), message))
-            self.log.log(time.time(), message, 'sent')
+            if self.log:
+                self.log.log(time.time(), message, 'sent')
             return True
         except socket.error as e:
             print("[Connection.send]: Failed to send, error:", e)

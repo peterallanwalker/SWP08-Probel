@@ -39,6 +39,9 @@ COMMANDS = {"connect": 0x02,    # Send to router to set a connection
             "connected": 0x04,  # Sent from router when a connection is made
             "push_labels": 107,
             "push_labels_extended": 235,
+            "cross-point tally dump request": 21,
+            "cross-point tally dump (byte)": 22,
+            "cross-point tally dump (word/extended)": 23,
             }
 
 # keys - num chars, values - coded value

@@ -31,8 +31,7 @@ def set_label_len(labels, char_len):
     """
     valid_label_lengths = (4, 8, 12, 16, 32)
     if char_len not in valid_label_lengths:
-        print("[swp_message._format_labels]: Invalid character length: {}, must be one of: {}".format(char_len,
-                                                                                                      valid_label_lengths))
+        print("[swp_message.set_label_len]: Invalid character length: {}, must be one of: {}".format(char_len, valid_label_lengths))
         return False
     else:
         fixed_len = []
@@ -66,6 +65,8 @@ class Message:
 
     def __init__(self,
                  command=None,
+                 matrix=None,
+                 level=None,
                  source=None,
                  destination=None,
                  char_len=None,
@@ -119,21 +120,52 @@ class Message:
                     self.labels = "True"
                     # self.labels = utils.get_labels()
 
+                elif self.command in ("cross-point tally dump (byte)",
+                                      "cross-point tally dump (word/extended)"):
+                    # TODO, jsut focusing on the word/extended, will have to do the short one separately
+                    self.matrix, self.level = utils.decode_matrix_level(self.encoded)
+
+                    self.tallies = self.encoded[utils.COMMAND_BYTE + 2]
+
+                    # TODO - parse id based on multiplier, div & mod,
+                    #        HERE IM JUST USING MOD SO WILL FAIL FOR BIGGER NUMBERS!!
+                    self.destination = self.encoded[utils.COMMAND_BYTE + 4]
+                    self.source = self.encoded[utils.COMMAND_BYTE + 6]
+
+                    # TODO PARSE remaining message for potential extra sources??...
+                    # get byte count ...
 
         else:
-            print("[swp_message.__init__]: command = {}, source = {}, destination = {}".format(command, source, destination))
+            #print("[swp_message.__init__]: command = {}, source = {}, destination = {}".format(command, source, destination))
             self.command = command
-            self.matrix, self.level = source.matrix, source.level
+
+            if matrix is not None and level is not None:
+                # - Matrix & level have been passed to the constructor as discrete values
+                # - (rather than as part of source/dest node objects)
+                self.matrix = matrix
+                self.level = level
+            else:
+                self.matrix, self.level = destination.matrix, destination.level
 
             if source is not None:
-                self.source = source
+                if type(source) is int:
+                    self.source = source
+                else:
+                    self.source = source.id
             else:
                 self.source = False
 
-            self.destination = destination
+            if destination is not None:
+                if type(destination) is int:
+                    self.destination = destination.id
+                else:
+                    self.destination = destination.id
+
+            else:
+                self.destination = False # TODO, probs dont need this now, just leave as None
 
             if self.command in ("connect", "connected"):
-                self.multiplier = utils.encode_multiplier(self.source.id, self.destination.id)
+                self.multiplier = utils.encode_multiplier(self.source, self.destination)
 
             if self.command in ("push_labels", "push_labels_extended"):
                 self._char_len = utils.CHAR_LEN_CODES[char_len]
@@ -144,12 +176,39 @@ class Message:
 
             self.encoded = self._encode()
 
-        self.summary = self._get_summary()
+        #self.summary = self._get_summary()
+        self.summary = self._summary()
 
     def __str__(self):
-        return "SWP08 Message object - Command: {}, Matrix: {}, Level: {}, Multiplier: {}, Source: {}, Destination: {}," \
-               "\nLabels: {}\nEncoded: {}".format(self.command, self.matrix, self.level, self.multiplier,
+        return "SWP08 Message object - Command: {}, Matrix: {}, Level: {}, Multiplier: , Source: {}, Destination: {}," \
+               "\nLabels: {}\nEncoded: {}".format(self.command, self.matrix, self.level, #self.multiplier,
                                                   self.source, self.destination, self.labels, self.encoded)
+
+    def _summary(self):
+        summary = self.command.upper()
+        if self.command in ("connect", "connected"):
+
+            #if type(self.source) is int:
+            #    summary += " Matrix: {}, Level: {}, Source: {}, Destination: {}".format(self.matrix, self.level,
+            #                                                                            self.source, self.destination)
+
+            #else:
+            #    summary += " Matrix: {}, Level: {}, Source: {}, Destination: {}".format(self.matrix, self.level,
+            #                                                                            self.source, self.destination)
+
+            summary += " Matrix: {}, Level: {}, Source: {}, Destination: {}".format(self.matrix, self.level,
+                                                                                    self.source, self.destination)
+        elif self.command in ("push_labels", "push_labels_extended"):
+            summary += " First Destination: {}, Label/s: {}".format(self.destination, self.labels)
+
+        elif self.command == "cross-point tally dump request":
+            summary += " Matrix: {}, Level: {}".format(self.matrix, self.level)
+
+        elif self.command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
+            summary += " Matrix: {}, Level: {}, Dest: {}, Src:{}".format(self.matrix, self.level, self.destination, self.source)
+
+        return summary
+
 
     """ PUBLIC CONSTRUCTORS FOR INSTANTIATING THIS CLASS """
     @classmethod
@@ -174,7 +233,7 @@ class Message:
         return message
 
     @classmethod
-    def push_labels(cls, labels, first_destination, char_len=4, multiplier=0):
+    def push_labels(cls, labels, first_destination, char_len=12):
         """
         Instantiate a label push message object
         :param labels: list of strings
@@ -186,8 +245,11 @@ class Message:
         :param multiplier: int
         :return: SWP message object for pushing labels
         """
-        message = Message(command="push_labels", labels=labels, destination=first_destination.id, char_len=char_len,
-                          matrix=first_destination.matrix, level=first_destination.level, multiplier=multiplier)
+        #message = Message(command="push_labels", labels=labels, destination=first_destination.id, char_len=char_len,
+        #                  matrix=first_destination.matrix, level=first_destination.level, multiplier=multiplier)
+
+        message = Message(command="push_labels", labels=labels, destination=first_destination, char_len=char_len)
+
         return message
 
     @classmethod
@@ -209,9 +271,10 @@ class Message:
                           matrix=matrix, level=level, multiplier=multiplier)
         return message
 
-    """ PUBLIC METHODS """
-    def print_summary(self, heading):
-        cli_utils.print_block(heading, self.summary)
+    @classmethod
+    def cross_point_tally_dump_request(cls, matrix=0, level=0):
+        message = Message(command="cross-point tally dump request", matrix=matrix, level=level)
+        return message
 
     """ PRIVATE METHODS """
     def _encode(self):
@@ -224,14 +287,17 @@ class Message:
         command = [utils.COMMANDS[self.command], matrix_level]
 
         if self.command in ("connect", "connected"):
-            data = command + [self.multiplier, self.destination.id % 128, self.source.id % 128]
+            data = command + [self.multiplier, self.destination % 128, self.source % 128]
 
         elif self.command in ("push_labels", "push_labels_extended"):
-            start_dest_div = int(self.destination.id / 256)
-            start_dest_mod = self.destination.id % 256
+            start_dest_div = int(self.destination / 256)
+            start_dest_mod = self.destination % 256
             label_qty = len(self.labels)
             labels = format_labels(self.labels)
             data = command + [self._char_len, start_dest_div, start_dest_mod, label_qty] + labels
+
+        elif self.command == "cross-point tally dump request":
+            data = command
 
         else:
             print("[swp_message._encode]: unsupported command: {}".format(self.command))
@@ -251,12 +317,14 @@ class Message:
         return bytes(message)
 
     def _get_summary(self):
-
+        # - TODO - think this can be removed,
         if self.labels:
             labels = '\n  Labels: '
             labels += ''.join(self.labels)
         else:
             labels = ''
+
+
 
         r = ['Command: {}, [Matrix:{}, Level:{}] '
              'Source:{}, Destination: {}{}'.format(self.command.upper(),
@@ -280,8 +348,8 @@ if __name__ == '__main__':
 
     # - Test message encode - connect source ID 1 to destination ID 11
     # - Note, ID "1" in Calrec UI/csv == 0 in protocol/message
-    test = Message.connect(0, 10)
-    print("\nTest message encode, connect source 0 to dest 10...\n{}".format(test))
+    #test = Message.connect(0, 10)
+    #print("\nTest message encode, connect source 0 to dest 10...\n{}".format(test))
 
     # - Test decode of above encode
     test2 = Message.decode(test.encoded)
@@ -290,17 +358,22 @@ if __name__ == '__main__':
 
     # - Test push_labels message
     labels = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
-    test = Message.push_labels(labels, 0)
-    print("\nTest push_labels message...\n{}".format(test))
+    #test = Message.push_labels(labels, 0)
+    #print("\nTest push_labels message...\n{}".format(test))
 
     # - Test push_labels message, set to 8 chars
     labels = ["testing", "eight", "char", "labels", "so", "some very long"]
-    test = Message.push_labels(labels, 0, char_len=8)
-    print("\nTest 8 character push_labels message...\n{}".format(test))
+    #test = Message.push_labels(labels, 0, char_len=8)
+    #print("\nTest 8 character push_labels message...\n{}".format(test))
 
     # - Test push_labels_extended
     labels = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
-    test = Message.push_labels_extended(labels, 0)
-    print("\nTest push_labels_extended message...\n{}".format(test))
+    #test = Message.push_labels_extended(labels, 0)
+    #print("\nTest push_labels_extended message...\n{}".format(test))
 
+    # - Test cross-point tally dump request
+    matrix, level = 0, 0
+    msg = Message.cross_point_tally_dump_request(matrix, level)
+    print(msg)
+    print(msg.summary)
     print(header_width * "-")
