@@ -2,20 +2,13 @@
 # For testing SWP08/Probel router control - cross-point switching + label pushing
 # Peter Walker, March 2022
 
-# TODO, pass argument csv file name to test multiple patches
-# TODO present returned messages better (ACK/NAK)
-# deal with different matrix/level/multiplier etc
 
-# Testing - Connection currently using unpack 2 so we should
-# be able to pull ACK/NAK from received message buffer
-# TODO sort init for unknown messages and better handling/print of ACK/NAK
-# ... maybe provide a print summary
-# TODO, wait for ACK before sending next, retry if no ACK or NAK?
+# TODO,
 
 
 import time
 import datetime
-from string import punctuation  # - used just to parse/sanitise user input.
+from string import punctuation  # - used just to sanitise user input.
 
 import cli_utils
 import connectIO_cli_settings as config
@@ -65,7 +58,6 @@ def prompt_for_tally_dump(matrix, level):
     confirm = input("Get current connection state for matrix {}, level {} (y/n)?".format(matrix + 1, level + 1))
     if confirm.lower() in ("y", "yes", ""):
         msg = Message.cross_point_tally_dump_request(matrix, level)
-        print("DEBUG prompt for tally dump", msg, msg.summary)
         send_message(connection, msg)
 
 

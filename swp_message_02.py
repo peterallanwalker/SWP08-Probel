@@ -11,6 +11,13 @@
 # https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf
 # Other versions of the protocol doc are available in the project's protocol docs folder
 
+# TODO fix tally message dump to handle multiplier & div as currently will fail with ID's > 255.
+#      Also check we're handling the matrix/level properly.
+# ... mixer seems to allways reposnd as matrix1 level 1??
+# ... need to check that, probably +1 the cli output / message print/summary,
+# ... parse remaining / mulitpl source info in the dump reposnse.
+
+
 import swp_utils as utils
 import cli_utils
 
@@ -136,6 +143,20 @@ class Message:
 
                     # TODO PARSE remaining message for potential extra sources??...
                     # get byte count ...
+                    # - Byte count of the data/payload is the 4th byte from the end (SOM-DATA-BTC-CHK-EOM)
+                    # - ... ok, the following is working but needs tidying and handling...
+                    # - you may get multiple responses to a tally dump request, each response containst the
+                    # - FIRST dest ID, the number of tallies returned, and a source for each consecutive destination
+                    # - (similar to the push labels message)
+                    byte_count = self.encoded[-4]
+                    src_byte = utils.COMMAND_BYTE + 6
+                    self.source = []
+                    while src_byte < len(self.encoded) -4:
+                        self.source.append(self.encoded[src_byte])
+                        src_byte += 2
+
+
+
 
         else:
             #print("[swp_message.__init__]: command = {}, source = {}, destination = {}".format(command, source, destination))
@@ -207,7 +228,10 @@ class Message:
             summary += " Matrix: {}, Level: {}".format(self.matrix, self.level)
 
         elif self.command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
-            summary += " Matrix: {}, Level: {}, Dest: {}, Src:{}".format(self.matrix, self.level, self.destination, self.source)
+            summary += " Matrix: {}, Level: {}, Tallies: {}, Dest: {}, Src: {}".format(self.matrix,
+                                                                                       self.level,
+                                                                                       self.tallies,
+                                                                                       self.destination, self.source)
 
         return summary
 

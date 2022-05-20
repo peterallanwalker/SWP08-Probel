@@ -16,6 +16,8 @@ import swp_unpack as swp
 # - from the log vs storing msg objects... connection should call back to the router with a confirmed timestamp,
 # - have the router then log it, in a separate class.
 
+# - TODO - fix connection retry / reconnect (think it woks for CSCP but isn't for SWP)
+
 
 TITLE = "Connection"
 VERSION = 0.2

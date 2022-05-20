@@ -54,6 +54,11 @@
 # now getting small window when first opening - is that the message view window?
 # scroll tha message wondows, keep message wondow [SIC] on top
 
+# TODO, sort messaging view, and re-use it for CSCP-MIDI
+#       use a scrollable grid layout, col 1 timestamp, col 2 sent, col 3 received
+#       get tally dump on startup / loading new connection / changing matrix/level / loading csv
+#       (note tally dump messaging not yet using mulitplier/div, so will produce wrong results for IDs > 255)
+
 import sys
 import time
 from pathlib import Path
