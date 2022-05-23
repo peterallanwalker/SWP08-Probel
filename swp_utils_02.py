@@ -31,6 +31,7 @@ DESTINATION_BYTE = 5  # - For Connect, Connected, Push Labels, Push Labels Exten
 MULTIPLIER_BYTE = 4  # - For Connect/Connected messages
 CHAR_LEN_BYTE = 4  # - For Push Labels / Push Labels Extended messages
 LABEL_QTY_BYTE = 7  # - For Push Labels / Push Labels Extended messages
+FIRST_LABEL_CHAR_BYTE = 8  # - For Push Labels / Push Labels Extended messages
 
 COMMANDS = {"connect": 2,  # Send to router to make a connection.
             "connected": 4,  # Received from router when a connection is made.
@@ -218,12 +219,18 @@ def get_labels(msg):
     label_qty = msg[LABEL_QTY_BYTE]
     char_len = list(CHAR_LEN_CODES.keys())[list(CHAR_LEN_CODES.values()).index(msg[CHAR_LEN_BYTE])]
     labels = []
-    #for l in range(label_qty):
-    #    label = ''
+    i = FIRST_LABEL_CHAR_BYTE
+    for _ in range(label_qty):
+        label = ''
+        for letter in range(char_len):
+            label += chr(msg[i])
+            i += 1
+        labels.append(label)
 
-    print("DEBUG CHAR LEN:", char_len)
-    print("DEBUG LABEL QTY:", label_qty)
-    return "LABELS (TODO)"
+    #print("DEBUG CHAR LEN:", char_len)
+    #print("DEBUG LABEL QTY:", label_qty)
+    return labels
+
 
 def test_get_labels():
     test_messages = [b'\x10\x02k\x00\x02\x00\x00\none         two         three       four        five        six'
@@ -232,7 +239,7 @@ def test_get_labels():
 
     test_label_lens = [12, 8]  # - label lengths passed in test_messages
     for msg in test_messages:
-        get_labels(msg)
+        print(get_labels(msg))
 
 
 if __name__ == '__main__':
