@@ -54,6 +54,8 @@ def decode(encoded_message):
             destination = utils.decode_labels_destination(encoded_message)
             matrix, level = utils.decode_matrix_level(encoded_message)
             labels = utils.get_labels(encoded_message)
+            char_len =
+            return PushLabels(destination, labels, matrix, char_len)
         else:
             raise ValueError("[swp_massage.decode]: Command not yet supported")
 
