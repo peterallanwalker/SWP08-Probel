@@ -363,14 +363,15 @@ class Message:
 
 
 if __name__ == '__main__':
+    from swp_node_03 import Node
     heading = "SWPO8 Router Control Message Encoding and Decoding"
     header_width = len(heading) + 8
     print("\n{}\n -- {} --\n{}".format(header_width * '#', heading, header_width * '-'))
 
     # - Test message decode - Sample "Connected" message received from mixer:
-    connected_message = b'\x10\x02\x04\x00\x00\n\x00\x05\xed\x10\x03'
-    test = Message.decode(connected_message)
-    print("\nTest message decode using a sample 'Connected' message received from a mixer...\n{}".format(test))
+    #connected_message = b'\x10\x02\x04\x00\x00\n\x00\x05\xed\x10\x03'
+    #test = Message.decode(connected_message)
+    #print("\nTest message decode using a sample 'Connected' message received from a mixer...\n{}".format(test))
 
     # - Test message encode - connect source ID 1 to destination ID 11
     # - Note, ID "1" in Calrec UI/csv == 0 in protocol/message
@@ -378,28 +379,33 @@ if __name__ == '__main__':
     #print("\nTest message encode, connect source 0 to dest 10...\n{}".format(test))
 
     # - Test decode of above encode
-    test2 = Message.decode(test.encoded)
-    print("\nTest decoding of the previously encoded message...")
-    print("Decode == Encode:", print(test) == print(test2))
+    #test2 = Message.decode(test.encoded)
+    #print("\nTest decoding of the previously encoded message...")
+    #print("Decode == Encode:", print(test) == print(test2))
 
     # - Test push_labels message
     labels = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
-    #test = Message.push_labels(labels, 0)
-    #print("\nTest push_labels message...\n{}".format(test))
+    test = Message.push_labels(labels, Node.destination(0, 0, 0))
+    print("\nTest push_labels message...\n{}".format(test))
 
     # - Test push_labels message, set to 8 chars
     labels = ["testing", "eight", "char", "labels", "so", "some very long"]
-    #test = Message.push_labels(labels, 0, char_len=8)
-    #print("\nTest 8 character push_labels message...\n{}".format(test))
+    test = Message.push_labels(labels, Node.destination(0, 0, 0), char_len=8)
+    print("\nTest 8 character push_labels message...\n{}".format(test))
 
     # - Test push_labels_extended
-    labels = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+    #labels = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
     #test = Message.push_labels_extended(labels, 0)
     #print("\nTest push_labels_extended message...\n{}".format(test))
 
     # - Test cross-point tally dump request
-    matrix, level = 0, 0
-    msg = Message.cross_point_tally_dump_request(matrix, level)
-    print(msg)
-    print(msg.summary)
-    print(header_width * "-")
+    #matrix, level = 0, 0
+    #msg = Message.cross_point_tally_dump_request(matrix, level)
+    #print(msg)
+    #print(msg.summary)
+    #print(header_width * "-")
+
+    #src = Node.source(2, 3, 300)
+    #dst = Node.destination(2, 3, 999)
+    #msg = Message.connect(src, dst)
+    #print(msg)

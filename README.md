@@ -19,13 +19,23 @@ e.g. connect destination 16 to source 3, gets encoded as \x16\x03 which I'm iden
 ### connectIO.py
 A main entry point to the application for users - creates a connection (based on last used settings if any, prompts for confrim/edit), prompts for individual source-to-destination routes with optional label to pass.
 
-#### TODO
-- [ ] Take csv filename as command line argument to test bulk patching / salvos.
 
 ### swp_message.py
-The core of this appplication, provides a Message class with various contructors for encoding and decoding messages using the SWP08 protocol.
+Provides classes to represent various SWP08 command messages. All messages classes provide an `encoded` attribute which 
+is the byte string as sent/received by the socket connection
 
-`Message.connect(source, destination)` takes single source and destination IDs as integers and creates an SWP08 "Connect" message (SWP08 message 2)
+`Connect` - Connect message (swp protocol command 2) to send to a router, 
+and can be instantiated either with node objects; `Connect(source Node, destination Node)`,
+or with integer IDs and named matrix & level; `Connect(source id, destination id, matrix=n, level=n)`.
+
+
+`Connected` - Connected message (swp protocol command 4), as sent by a router when it makes connections.
+This class inherits from `Connect` and can also be instantiated using either Node objects or integers. 
+
+`GetConnections` - Cross-point tall dump request message (swp protocol 21), 
+
+
+
 
 `Message.push_labels(labels, first_destination)` takes a list of labels (of any character length), and a single integer ID of the first destination. If 
 multiple labels are provided, the receiving device (Calrec Apollo+/Artemis+ audio mixer) will apply them to consecutive IDs. char_len is an optional argument, defaulting to 4. SWP supports 4, 8, 12, 16 or 32 character length labels (this sets what is displayed on the mixer, but the function accepts labels of any length, truncating long ones and padding short ones with spaces).... In my tests with Apollo+ it will display 4, 8 or 12 char labels. If you send 16 or 32 character label messages, the mixer will update but only display the first four chars. (SWP08 message 107).

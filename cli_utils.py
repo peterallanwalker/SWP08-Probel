@@ -4,7 +4,7 @@
 # Just gives me consistent header formatting at the mo
 # TODO, add other common CLI formatting as and when I need it moving forwards
 # TODO, use curses for more advance terminal manipulation, colour/highlights, clear/overwrite/cursor movement
-# TODO, e.g. for progress bars etc
+# TODO, e.g. for progress bars etc... or judt colorama, not tired that one yet.
 
 TITLE = "Command Line Utilities"
 VERSION = 1.0

@@ -208,9 +208,9 @@ if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
 
     #connected_message = b'\x10\x02\x04\x00\x00\n\x00\x05\xed\x10\x03'
-    connected_message = b'\x10\x02\x04\xf0\x00\n\x00\x05\xed\x10\x03'
-    print(decode_matrix_level(connected_message))
+    #connected_message = b'\x10\x02\x04\xf0\x00\n\x00\x05\xed\x10\x03'
+    #print(decode_matrix_level(connected_message))
 
-    matrix = 3
-    level = 6
-    print(encode_matrix_level(matrix, level))
+    #matrix = 3
+    #level = 6
+    #print(encode_matrix_level(matrix, level))

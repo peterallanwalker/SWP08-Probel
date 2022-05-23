@@ -1,5 +1,5 @@
 {
-    "Router IP Address": "192.169.1.201",
+    "Router IP Address": "127.0.0.1",
     "Port": 61000,
     "Protocol": "SWP08",
     "Label Length": 12

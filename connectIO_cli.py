@@ -13,7 +13,7 @@ from string import punctuation  # - used just to sanitise user input.
 import cli_utils
 import connectIO_cli_settings as config
 from connection_02 import Connection
-from swp_message_02 import Message
+import swp_message_03 as message
 from swp_node_02 import Node
 
 
@@ -57,7 +57,7 @@ def prompt_matrix_level():
 def prompt_for_tally_dump(matrix, level):
     confirm = input("Get current connection state for matrix {}, level {} (y/n)?".format(matrix + 1, level + 1))
     if confirm.lower() in ("y", "yes", ""):
-        msg = Message.cross_point_tally_dump_request(matrix, level)
+        msg = message.GetConnections(matrix, level)
         send_message(connection, msg)
 
 
@@ -97,7 +97,7 @@ def send_message(connection, message):
     while not response:
         while connection.receive_buffer_len():
             timestamp, response = connection.get_message()
-            response = Message.decode(response)
+            response = message.decode(response)
 
             print("[" + format_timestamp(timestamp) + "] <<< Received:",
                   response.summary,
@@ -132,11 +132,11 @@ if __name__ == '__main__':
         source = Node(matrix, level, source_id, "source")
         destination = Node(matrix, level, destination_id, "destination")
 
-        patch_msg = Message.connect(source, destination)
+        patch_msg = message.Connect(source, destination)
         send_message(connection, patch_msg)
 
         if label:
-            label_msg = Message.push_labels([label], destination, char_len=settings["Label Length"])
+            label_msg = message.PushLabels([label], destination, char_len=settings["Label Length"])
             send_message(connection, label_msg)
 
         prompt_for_tally_dump(matrix, level)
