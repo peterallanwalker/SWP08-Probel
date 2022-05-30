@@ -1,10 +1,7 @@
 # - Utility tools for CLI based "TUI"
 # Peter Walker, April 2022
 
-# Just gives me consistent header formatting at the mo
-# TODO, add other common CLI formatting as and when I need it moving forwards
-# TODO, use curses for more advance terminal manipulation, colour/highlights, clear/overwrite/cursor movement
-# TODO, e.g. for progress bars etc... or judt colorama, not tired that one yet.
+from string import punctuation
 
 TITLE = "Command Line Utilities"
 VERSION = 1.0
@@ -25,23 +22,36 @@ def print_header(title, version=None):
     print("\n{}\n -- {} --\n{}".format(header_width * '#', heading, header_width * '-'))
 
 
-def print_block(heading='', rows=None):
-    if rows is None:
-        rows = []
+def print_block(heading='', rows=()):
     width = len(heading)
     row_width = len(max(rows, key=len))
     if row_width > width:
         width = row_width
-    #width *= 2
-    print("{}\n {}".format(width * '-', heading))
+
+    print("{}\n{}".format(width * '-', heading))
     for row in rows:
-        print(" ", row)
-    print(width * '.')
+        print(row)
+    print("\n")
+
+
+def get_number(prompt='number'):
+    """
+    cli prompt user until they input a number
+    :param prompt: optional string for the prompt to describe the number being asked for
+    :return: int, from user input.
+    """
+    # - prompt user to input a number, repeat until they do and return the number as an int
+    while True:
+        n = input("Enter " + prompt + ": ").split()
+        if len(n) == 1 and n[0].strip(punctuation).isnumeric():
+            return int(n[0].strip(punctuation))
 
 
 if __name__ == '__main__':
     print_header(TITLE, VERSION)
 
     block_header = "Heading"
-    rows = ["Row 1", "Row 2", "Row 3", "Row 4"]
-    print_block(block_header, rows)
+    content = ["Row 1", "Row 2", "Row 3", "Row 4"]
+    print_block(block_header, content)
+
+

@@ -6,6 +6,8 @@
 
 import cli_utils
 import swp_utils_02 as utils
+from swp_node_03 import Node
+
 
 TITLE = 'SWP Messages'
 VERSION = 0.3
@@ -54,7 +56,7 @@ def decode(encoded_message):
             destination = utils.decode_labels_destination(encoded_message)
             matrix, level = utils.decode_matrix_level(encoded_message)
             labels = utils.get_labels(encoded_message)
-            char_len =
+            char_len = encoded_message[utils.CHAR_LEN_BYTE]
             return PushLabels(destination, labels, matrix, char_len)
         else:
             raise ValueError("[swp_massage.decode]: Command not yet supported")
@@ -72,11 +74,10 @@ class Response:
 
     def __str__(self):
         if self.command == 'ACK':
-            description = "Receipt of valid message acknowledged"
+            description = " - Receipt of valid message acknowledged"
         else:
-            description = "Not Acknowledged (message received but not considered valid"
-        return "[swp_message object]: Command: {}{}, encoded: {}" \
-            .format(self.command.upper(), description, self.encoded)
+            description = " - Not Acknowledged (message received but not considered valid"
+        return "[swp_message object]: Command: {}{}".format(self.command.upper(), description)
 
 
 class Connect:
@@ -129,9 +130,8 @@ class Connect:
 
     def __str__(self):
         return "[swp_message object]: Command: {} ({}), matrix: {}, level: {}, " \
-               "source: {}, destination: {}, encoded: {}".format(self.command.upper(), utils.COMMANDS[self.command],
-                                                                 self.matrix, self.level, self.source, self.destination,
-                                                                 self.encoded)
+               "source: {}, destination: {}".format(self.command.upper(), utils.COMMANDS[self.command],
+                                                    self.matrix, self.level, self.source, self.destination,)
 
 
 class Connected(Connect):
@@ -167,8 +167,8 @@ class GetConnections:
         return _format_message(data)
 
     def __str__(self):
-        return "[swp_message object]: Command: {} ({}), matrix: {}, level: {}, encoded: {}" \
-            .format(self.command.upper(), utils.COMMANDS[self.command], self.matrix, self.level, self.encoded)
+        return "[swp_message object]: Command: {} ({}), matrix: {}, level: {}" \
+            .format(self.command.upper(), utils.COMMANDS[self.command], self.matrix, self.level)
 
 
 class PushLabels:
@@ -181,7 +181,7 @@ class PushLabels:
     as any destinations that are explicitly getting labels pushed to them.
     """
 
-    def __init__(self, first_destination, labels, matrix=None, char_len=12):
+    def __init__(self, first_destination, labels, matrix=0, char_len=12):
         """
         :param first_destination: Node object or int representing ID of the destination for the first label
         :param labels: list of strings - one per destination label
@@ -224,9 +224,9 @@ class PushLabels:
         return _format_message(data)
 
     def __str__(self):
-        return "[swp_message_object]: Command: {} ({}), matrix: {}, level: {}, first destination: {}, label/s: {}, " \
-               "encoded: {}".format(self.command.upper(), utils.COMMANDS[self.command],
-                                    self.matrix, self.level, self.destination, self.labels, self.encoded)
+        return "[swp_message_object]: Command: {} ({}), matrix: {}, level: {}, first destination: {}, label/s: {}" \
+               .format(self.command.upper(), utils.COMMANDS[self.command],
+                       self.matrix, self.level, self.destination, self.labels)
 
 
 def test_connect():
@@ -242,12 +242,12 @@ def test_connect():
                      Connect(Node.source(2, 3, 300), Node.destination(2, 3, 999))]
 
     for i, test in enumerate(test_messages):
-        print("message:", test, type(test.encoded))
-        print("sample:", test_results[i], type(test_results[i]))
+        #print("message:", test, type(test.encoded))
+        #print("sample:", test_results[i], type(test_results[i]))
         if test.encoded == test_results[i]:
-            print("PASS")
+            print("Test Connect {}: PASS".format(i + 1))
         else:
-            print("FAIL")
+            print("Test Connect {}: FAIL".format(i + 1))
 
 
 def test_connected():
@@ -264,13 +264,13 @@ def test_connected():
                 Connected(src_id, dest_id, matrix=0, level=0),
                 Connected(src, dst)]
 
-    for msg in messages:
-        print("message:", msg, type(msg.encoded))
-        print("sample:", test_result, type(test_result))
+    for i, msg in enumerate(messages):
+        #print("message:", msg, type(msg.encoded))
+        #print("sample:", test_result, type(test_result))
         if msg.encoded == test_result:
-            print("PASS")
+            print("Test Connected {}: PASS".format(i + 1))
         else:
-            print("FAIL")
+            print("Test Connected {}: FAIL".format(i + 1))
 
 
 def test_push_labels():
@@ -286,23 +286,20 @@ def test_push_labels():
                      PushLabels(dest, test_labels[1], char_len=8)]
 
     for i, message in enumerate(test_messages):
-        print("message:", message.encoded, type(message.encoded))
-
-        print("sample:", test_results[i], type(test_results[i]))
+        #print("message:", message.encoded, type(message.encoded))
+        #print("sample:", test_results[i], type(test_results[i]))
         if message.encoded == test_results[i]:
-            print("PASS")
+            print("Test Push Labels {}: PASS".format(i + 1))
         else:
-            print("FAIL")
+            print("Test Push Labels {}: FAIL".format(i + 1))
 
 
 if __name__ == '__main__':
-    from swp_node_03 import Node
-
     cli_utils.print_header(TITLE, VERSION)
     print("Tests...")
     test_connect()
     test_connected()
     test_push_labels()
 
-    msg = GetConnections(12, 10)
-    print(msg)
+    #msg = GetConnections(12, 10)
+    #print(msg)

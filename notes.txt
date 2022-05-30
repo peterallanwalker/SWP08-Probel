@@ -164,3 +164,10 @@ Encoded: b'\x10\x02\x04\x00\x00\x01\n\x05\xec\x10\x03'
 
 
 Enter source, destination & optional label:
+
+
+---------------------
+todo
+switch virtual router to us new message classes
+and reply to connect with connected.
+Also set up random connections and respond to tally dump request

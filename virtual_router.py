@@ -14,14 +14,14 @@
 
 import socket
 import threading
-import time
+#import time
 import datetime
 
-from swp_message_02 import Message
+import cli_utils
+import swp_message_03 as swp_message
 from swp_unpack import unpack_data
 from swp_node_02 import Node
-import swp_utils
-import cli_utils
+#import swp_utils
 
 TITLE = "Virtual Router"
 VERSION = 0.1
@@ -29,6 +29,7 @@ SWP_PORT = 61000
 
 
 def format_timestamp(t):
+    # Format a datetime object to Hour:Minute:Seconds, with seconds to 3 decimal places / milliseconds
     return t.strftime('%H:%M:%S.%f')[:-3]
 
 
@@ -108,6 +109,8 @@ if __name__ == '__main__':
 
             if msg:
                 # - If its in the receive buffer then its already been validated by checksum so let's ACK
+                cli_utils.print_block("[" + format_timestamp(timestamp) + "] <<< Received:",
+                                      [msg.__str__(), msg.encoded])
                 print("[" + format_timestamp(timestamp) + "] <<< Received:", msg.summary, "\nEncoded:",
                       msg.encoded)
 
