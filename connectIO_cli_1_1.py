@@ -14,6 +14,7 @@ import connectIO_cli_settings as config
 from connection_02 import Connection
 import swp_message_03 as swp_message
 from swp_node_03 import Node
+import swp_utils_02 as swp_utils
 
 
 # Time to wait for ACK before retry.
@@ -27,6 +28,7 @@ VERSION = 1.1
 
 def format_timestamp(t):
     # takes a datetime.datetime object and returns as formatted string
+    # TODO - DEPREACTED, MOVED TO SWP_UTILS
     return t.strftime('%H:%M:%S.%f')[:-3]  # - truncated to millisecond / 3 decimal places on the seconds field.
 
 
@@ -93,8 +95,10 @@ def send_message(conn, msg):
     ack = False
     tries = 0
 
-    cli_utils.print_block("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending:",
-                          [msg.__str__(), "Encoded: " + str(msg.encoded)])
+    #cli_utils.print_block("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending:",
+    #                      [msg.__str__(), "Encoded: " + str(msg.encoded)])
+
+    swp_utils.print_message(datetime.datetime.now(), "sending", msg)
 
     conn.send(msg)
     t = time.time()
@@ -107,8 +111,9 @@ def send_message(conn, msg):
             timestamp, response = conn.get_message()
             response = swp_message.decode(response)
 
-            cli_utils.print_block("[" + format_timestamp(timestamp) + "] <<< Received:",
-                                  [response.__str__(), "Encoded: " + str(response.encoded)])
+            #cli_utils.print_block("[" + format_timestamp(timestamp) + "] <<< Received:",
+            #                      [response.__str__(), "Encoded: " + str(response.encoded)])
+            swp_utils.print_message(timestamp, "received", swp_message)
 
     if not response:
         print("Timeout, no response from router after {}s".format(TIMEOUT))

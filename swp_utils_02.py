@@ -13,7 +13,7 @@
 import cli_utils
 
 TITLE = "SWP08 utilities"
-VERSION = 1.1
+VERSION = 1.2
 
 # - SPECIAL VALUES
 # - DLE is a special value used to identify SOM/EOM. Wherever 0x10/16 is within payload it should be escaped
@@ -44,6 +44,27 @@ COMMANDS = {"connect": 2,  # Send to router to make a connection.
 
 # LABEL MESSAGE LENGTH CODES, keys - num chars, values - coded value
 CHAR_LEN_CODES = {4: 0, 8: 1, 12: 2, 16: 3, 32: 4}
+
+
+def format_timestamp(t):
+    # takes a datetime.datetime object and returns as formatted string
+    return t.strftime('%H:%M:%S.%f')[:-3]  # - truncated to millisecond / 3 decimal places on the seconds field.
+
+
+def print_message(timestamp, direction, msg):
+    """
+    :param timestamp: datetime.datetime object
+    :param direction: str - "sent" or "received"
+    :param msg: swp_message object
+    :return:
+    """
+    if direction == "sending":
+        direction_text = ">>> Sending:"
+    else:
+        direction_text = "<<< Received:"
+
+    cli_utils.print_block("[" + format_timestamp(timestamp) + "] " + direction_text,
+                          [msg.__str__(), "Encoded: " + str(msg.encoded)])
 
 
 def is_same_matrix_and_level(source, destination):

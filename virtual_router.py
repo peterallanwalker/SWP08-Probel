@@ -21,10 +21,10 @@ import cli_utils
 import swp_message_03 as swp_message
 from swp_unpack import unpack_data
 from swp_node_02 import Node
-#import swp_utils
+import swp_utils_02 as swp_utils
 
 TITLE = "Virtual Router"
-VERSION = 0.1
+VERSION = 1.0
 SWP_PORT = 61000
 
 
@@ -105,14 +105,15 @@ if __name__ == '__main__':
     while True:
         timestamp, received = connection.get_message()
         if received:
-            msg = Message.decode(received)
+            msg = swp_message.decode(received)
 
             if msg:
                 # - If its in the receive buffer then its already been validated by checksum so let's ACK
-                cli_utils.print_block("[" + format_timestamp(timestamp) + "] <<< Received:",
-                                      [msg.__str__(), msg.encoded])
-                print("[" + format_timestamp(timestamp) + "] <<< Received:", msg.summary, "\nEncoded:",
-                      msg.encoded)
+                swp_utils.print_message(timestamp, "received", msg)
+                #cli_utils.print_block("[" + format_timestamp(timestamp) + "] <<< Received:",
+                #                      [msg.__str__(), msg.encoded])
+                #print("[" + format_timestamp(timestamp) + "] <<< Received:", msg.summary, "\nEncoded:",
+                #      msg.encoded)
 
                 print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending: ACK\nEncoded", bytes(swp_utils.ACK))
 
@@ -125,11 +126,11 @@ if __name__ == '__main__':
                                        "test", "x", "test x", "test", "source")
                     # TODO, response should be a "connected" message,
                     #  but responding with a "connect" works fine for testing
-                    response = Message.connect(source, destination)
+                    response = swp_message.Connect(source, destination)
 
-                    print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending:", response.summary,
-                          "\nEncoded", response.encoded)
-
+                    #print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending:", response.summary,
+                    #      "\nEncoded", response.encoded)
+                    swp_utils.print_message(datetime.datetime.now(), "sending", response)
                     connection.send(response.encoded)
 
             else:
