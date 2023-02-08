@@ -3,7 +3,7 @@ LOCALHOST = "127.0.0.1"
 
 if __name__ == '__main__':
     import time
-    import swp_message_03 as swp
+    import swp_message as swp
 
     client = Client(LOCALHOST)
     while not client.status:

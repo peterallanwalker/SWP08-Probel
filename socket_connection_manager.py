@@ -127,7 +127,7 @@ class Client(Connection):
 
 
 if __name__ == '__main__':
-    import swp_message_03 as swp
+    import swp_message as swp
     import time
     cli_utils.print_header(TITLE, VERSION)
     server = Server(LOCALHOST)

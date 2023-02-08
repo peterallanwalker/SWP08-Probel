@@ -6,7 +6,7 @@
 
 import cli_utils
 import swp_utils as utils
-from swp_node_03 import Node
+from swp_node import Node
 
 TITLE = 'SWP Messages'
 VERSION = 0.3
@@ -257,6 +257,8 @@ class PushLabels:
             .format(self.command.upper(), utils.COMMANDS[self.command],
                     self.matrix, self.level, self.destination, self.labels)
 
+
+# TEST FUNCTIONS
 
 def test_connect():
     # - Proven connect message for matrix 0, level 0, source 0, destination 1

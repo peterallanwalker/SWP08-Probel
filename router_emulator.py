@@ -7,9 +7,9 @@ import datetime
 
 import cli_utils
 import swp_utils
-from import_io_06 import import_io_from_csv
+from import_io import import_io_from_csv
 from socket_connection_manager import Server
-import swp_message_03 as swp_message
+import swp_message as swp_message
 
 TITLE = "SWP08/Probel Router Emulator"
 VERSION = 1.1
@@ -115,6 +115,6 @@ if __name__ == '__main__':
     print("Destinations:")
     for dst in router.destinations:
         print(dst)
-
+    print("Listening for client connections...")
     while True:
         router.process_incoming_messages()

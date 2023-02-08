@@ -9,10 +9,10 @@ import datetime
 from string import punctuation
 
 import cli_utils
-import settings_cli as config
+import settings as config
 from client_connection import Connection
-import swp_message_03 as swp_message
-from swp_node_03 import Node
+import swp_message
+from swp_node import Node
 import swp_utils as swp_utils
 
 
