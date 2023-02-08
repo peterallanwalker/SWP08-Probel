@@ -1,6 +1,6 @@
 # SWP08/Probel
 
-Download [SWP-08-Probel](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/master.zip)
+Download: [SWP-08-Probel](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/master.zip)
 
 ### Router control using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf)
 (Other versions of the protocol doc are available in [this repo's protocol docs folder](https://github.com/peterallanwalker/SWP08-Probel/tree/master/protocol%20docs))
