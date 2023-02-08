@@ -196,7 +196,7 @@ class CrossPointTallyDumpWord:
     def _encode(self):
         matrix_level = utils.encode_matrix_level(self.matrix, self.level)
         data = [utils.COMMANDS[self.command], matrix_level, len(self.sources),
-                int(self.destination / 256), self.destination % 256
+                int(self.destination / 256), self.destination % 256]
         return _format_message(data)
 
 

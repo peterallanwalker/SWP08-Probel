@@ -3,6 +3,7 @@
 # - Peter Walker, June 2021.
 
 import datetime
+import sys
 import time
 import socket
 import threading
@@ -29,6 +30,7 @@ RECEIVE_TIMEOUT = 10
 class Connection:
     def __init__(self, ip_address, log=None):
         self.address = ip_address
+        self.port = swp_utils.PORT
         self.sock = None
         self.status = 'Starting'
 
@@ -64,7 +66,8 @@ class Connection:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.settimeout(TIMEOUT)
             # self.sock.connect((self.address, self.port))
-            self.sock.connect((self.address, swp_utils.PORT))
+            #self.sock.connect((self.address, swp_utils.PORT))
+            self.sock.connect((self.address, self.port))
             print('[Connection]: Connection established with address {} on port {}'.format(self.address, swp_utils.PORT))
 
             # I just have to send any message, not this one specifically)
@@ -77,6 +80,15 @@ class Connection:
             self.close()
             # self.sock = False
             self.sock = None
+
+        except ConnectionRefusedError as e:
+            print('[Connection]: socket timeout - Failed to create connection with address {} on port {}'.format(
+                self.address, self.port))
+            print(e)
+            self.close()
+            # self.sock = False
+            self.sock = None
+            sys.exit()
 
     def _run(self):
 
