@@ -1,10 +1,10 @@
-# SWP08/Probel
+# SWP08/Probel - ConnectIO CLI, V1.2
 
-Router control - Source to destination cross-point switching and pushing of labels using the 
-[SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf)
+A Python3 application for testing router control - Source to destination cross-point switching and pushing of labels 
+using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf)
 (Other versions of the protocol doc are available in [this repo's protocol docs folder](https://github.com/peterallanwalker/SWP08-Probel/tree/master/protocol%20docs))
 
-[Download SWP-08-Probel.zip](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/master.zip)
+[Download ConnectIO CLI V1.2](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
 
 Cross-point switching tested with Calrec Brio and Apollo+/Impulse audio mixers.
 Label pushing tested with Calrec Apollo+ (label exchange is not supported on Brio or Summa)
@@ -16,8 +16,7 @@ and enter `audit/update 105` & `audit/update 70` to enable SWP related debug out
 repeatedly entering `help` until the help info is displayed gets it recognising input)
 
 ## connectIO.py
-A Python3 script providing CLI based interaction for exchanging SWP08 messages with a router. 
-
+The main script, providing CLI based user interaction for exchanging SWP08 messages with a router. 
 
 
 ### swp_message.py
