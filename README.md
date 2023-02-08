@@ -27,8 +27,8 @@ incoming messages, and provides public methods for sending messages and getting 
 Connection.send() accepts raw byte strings or swp_message objects. Connection.get_message returns the oldest message in the input buffer (along with the timestamp of when it was received) 
 
 #### swp_message.py
-Provides classes for various SWP08 message types that accept human parameters, and a `decode()` method that parses
-bytes and returns message classes.
+Provides classes for various SWP08 message types that accept human parameters and provides SWP encoded bytes, 
+and a `decode()` method that parses bytes and returns the relevant message class.
 
 #### swp_unpack.py
 Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a list of separated messages. 
