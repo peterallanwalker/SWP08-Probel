@@ -1,10 +1,6 @@
 # SWP08/Probel
 
-Download: [SWP-08-Probel Master](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/master.zip)
-
-Download: [ConnectIO CLI V1.2 (stable CLI based utility for testing SWP08 interation with a router](https://github.com/peterallanwalker/SWP08-
-
-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
+[Download ConnectIO CLI V1.2](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
 
 ConnectIO GUI - crosspoint matrix with label handling is beta
 
