@@ -1,26 +1,23 @@
 # SWP08/Probel
 
-Download [SWP-08-Probel](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/master.zip)
-
-### Router control using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf)
+Router control - Source to destination cross-point switching and pushing of labels using the 
+[SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf)
 (Other versions of the protocol doc are available in [this repo's protocol docs folder](https://github.com/peterallanwalker/SWP08-Probel/tree/master/protocol%20docs))
 
-## Source to destination cross-point switching and pushing of labels.
+[Download SWP-08-Probel.zip](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/master.zip)
 
 Cross-point switching tested with Calrec Brio and Apollo+/Impulse audio mixers.
 Label pushing tested with Calrec Apollo+ (label exchange is not supported on Brio or Summa)
 
-To help with debugging if needed, telnet into the Calrec router on port 55555 (default address of Impulse router on the internal network via interface 2 is 172.16.255.10), and enter `audit/update 105` & `audit/update 70` to enable SWP related debug output. (Note router telnet session may not be responsive to commands initially, in which case, repeatedly entering `help` untill the help info is displayed gets it recognising input)
+To help with debugging if needed, telnet into the Calrec router on port 55555 
+(default address of Impulse router on the internal network via interface 2 is 172.16.255.10), 
+and enter `audit/update 105` & `audit/update 70` to enable SWP related debug output from the Calrec router. 
+(Note router telnet session may not be responsive to commands initially, in which case, 
+repeatedly entering `help` until the help info is displayed gets it recognising input)
 
-#### TODO:
-- [ ] Handle DLE's within payload properly... check I'm properly escaping them when encoding payload. Decode is failing, 
-e.g. connect destination 16 to source 3, gets encoded as \x16\x03 which I'm identifying as a false EOM but am not parsing
-  to find the actual EOM in such case!
+## connectIO.py
+A Python3 script providing CLI based interaction for exchanging SWP08 messages with a router. 
 
-## Project Files
-
-### connectIO.py
-A main entry point to the application for users - creates a connection (based on last used settings if any, prompts for confrim/edit), prompts for individual source-to-destination routes with optional label to pass.
 
 
 ### swp_message.py
@@ -77,9 +74,9 @@ Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a li
 ### connection_settings.py
 Handles loading of last used settings, user confirm/edit and save as json.
 
-### prot0x.py
-Rough testing/in-progress dev scripts.
-
-
+### TODO:
+- [ ] Handle DLE's within payload properly... check I'm properly escaping them when encoding payload. 
+  Decode is failing, e.g. connect destination 16 to source 3, gets encoded as \x16\x03 which 
+  I'm identifying as a false EOM but am not parsing to find the actual EOM in such case!
 
  
