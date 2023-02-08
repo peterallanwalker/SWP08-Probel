@@ -2,7 +2,7 @@ import time
 import random
 
 import cli_utils
-import connectIO_cli_settings as config
+import settings_cli as config
 from swp_router_06 import Router
 
 TITLE = "Unit tests for swp_router.py"

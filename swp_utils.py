@@ -1,42 +1,41 @@
-# SWP08 UTILITIES
-# Constants and helper functions for working with the SWP08 router control protocol
-# Peter Walker, June 2021
+# - Constants and utility functions for working with the SWP08/Probel protocol
+# - Peter Walker, May 2022.
 #
-# Updated March 2022 - added support for pushing labels.
-# ... Note this is not typical usage of the protocol,
-#     it is used by VSM to push labels to Calrec Apollo/Artemis audio mixers
+# - Protocol doc:
+# -   https://github.com/peterallanwalker/SWP08-Probel/blob/master/protocol%20docs/SW-P-08%20Issue%2032.pdf
 #
-# SWP08 protocol info:
-# https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf
-# Other versions of the protocol doc are available in the project's protocol docs folder
+# - Message Structure (protocol doc page 9):
+# -   SOM, DATA, BYTE-COUNT, CHECKSUM, EOM
+# -   DATA = Command Byte + payload
+# -     Max size of DATA should be 128 bytes (before DLE padding/escaping)
+# -   BYTE-COUNT = Number of bytes in DATA
 
 import cli_utils
 
-# This file
-import swp_utils
-
 TITLE = "SWP08 utilities"
-VERSION = 1.0
+VERSION = 1.2
+PORT = 61000  # - TCP port for SWP08 protocol
 
-# - CONSTANTS
-DLE = 0x10  # - DLE is a special value used to identify headers/EOM. Wherever DLE/0x10/16 is used within payload, it should be duplicated DLE DLE to differentiate
-SOM = [0x10, 0x02]  # SWP08 Message header ("Start Of Message")
-EOM = [0x10, 0x03]  # SWP08 Message end ("End of Message")
-ACK = [0x10, 0x06]  # Returned by router to acknowledge receipt of a valid message
-NAK = [0x10, 0x15]  # Returned by router if message is not valid (e.g. wrong format/byte-count/checksum)
+# - SPECIAL VALUES
+# - DLE is a special value used to identify SOM/EOM. Wherever 0x10/16 is within payload it should be escaped
+# - (by duplicating it, i.e. b'\x10\x10' represents a single 0x10 value outside of a SOM/EOM
+DLE = 16
+SOM = [DLE, 2]  # - SWP message header ("Start of Message")
+EOM = [DLE, 3]  # - SWP message end ("End of Message")
+ACK = bytes([DLE, 6])  # - Acknowledged message returned by router on receipt of a valid message.
+NAK = bytes([DLE, 21])  # - Not Acknowledged message returned by router on receipt of an invalid message.
 
-COMMAND_BYTE = 2    # Command type is set in the 3rd byte of an SWP08 message
-MATRIX_LEVEL_BYTE = 3  # for connect, connected, push labels, push labels extended
+COMMAND_BYTE = 2  # - Command type is the 3rd byte of any SWP message other than ACK/NAK (first byte after SOM)
+MATRIX_LEVEL_BYTE = 3  # - For Connect, Connected, Push Labels, Push Labels Extended (+ others)
+SOURCE_BYTE = 6  # - For Connect & Connected messages
+DESTINATION_BYTE = 5  # - For Connect, Connected, Push Labels, Push Labels Extended (+ others)
+MULTIPLIER_BYTE = 4  # - For Connect/Connected messages
+CHAR_LEN_BYTE = 4  # - For Push Labels / Push Labels Extended messages
+LABEL_QTY_BYTE = 7  # - For Push Labels / Push Labels Extended messages
+FIRST_LABEL_CHAR_BYTE = 8  # - For Push Labels / Push Labels Extended messages
 
-# - FOLLOWING ARE ONLY CORRECT FOR CONNECT AND CONNECTED MESSAGES...
-# - TODO - provide a more genric way of looking up source/dest bytes based on message type
-# - ... actually byte 5 is the destination DIV for a label message
-SOURCE_BYTE = 6
-DESTINATION_BYTE = 5
-MULTIPLIER_BYTE = 4  # Connect/Connected messages
-
-COMMANDS = {"connect": 0x02,    # Send to router to set a connection
-            "connected": 0x04,  # Sent from router when a connection is made
+COMMANDS = {"connect": 2,  # Send to router to make a connection.
+            "connected": 4,  # Received from router when a connection is made.
             "push_labels": 107,
             "push_labels_extended": 235,
             "cross-point tally dump request": 21,
@@ -44,22 +43,107 @@ COMMANDS = {"connect": 0x02,    # Send to router to set a connection
             "cross-point tally dump (word/extended)": 23,
             }
 
-# keys - num chars, values - coded value
-CHAR_LEN_CODES = {4: 0,
-                  8: 1,
-                  12: 2,
-                  16: 3,
-                  32: 4
-                  }
+# LABEL MESSAGE LENGTH CODES, keys - num chars, values - coded value
+CHAR_LEN_CODES = {4: 0, 8: 1, 12: 2, 16: 3, 32: 4}
+
+
+def format_timestamp(t):
+    # takes a datetime.datetime object and returns as formatted string
+    return t.strftime('%H:%M:%S.%f')[:-3]  # - truncated to millisecond / 3 decimal places on the seconds field.
+
+
+def print_message(timestamp, direction, msg):
+    """
+    :param timestamp: datetime.datetime object
+    :param direction: str - "sent" or "received"
+    :param msg: swp_message object
+    :return:
+    """
+    if direction in ("sending", "sent"):
+        direction_text = ">>> Sending:"
+    else:
+        direction_text = "<<< Received:"
+
+    cli_utils.print_block("[" + format_timestamp(timestamp) + "] " + direction_text,
+                          [msg.__str__(), "Encoded: " + str(msg.encoded)])
+
+
+def is_same_matrix_and_level(source, destination):
+    """
+    :param source: Node object
+    :param destination: Node object
+    :return: Boolean
+    """
+    if source.matrix == destination.matrix and source.level == destination.level:
+        return True
+    else:
+        return False
+
+
+def encode_matrix_level(matrix, level):
+    """
+    Protocol doc section 3.1.2, page 13.
+    Encodes matrix & level into a single byte, bits 0-3 for level, bits 4-7 for matrix
+    :param matrix: int
+    :param level: int
+    :return: int representing matrix and level
+    """
+    if matrix not in range(16) or level not in range(16):
+        error_message = "[swp_utils.encode_matrix_level]: Matrix and level need to be within range 0 to 15, " \
+                        "values passed - matrix: {}, level: {}" \
+            .format(matrix, level)
+        raise ValueError(error_message)
+
+    # - Convert values to 4 bit binary
+    matrix = format(matrix, '04b')
+    level = format(level, '04b')
+    # - Concatenate to 8 bits and return as decimal int
+    return int(matrix + level, 2)
+
+
+def encode_multiplier():
+    pass
+
+
+def encode_source_destination_multiplier(source, destination):
+    """
+    Protocol doc section 3.1.2, page 13
+    The multiplier byte allows source and destination IDs up to 1023 to be used
+    :param source: int in range 0-1023
+    :param destination: int in range 0-1023
+    :return: int, decimal, encoded multiplier for the given source and destination IDs
+    """
+    if source not in range(1024) or destination not in range(1024):
+        error_message = "[swp_utils.encode_source_destination_multiplier]: Source and destination IDs must be in range 0 to 1023, " \
+                        "\n\tReceived Source: {}, Destination: {}".format(source, destination)
+        raise ValueError(error_message)
+
+    bit7 = '0'
+    bit3 = '0'
+    # - Multiplier values are source/dest DIV 128
+    # - Using format to convert dec values to binary padded to 3 bits
+    bits4_6 = format(int(destination / 128), '03b')
+    bits0_3 = format(int(source / 128), '03b')
+    binary_num = '0b' + bit7 + bits4_6 + bit3 + bits0_3
+    return int(binary_num, 2)
+
+
+def decode_matrix_level(msg):
+    d = msg[MATRIX_LEVEL_BYTE]
+    d = format(d, '08b')  # converted to 8bit binary
+    matrix = d[:4]  # - 4 MSBs (bits 4-7)
+    level = d[4:]  # - 4 LSBs (bits 0-3)
+    matrix = int(matrix, 2)
+    level = int(level, 2)
+    return matrix, level
 
 
 def calculate_checksum(data):
     """
         Calculates and returns a checksum for an SWP08 message.
-        :param data: takes an array/list of values,
-            one per byte of an SWP08 message's DATA and BTC (byte count),
-            e.g. [<COMMAND byte>, <DATA byte 1>, ... , <DATA byte n>, <BTC - byte count>]
-
+        :param data: list of byte values that make up the message payload
+            [command byte, data byte 1, ... , data byte n, byte-count byte]
+        :return: int - decimal value of checksum for data
     """
     checksum = 0
     for value in data:
@@ -84,40 +168,79 @@ def is_checksum_valid(message):
 
 def twos_compliment(value):
     """
-    :param value: integer
-    :return: integer - two's compliment of the received value
+    :param value: int (decimal)
+    :return: int - decimal two's compliment of the received value
     """
-    # TODO - I've made a meal out of this, it works, but there must be a more elegant and concise way!
-    # TODO - replace manual padding to 8 bits with format(<value>, '#010b')
-    #  - takes decimal value converts to binary string padded with zeroes to 10 chars (includes '0b' at the begining
-    # https://stackoverflow.com/questions/16926130/convert-to-binary-and-keep-leading-zeros
-    # https://docs.python.org/2/library/string.html#format-specification-mini-language
+    # - https://stackoverflow.com/questions/16926130/convert-to-binary-and-keep-leading-zeros
+    # - https://docs.python.org/2/library/string.html#format-specification-mini-language
+    # - Convert to 8 bit binary value
+    value = format(value, '08b')
+    # - Invert the bits
+    value = ''.join('1' if x == '0' else '0' for x in value)
+    # - Add one, as per two's compliment
+    value = int(value, 2) + 1
 
-    value = bin(value)  # Convert to a binary string.
-    missing = 10 - len(value)  # Check supplied value is 8 bits (accounting for it being a string, prefixed with "0b"
+    # - If result is larger than 1 byte...
+    if value > 255:
+        value = bin(value)[-8:]  # - Convert to binary and take the last 8 bits
+        value = int(value, 2)  # - Convert back to decimal int
 
-    result = missing * "1"  # Pad out missing 8 bit MSB 0's with 1's (inverting as part of 2's comp)
-
-    for bit in range(2, len(value)):  # get rid of the "0b" at the beginning of the binary string and loop through bits
-        # invert bits
-        if value[bit] == "1":
-            result += "0"
-        elif value[bit] == "0":
-            result += "1"
-
-    # add one to the result
-    result = int(result, 2) + 1  # TODO, should be able to +1 without converting to int
-
-    # If result is larger than 1 byte, trim to 1 byte by taking just the 8 least significant bits
-    if result > 255:
-        result = bin(result)     # Convert back to binary
-        result = (result[-8:])   # Take last 8 bits
-        result = int(result, 2)  # Convert back to decimal int
-
-    return result
+    return value
 
 
-def get_labels_destination(msg):
+def set_label_length(labels, length):
+    """
+    Check label lengths and truncate if necessary
+    :param labels: list of strings
+    :param length: int - number of chars for label format.
+    :return: list of strings
+    """
+    valid_label_lengths = (4, 8, 12, 16, 32)
+    if length not in valid_label_lengths:
+        raise ValueError("[swp_utils.truncate_labels]: Invalid character length: {}, must be one of: {}".
+                         format(length, valid_label_lengths))
+    else:
+        fixed_len = []
+        for label in labels:
+            if len(label) > length:
+                # - Truncate long labels
+                fixed_len.append(label[:length])
+            else:
+                # - Pad short labels (also passes labels that are already the correct length)
+                fixed_len.append(label.ljust(length))
+        return fixed_len
+
+
+def format_labels(labels):
+    """
+    :param labels: List of strings
+    :return: list of strings converted to their decimal ASCII values
+    """
+    r = []
+    for label in labels:
+        for char in label:
+            r.append(ord(char))
+    return r
+
+
+def decode_connect_source_destination(encoded_message):
+    """
+    Parses Connect (02) and Connected (04) messages to extract source and destination IDs
+    :param encoded_message: bytes - valid encoded SWP message
+    :return: int, int - source ID, destination ID
+    """
+    source = encoded_message[SOURCE_BYTE]
+    destination = encoded_message[DESTINATION_BYTE]
+    # - Converted byte to 8 bit binary string using format
+    multiplier = format(encoded_message[MULTIPLIER_BYTE], '08b')
+    source_multiplier = multiplier[-3:]  # - bits 0-2 (3 LSBs)
+    dest_multiplier = multiplier[-7:-4]  # - bits 4-6
+    source += int(source_multiplier, 2) * 128
+    destination += int(dest_multiplier, 2) * 128
+    return source, destination
+
+
+def decode_labels_destination(msg):
     """
     Return the destination ID of a push_labels (107) / push_labels_extended (235) message
     :param msg: byte string - validated encoded label message
@@ -128,89 +251,50 @@ def get_labels_destination(msg):
     return 256 * div + mod
 
 
-def encode_multiplier(source, destination):
+def get_labels(msg):
     """
-    Creates the multiplier byte as used in Connect and Connected messages
-    ... This byte needs to be correctly set in order to pass source/destination ID values > 255, up to a max of 1023
-    (think you're suppose to be able to pass IDs up into the 10's of thousands though, not sure how yet!)
-    :param source: int - source id
-    :param destination: int - destination id
-    :return: encoded multiplier byte
+    :param msg: byte string - validated encoded push labels or push labels extended message
+    :return: list of strings - labels
     """
+    label_qty = msg[LABEL_QTY_BYTE]
+    char_len = list(CHAR_LEN_CODES.keys())[list(CHAR_LEN_CODES.values()).index(msg[CHAR_LEN_BYTE])]
+    labels = []
+    i = FIRST_LABEL_CHAR_BYTE
+    for _ in range(label_qty):
+        label = ''
+        for letter in range(char_len):
+            label += chr(msg[i])
+            i += 1
+        labels.append(label)
 
-    if source > 1024 or destination > 1024:
-        # TODO prevent input or handle > 1024 (should be able to handle much bigger numbers)
-        print("[swp_utils.encode_multiplier]: WARNING! Source & Destination IDs must be within range 0 - 1024" 
-              " (received Source:{}, Destination:{})".format(source, destination))
-        return False
-
-    bit7 = '0'
-    bit3 = '0'
-
-    # - using format to convert dec to binary and pad to 3 bits
-    # - (5 - includes '0b' prefix)
-    bits4_6 = format(int(destination / 128), '03b')
-    bits0_3 = format(int(source / 128), '03b')
-    binary_num = '0b' + bit7 + bits4_6 + bit3 + bits0_3
-    return int(binary_num, 2)
+    #print("DEBUG CHAR LEN:", char_len)
+    #print("DEBUG LABEL QTY:", label_qty)
+    return labels
 
 
-def decode_source_destination(msg):
-    """
-    Parses Connect (02) & Connected (04) messages to extract source and destination IDs
-            using the multiplier byte (that allows for IDs > 255, but limited to 1024)
-    :param msg: bytestring - validated swp message
-    :return: int, int, source ID, destination ID
-    """
-    # TODO - shouldnt need to have this check here
-    #  as I'll only be calling this on message types that have a multiplier byte
-    if msg[COMMAND_BYTE] not in (COMMANDS["connect"], COMMANDS["connected"]):
-        print("[swp_utils.decode_source_destination]: This function only supports Connect(02)/Connected(04) messages,"
-              " {} passed".format(msg[COMMAND_BYTE]))
-        return False, False
+def test_get_labels():
+    test_messages = [b'\x10\x02k\x00\x02\x00\x00\none         two         three       four        five        six'
+                     b'         seven       eight       nine        ten         ~Z\x10\x03',
+                     b'\x10\x02k\x00\x01\x00\x00\x06testing eight   char    labels  so      some ver65\x10\x03']
 
-    source = msg[SOURCE_BYTE]
-    destination = msg[DESTINATION_BYTE]
-    multiplier = format(msg[MULTIPLIER_BYTE], '08b')  # - byte converted to 8 bit binary string using format
-    source_mult = multiplier[-3:]  # - 3 LSBs (bits 0-2)
-    dest_mult = multiplier[-7:-4]   # - bits 4-6
-
-    source += int(source_mult, 2) * 128
-    destination += int(dest_mult, 2) * 128
-
-    return source, destination
+    test_label_lens = [12, 8]  # - label lengths passed in test_messages
+    for msg in test_messages:
+        print(get_labels(msg))
 
 
-def decode_matrix_level(msg):
-    d = msg[MATRIX_LEVEL_BYTE]
-    d = format(d, '08b')  # converted to 8bit binary
-
-    matrix = d[:4]  # - 4 MSBs
-    level = d[4:]  # - 4 LSBs
-
-    matrix = int(matrix, 2)
-    level = int(level, 2)
-    return matrix, level
+def match_destination(msg, destinations):
+    for dest in destinations:
+        if dest.matrix == msg.matrix and dest.level == msg.level and dest.id == msg.destination:
+            return dest
 
 
-def encode_matrix_level(matrix, level):
-    if matrix > 15 or level > 15:
-        print("[swp_utils.encode_matrix_level]: ** ERROR ** Matrix: {} & Level: {} passed. "
-              "Values need to be in range 0 - 15, ".format(matrix, level))
-        return False
-    # - Convert values to 4 bit binary
-    matrix = format(matrix, '04b')
-    level = format(level, '04b')
-    return int(matrix + level, 2)
+def match_source(msg, sources):
+    for src in sources:
+        if src.matrix == msg.matrix and src.level == msg.level and src.id == msg.source:
+            return src
 
 
 if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
-
-    #connected_message = b'\x10\x02\x04\x00\x00\n\x00\x05\xed\x10\x03'
-    #connected_message = b'\x10\x02\x04\xf0\x00\n\x00\x05\xed\x10\x03'
-    #print(decode_matrix_level(connected_message))
-
-    #matrix = 3
-    #level = 6
-    #print(encode_matrix_level(matrix, level))
+    print("Tests...")
+    test_get_labels()

@@ -12,7 +12,7 @@
 
 from string import punctuation  # - used just to parse/sanitise user input.
 
-import connectIO_cli_settings as config
+import settings_cli as config
 from archive.connection import Connection
 from swp_message import Message
 

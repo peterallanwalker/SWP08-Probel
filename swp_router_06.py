@@ -1,30 +1,17 @@
 # - Data model & comms interface to sit between UI and router.
 # - Peter Walker, April 2022
-import random
 import time  # - Just for debug
 
 import cli_utils
 from import_io_06 import import_io_from_csv
-from swp_node_02 import Node
-import connectIO_cli_settings as config
-from connection_02 import Connection
+import settings_cli as config
+from client_connection import Connection
 from swp_message_02 import Message
 from message_log import MessageLog
+from swp_utils import match_destination, match_source
 
 TITLE = 'SWP Router'
 VERSION = 0.6
-
-
-def match_destination(msg, destinations):
-    for dest in destinations:
-        if dest.matrix == msg.matrix and dest.level == msg.level and dest.id == msg.destination:
-            return dest
-
-
-def match_source(msg, sources):
-    for src in sources:
-        if src.matrix == msg.matrix and src.level == msg.level and src.id == msg.source:
-            return src
 
 
 class Router:
@@ -32,8 +19,7 @@ class Router:
     def __init__(self, settings, io_config=None):
         self.settings = settings
         self.log = MessageLog()
-        self.connection = Connection(settings["Router IP Address"], settings["Port"],
-                                     settings["Protocol"], log=self.log)
+        self.connection = Connection(settings["Router IP Address"], settings["Port"], log=self.log)
 
         if 'IO Config File' in self.settings:
             self.source_data = self.settings['IO Config File']

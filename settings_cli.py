@@ -5,7 +5,7 @@
 
 import json
 
-import swp_utils
+import swp_utils as swp_utils
 
 CONFIG_FILE = "connectIO_cli_settings.json"
 

@@ -5,8 +5,8 @@ import time  # - Just for debug
 
 import cli_utils
 from import_io_02 import import_io_from_csv
-import connectIO_cli_settings as config
-from connection_02 import Connection
+import settings_cli as config
+from client_connection import Connection
 from swp_message import Message
 from message_log import MessageLog
 

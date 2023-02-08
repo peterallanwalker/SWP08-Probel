@@ -1,14 +1,15 @@
-# CONNECTION
-# IP connection manager, buffers incoming messages, provides send and receive methods
-# Peter Walker, June 2021
-# Based on CSCP_connection, let's aim to keep it generic, with SWP08 specific handling external to this file.
+# - Client-side IP socket connection manager for SWP08/Probel controller
+# - Buffers incoming messages, provides send and receive methods.
+# - Peter Walker, June 2021.
+
 import datetime
 import time
 import socket
 import threading
 
-import swp_unpack as swp
-#import CSCP_unpack_1_1 as cscp
+import cli_utils
+import swp_utils
+from swp_unpack import unpack_data as swp
 
 # - V02 - add timestamps to messaging
 # - and a log, though that should maybe be in the router
@@ -19,38 +20,31 @@ import swp_unpack as swp
 # - TODO - fix connection retry / reconnect (think it woks for CSCP but isn't for SWP)
 
 
-TITLE = "Connection"
-VERSION = 0.2
-TIMEOUT = 3  # how long to wait when starting connection and receiving data.
+TITLE = "Client-side Connection"
+VERSION = 1.1
+TIMEOUT = 3  # - How long to wait when starting connection and receiving data.
 RECEIVE_TIMEOUT = 10
 
 
 class Connection:
-
-    def __init__(self, address, port, protocol="SWP08", log=None):
-
-        self._protocol = protocol
-
-        # Set the function to use for unpacking data based on the protocol being used
-        if protocol == "CSCP":
-            self._unpack = cscp.unpack_data
-        elif protocol == "SWP08":
-            self._unpack = swp.unpack_data
-
-        self.address = address
-        self.port = port
-
+    def __init__(self, ip_address, log=None):
+        self.address = ip_address
         self.sock = None
         self.status = 'Starting'
 
         # Received message buffer
         self._messages = []
-        self._residual_data = False  #
+        self._residual_data = False
         # Residual data is received data that cannot be parsed but might be the beginning of a message
         # whose remainder is in the next chunk of data to be received
 
+        # - I'm logging sent messages here in the connection to timestamp them at point of send
+        # - but I'm not logging the received messages here... received get timestamped and put into a buffer
+        # - ... I'm logging them in the router when popping off the receive buffer
+        # - ... to keep receive buffer thread as fast as possible (by not converting to message objects in that thread.
+        # - ...    - maybe unnecessary and would be easier to follow if sent and received logging was done in the same
+        #            place
         self.log = log
-
         self.receiver = threading.Thread(target=self._run)
 
         # TODO, check the following...
@@ -69,8 +63,9 @@ class Connection:
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.settimeout(TIMEOUT)
-            self.sock.connect((self.address, self.port))
-            print('[Connection]: Connection established with address {} on port {}'.format(self.address, self.port))
+            # self.sock.connect((self.address, self.port))
+            self.sock.connect((self.address, swp_utils.PORT))
+            print('[Connection]: Connection established with address {} on port {}'.format(self.address, swp_utils.PORT))
 
             # I just have to send any message, not this one specifically)
             # TODO - ping device / request some data
@@ -109,28 +104,18 @@ class Connection:
 
             if data:
                 self.pinged = False
-                #print("[connection.py.run]: DATA RECEIVED", data)
-
-                messages, self._residual_data = self._unpack(data, self._residual_data)  # TODO - TEST SPLIT MESSAGES
+                messages, self._residual_data = swp(data, self._residual_data)  # TODO - TEST SPLIT MESSAGES
 
                 if messages:
                     for msg in messages:
                         timestamp = datetime.datetime.now()
                         self._messages.append((timestamp, msg))
 
-
             elif self.pinged:
                 self.status = "Connection Lost!"
                 self.close()
                 self._connect()
                 self._run()
-
-    # TODO - dont think I'm using this? - JUST BEEN CALLING BY ACCIDENT INSTEAD OF GET_MESSAGE!!!!!
-    #def receive(self):
-    #    """ Check Receive Buffer """
-    #    self.sock.settimeout(None)
-    #    data = self.sock.recv(1024)
-    #    return data
 
     # TODO - dont think I'm using this, check proper behaviour for handling sockets and threads
     def close(self):
@@ -183,40 +168,24 @@ class Connection:
         """
         return len(self._messages)
 
-    # TODO - instead of flushing, keep n entries... might need a Log class?
-    #def flush_received_log(self):
-    #    self._received_log = []
-
-    #def flush_sent_log(self):
-    #    self._sent_log = []
-
-    #def sent_log_len(self):
-    #    return len(self._sent_log)
-
-    #def received_log_len(self):
-    #    return len(self._received_log)
-
 
 if __name__ == '__main__':
-
+    cli_utils.print_header(TITLE, VERSION)
     import time
 
-    print(20 * '#' + ' IP Connection Manager' + 20 * '#')
-
     # address = "172.29.1.24"  # Impulse default SWP08 Router Management adaptor
-    address = "192.169.1.201"  # Impulse added address for SWP08 Router on Interface 3
-
-    port = 61000  # Fixed port for SWP08
+    # address = "192.169.1.201"  # Impulse added address for SWP08 Router on Interface 3
+    address = "127.0.0.1"
+    # port = 61000  # Fixed port for SWP08
 
     # Open a TCP connection with the mixer/router
-    connection = Connection(address, port, protocol="SWP08")
+    connection = Connection(address)
 
-    # print("[connection.py] :", connection)
     time.sleep(1)
-    print("[connection.py] :", connection)
+    print("[{}] :".format(TITLE), connection)
 
     while True:
         message = connection.get_message()
         if message:
-            print("[connection_01]: messages in receive buffer: {}, message: {}".format(len(connection._messages),
+            print("[{}]: messages in receive buffer: {}, message: {}".format(TITLE, len(connection._messages),
                                                                                         message))

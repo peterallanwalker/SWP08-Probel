@@ -14,28 +14,23 @@
 
 import socket
 import threading
-#import time
+import time  # only using for debug right now
 import datetime
 
 import cli_utils
 import swp_message_03 as swp_message
 from swp_unpack import unpack_data
 from swp_node_02 import Node
-import swp_utils_02 as swp_utils
+import swp_utils as swp_utils
 
 TITLE = "Virtual Router"
 VERSION = 1.0
 SWP_PORT = 61000
 
 
-def format_timestamp(t):
-    # Format a datetime object to Hour:Minute:Seconds, with seconds to 3 decimal places / milliseconds
-    return t.strftime('%H:%M:%S.%f')[:-3]
-
-
 class SwpServer:
     """
-    Server-side socket connection for comms with swp controller apps
+    Server-side (router) socket connection for comms with swp controller apps
     """
     def __init__(self, ip_address, port):
         self.address = ip_address
@@ -58,9 +53,11 @@ class SwpServer:
             s.bind((self.address, self.port))
             while True:
                 s.listen()
-                self.connection, addr = s.accept()
-                with self.connection:
 
+                # - s.accept() seems to block until a client connects in
+                self.connection, addr = s.accept()
+
+                with self.connection:
                     print('New connection with client:', addr, self.connection)
                     data = self.connection.recv(1024)  # - Receive up to 1MB of data
                     while data:
@@ -95,7 +92,7 @@ class SwpServer:
 
 if __name__ == '__main__':
     cli_utils.print_header(TITLE, VERSION)
-    print("Listening for SWP08 messages...")
+    print("Listening for client connection...")
 
     server_address = '127.0.0.1'  # - localhost, to exchange data with apps running on the same PC
     port = SWP_PORT
@@ -106,19 +103,21 @@ if __name__ == '__main__':
         timestamp, received = connection.get_message()
         if received:
             msg = swp_message.decode(received)
-
             if msg:
-                # - If its in the receive buffer then its already been validated by checksum so let's ACK
                 swp_utils.print_message(timestamp, "received", msg)
-                #cli_utils.print_block("[" + format_timestamp(timestamp) + "] <<< Received:",
-                #                      [msg.__str__(), msg.encoded])
-                #print("[" + format_timestamp(timestamp) + "] <<< Received:", msg.summary, "\nEncoded:",
-                #      msg.encoded)
 
-                print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending: ACK\nEncoded", bytes(swp_utils.ACK))
+                # - If a message is in the receive buffer,
+                # - then it has already been validated by checksum so let's respond with an ACK
+                # - TODO provide a better way of creating an ACK message, or just change send to accept bytes
 
-                connection.send(bytes(swp_utils.ACK))  # - TODO provide a better way of creating an ACK message, or just change send to accept bytes
+                connection.send(bytes(swp_utils.ACK))
 
+                if msg.command == "connect":
+                    # - TODO, save connections / maybe import a csv (optional)
+                    response = swp_message.Connected(msg.source, msg.destination, matrix=msg.matrix, level=msg.level)
+                    swp_utils.print_message(datetime.datetime.now(), "sending", response)
+                    connection.send(response.encoded)
+                """
                 if msg.command == "connect":
                     source = Node(msg.matrix, msg.level, msg.source,
                                   "test", "x", "test x", "test", "source")
@@ -132,7 +131,7 @@ if __name__ == '__main__':
                     #      "\nEncoded", response.encoded)
                     swp_utils.print_message(datetime.datetime.now(), "sending", response)
                     connection.send(response.encoded)
-
+                """
             else:
                 print("[" + format_timestamp(timestamp) + "] <<< Received: Cannot Decode - ", received)
                 print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending: NAK\n", bytes(swp_utils.ACK))

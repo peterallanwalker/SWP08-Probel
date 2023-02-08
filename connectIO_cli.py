@@ -1,47 +1,28 @@
-# ConnectIO
-# For testing SWP08/Probel router control - cross-point switching + label pushing
+# - ConnectIO CLI
+# - CLI interface for For testing the sending of SWP08/Probel control messages to a router,
+# - making connections, pushing labels and requesting connection/tally data.
+
 # Peter Walker, March 2022
-
-
-# TODO,
-
 
 import time
 import datetime
-from string import punctuation  # - used just to sanitise user input.
+from string import punctuation
 
 import cli_utils
-import connectIO_cli_settings as config
-from connection_02 import Connection
-import swp_message_03 as message
-from swp_node_02 import Node
+import settings_cli as config
+from client_connection import Connection
+import swp_message_03 as swp_message
+from swp_node_03 import Node
+import swp_utils as swp_utils
 
 
 # Time to wait for ACK before retry.
-TIMEOUT = 1
+TIMEOUT = 3
 # Number of send/resend to attempt until ACK received
 MAX_SEND_ATTEMPTS = 5
 
 TITLE = "ConnectIO"
-VERSION = 1.0
-
-
-def format_timestamp(t):
-    # takes a datetime.datetime object and returns as formatted string
-    return t.strftime('%H:%M:%S.%f')[:-3]  # - truncated to millisecond / 3 decimal places on the seconds field.
-
-
-def get_number(prompt='number'):
-    """
-    cli prompt user until they input a number
-    :param prompt: optional string for the prompt to describe the number being asked for
-    :return: int, from user input.
-    """
-    # - prompt user to input a number, repeat until they do and return the number as an int
-    while True:
-        n = input("Enter " + prompt + ": ").split()
-        if len(n) == 1 and n[0].strip(punctuation).isnumeric():
-            return int(n[0].strip(punctuation))
+VERSION = 1.1
 
 
 def prompt_matrix_level():
@@ -49,22 +30,22 @@ def prompt_matrix_level():
     if ok.lower() in ("y", "yes", ""):
         return 0, 0
     else:
-        mtx = get_number("matrix") - 1
-        lvl = get_number("level") - 1
-        return mtx, lvl
+        matrix = cli_utils.get_number("matrix") - 1
+        level = cli_utils.get_number("level") - 1
+        return matrix, level
 
 
 def prompt_for_tally_dump(matrix, level):
-    confirm = input("Get current connection state for matrix {}, level {} (y/n)?".format(matrix + 1, level + 1))
+    confirm = input("Get current connection state for matrix {}, level {}? (y/n)".format(matrix + 1, level + 1))
     if confirm.lower() in ("y", "yes", ""):
-        msg = message.GetConnections(matrix, level)
+        msg = swp_message.GetConnections(matrix, level)
         send_message(connection, msg)
 
 
 def prompt_source_dest_label():
     while True:
-        s = input("\nEnter source ID, destination ID & optional label: ").split()
-
+        s = input("\nEnter source ID, destination ID & optional label "
+                  "(or press Enter to check received message buffer): ").split()
         if len(s) > 1:
             if s[0].strip(punctuation).isnumeric() and s[1].strip(punctuation).isnumeric():
                 # - get src/dest and offset gui/csv 1 based to protocol 0 based
@@ -80,28 +61,46 @@ def prompt_source_dest_label():
 
                     return src, dest, lbl
 
+        elif len(s) == 0:
+            # - User hit enter without input, print any messages received from router since last send.
+            return None, None, None
 
-def send_message(connection, message):
-    connection.flush_receive_buffer()
 
-    ack = False
-    tries = 0
+def get_received_messages(conn):
+    response = False
+    while conn.receive_buffer_len():
+        response = True
+        timestamp, msg = conn.get_message()
+        msg = swp_message.decode(msg)
+        swp_utils.print_message(timestamp, "received", msg)
+    return response
 
-    print("[" + format_timestamp(datetime.datetime.now()) + "] >>> Sending:",
-          message.summary, ", Encoded:", message.encoded)
 
-    connection.send(message)
-    time.sleep(1)
-    response = None
-    # TODO PREVENT WAITING FOREVER, (TIMEOUT & RETRIES!)
-    while not response:
-        while connection.receive_buffer_len():
-            timestamp, response = connection.get_message()
-            response = message.decode(response)
+def send_message(conn, msg):
+    """
+    :param conn: connection object
+    :param msg: swp_message object
+    :return:
+    """
+    conn.flush_receive_buffer()
 
-            print("[" + format_timestamp(timestamp) + "] <<< Received:",
-                  response.summary,
-                  ", Encoded:", response.encoded)
+    # ack = False
+    # tries = 0
+
+    swp_utils.print_message(datetime.datetime.now(), "sending", msg)
+
+    conn.send(msg)
+    t = time.time()
+    ts = 0  # - timer
+
+    # TODO Retry after timeout, check for ACK
+    response = False
+    while not response and ts < TIMEOUT:
+        ts = time.time() - t
+        response = get_received_messages(conn)
+
+    if not response:
+        print("Timeout, no response from router after {}s".format(TIMEOUT))
 
 
 if __name__ == '__main__':
@@ -114,14 +113,14 @@ if __name__ == '__main__':
     config.save_settings(settings)
 
     # - Open a TCP client connection with the router
-    connection = Connection(settings["Router IP Address"], settings["Port"], settings["Protocol"])
+    connection = Connection(settings["Router IP Address"])
 
     # - Wait for connection status to be Connected
     while connection.status != "Connected":
         pass
 
-    matrix, level = prompt_matrix_level()
-    prompt_for_tally_dump(matrix, level)
+    mtx, lvl = prompt_matrix_level()
+    prompt_for_tally_dump(mtx, lvl)
 
     while True:
         # - Check connection and wait for reconnect if down
@@ -129,14 +128,21 @@ if __name__ == '__main__':
             print("connection status:", connection.status)
 
         source_id, destination_id, label = prompt_source_dest_label()
-        source = Node(matrix, level, source_id, "source")
-        destination = Node(matrix, level, destination_id, "destination")
 
-        patch_msg = message.Connect(source, destination)
-        send_message(connection, patch_msg)
+        if source_id is None:
+            # - User hit enter to check the received message buffer
+            received = get_received_messages(connection)
+            if not received:
+                print("\nReceived message buffer is empty")
+        else:
+            source = Node(mtx, lvl, source_id, "source")
+            destination = Node(mtx, lvl, destination_id, "destination")
 
-        if label:
-            label_msg = message.PushLabels([label], destination, char_len=settings["Label Length"])
-            send_message(connection, label_msg)
+            patch_msg = swp_message.Connect(source, destination)
+            send_message(connection, patch_msg)
 
-        prompt_for_tally_dump(matrix, level)
+            if label:
+                label_msg = swp_message.PushLabels(destination, [label], matrix=mtx, char_len=settings["Label Length"])
+                send_message(connection, label_msg)
+
+        prompt_for_tally_dump(mtx, lvl)

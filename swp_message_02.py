@@ -188,7 +188,7 @@ class Message:
                 self.destination = False # TODO, probs dont need this now, just leave as None
 
             if self.command in ("connect", "connected"):
-                self.multiplier = utils.encode_multiplier(self.source, self.destination)
+                self.multiplier = utils.encode_source_destination_multiplier(self.source, self.destination)
 
             if self.command in ("push_labels", "push_labels_extended"):
                 self._char_len = utils.CHAR_LEN_CODES[char_len]

@@ -5,9 +5,8 @@
 # - https://github.com/peterallanwalker/SWP08-Probel/blob/master/protocol%20docs/SW-P-08%20Issue%2032.pdf
 
 import cli_utils
-import swp_utils_02 as utils
+import swp_utils as utils
 from swp_node_03 import Node
-
 
 TITLE = 'SWP Messages'
 VERSION = 0.3
@@ -51,15 +50,24 @@ def decode(encoded_message):
             matrix, level = utils.decode_matrix_level(encoded_message)
             return Connect(source, destination, matrix, level, command)
 
-        elif command == 'push labels':
-
+        elif command in ('push_labels', 'push_labels_extended'):
             destination = utils.decode_labels_destination(encoded_message)
             matrix, level = utils.decode_matrix_level(encoded_message)
             labels = utils.get_labels(encoded_message)
-            char_len = encoded_message[utils.CHAR_LEN_BYTE]
+            # print(f'[{TITLE}.decode]: DEBUG labels: {labels}')
+
+            # - get character length code (dict key) by value
+            char_len = list(utils.CHAR_LEN_CODES.keys())[list(utils.CHAR_LEN_CODES.values()).index(encoded_message[utils.CHAR_LEN_BYTE])]
+            # print(f'[{TITLE}.decode]: DEBUG char_len: {char_len}')
             return PushLabels(destination, labels, matrix, char_len)
+
+        elif command == 'cross-point tally dump request':
+            #print(f"[{TITLE}.decode]: cross point tally dump request")
+            matrix, level = utils.decode_matrix_level(encoded_message)
+            return GetConnections(matrix, level)
+
         else:
-            raise ValueError("[swp_massage.decode]: Command not yet supported")
+            raise ValueError(f"[swp_massage.decode]: {command} command not yet supported")
 
 
 class Response:
@@ -76,7 +84,7 @@ class Response:
         if self.command == 'ACK':
             description = " - Receipt of valid message acknowledged"
         else:
-            description = " - Not Acknowledged (message received but not considered valid"
+            description = " - Not Acknowledged (Router received our message but not as valid SWP encoding)"
         return "[swp_message object]: Command: {}{}".format(self.command.upper(), description)
 
 
@@ -97,6 +105,7 @@ class Connect:
         :param level: int if int passed for source & destination
         :param command:
         """
+
         if type(source) is Node and type(destination) is Node:
             if utils.is_same_matrix_and_level(source, destination):
                 self.source = source.id
@@ -124,14 +133,14 @@ class Connect:
 
     def _encode(self):
         matrix_level = utils.encode_matrix_level(self.matrix, self.level)
-        multiplier = utils.encode_multiplier(self.source, self.destination)
+        multiplier = utils.encode_source_destination_multiplier(self.source, self.destination)
         data = utils.COMMANDS[self.command], matrix_level, multiplier, self.destination % 128, self.source % 128
         return _format_message(data)
 
     def __str__(self):
         return "[swp_message object]: Command: {} ({}), matrix: {}, level: {}, " \
                "source: {}, destination: {}".format(self.command.upper(), utils.COMMANDS[self.command],
-                                                    self.matrix, self.level, self.source, self.destination,)
+                                                    self.matrix, self.level, self.source, self.destination, )
 
 
 class Connected(Connect):
@@ -169,6 +178,26 @@ class GetConnections:
     def __str__(self):
         return "[swp_message object]: Command: {} ({}), matrix: {}, level: {}" \
             .format(self.command.upper(), utils.COMMANDS[self.command], self.matrix, self.level)
+
+
+class CrossPointTallyDumpWord:
+    def __init__(self, first_destination, connected_sources):
+        if len(connected_sources) > 64:
+            print(f'[{TITLE}.CrossPointTallyDumpWord]: Max number of tallies per message is 64, {len(connected_sources)}'
+                  f' received')
+        else:
+            self.command = "cross-point tally dump (word/extended)"
+            self.matrix = first_destination.matrix
+            self.level = first_destination.level
+            self.destination = first_destination
+            self.sources = connected_sources
+            self.encoded = self._encode()
+
+    def _encode(self):
+        matrix_level = utils.encode_matrix_level(self.matrix, self.level)
+        data = [utils.COMMANDS[self.command], matrix_level, len(self.sources),
+                int(self.destination / 256), self.destination % 256
+        return _format_message(data)
 
 
 class PushLabels:
@@ -225,8 +254,8 @@ class PushLabels:
 
     def __str__(self):
         return "[swp_message_object]: Command: {} ({}), matrix: {}, level: {}, first destination: {}, label/s: {}" \
-               .format(self.command.upper(), utils.COMMANDS[self.command],
-                       self.matrix, self.level, self.destination, self.labels)
+            .format(self.command.upper(), utils.COMMANDS[self.command],
+                    self.matrix, self.level, self.destination, self.labels)
 
 
 def test_connect():
@@ -242,8 +271,8 @@ def test_connect():
                      Connect(Node.source(2, 3, 300), Node.destination(2, 3, 999))]
 
     for i, test in enumerate(test_messages):
-        #print("message:", test, type(test.encoded))
-        #print("sample:", test_results[i], type(test_results[i]))
+        # print("message:", test, type(test.encoded))
+        # print("sample:", test_results[i], type(test_results[i]))
         if test.encoded == test_results[i]:
             print("Test Connect {}: PASS".format(i + 1))
         else:
@@ -265,8 +294,8 @@ def test_connected():
                 Connected(src, dst)]
 
     for i, msg in enumerate(messages):
-        #print("message:", msg, type(msg.encoded))
-        #print("sample:", test_result, type(test_result))
+        # print("message:", msg, type(msg.encoded))
+        # print("sample:", test_result, type(test_result))
         if msg.encoded == test_result:
             print("Test Connected {}: PASS".format(i + 1))
         else:
@@ -278,16 +307,17 @@ def test_push_labels():
     test_labels = [["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"],
                    ["testing", "eight", "char", "labels", "so", "some very long"]]
 
-    test_results = [b'\x10\x02k\x00\x02\x00\x00\none         two         three       four        five        six         ' \
-                    b'seven       eight       nine        ten         ~Z\x10\x03',
-                    b'\x10\x02k\x00\x01\x00\x00\x06testing eight   char    labels  so      some ver65\x10\x03']
+    test_results = [
+        b'\x10\x02k\x00\x02\x00\x00\none         two         three       four        five        six         ' \
+        b'seven       eight       nine        ten         ~Z\x10\x03',
+        b'\x10\x02k\x00\x01\x00\x00\x06testing eight   char    labels  so      some ver65\x10\x03']
 
     test_messages = [PushLabels(0, test_labels[0], matrix=0),
                      PushLabels(dest, test_labels[1], char_len=8)]
 
     for i, message in enumerate(test_messages):
-        #print("message:", message.encoded, type(message.encoded))
-        #print("sample:", test_results[i], type(test_results[i]))
+        # print("message:", message.encoded, type(message.encoded))
+        # print("sample:", test_results[i], type(test_results[i]))
         if message.encoded == test_results[i]:
             print("Test Push Labels {}: PASS".format(i + 1))
         else:
@@ -301,5 +331,5 @@ if __name__ == '__main__':
     test_connected()
     test_push_labels()
 
-    #msg = GetConnections(12, 10)
-    #print(msg)
+    # msg = GetConnections(12, 10)
+    # print(msg)

@@ -1,6 +1,6 @@
 # Settings handler for ConnectIO GUI
 # Peter Walker 2022.
-# Adapted from cli based connectIO_cli_settings.py
+# Adapted from cli based settings_cli.py
 
 import json
 import swp_utils

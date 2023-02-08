@@ -11,50 +11,6 @@ import swp_utils as utils
 from swp_utils import is_checksum_valid
 
 
-def _check_dle(data, index):
-    # TODO should prevent indexing > len(data).. though doing that before calling this function
-    if data[index] != utils.DLE:
-        return "NOT DLE!"
-    if data[index + 1] == utils.ACK[1]:
-        return "ACK"
-    if data[index + 1] == utils.NAK[1]:
-        return "NAK"
-    if data[index + 1] == utils.SOM[1]:
-        return "SOM"
-    if data[index + 1] == utils.EOM[1]:
-        return "EOM"
-    if data[index + 1] == utils.DLE:
-        # DLE DLE - ("escaped"/double DLE - payload value not header)
-        return "ESCAPED DLE / PAYLOAD VALUE"
-
-    # Should never see this, DLE should either be part of ACK/NAK/SOM/EOM or escaped (DLE DLE) payload value
-    return "LONE DLE!"
-
-
-def _escape_dles(message):
-    """
-    Takes a byte string representing a message - SOM + DATA + EOM (SOM & EOM are required)
-    and replaces any instances of DLE DLE found within the payload with a single DLE
-    :param message: byte string representing SOM + DATA + EOM
-    :return: byte sting with DLE DLE replaced with DLE
-    """
-    r = message[2: -2]  # - Strip SOM & EOM
-    r = r.replace(bytes([utils.DLE, utils.DLE]), bytes([utils.DLE]))
-    return bytes(utils.SOM) + r + bytes(utils.EOM)
-
-    """
-    r = []
-    i = 0
-    while i < len(message) - 1:
-        if message[i] == utils.DLE and message[i + 1] == utils.DLE:
-            i += 1  # - skip first DLE
-        r.append(message[i])
-        i += 1
-    r.append(message[-1])  # - Add last byte
-    return bytes(r)
-    """
-
-
 def unpack_data(data, previous_insufficient_data=False):
     """ Takes bytes, (and any residual bytes returned from previous call).
         Extracts and returns valid SWP08 messages found within
@@ -145,6 +101,50 @@ def unpack_data(data, previous_insufficient_data=False):
                 #break
 
     return messages, insufficient_data
+
+
+def _check_dle(data, index):
+    # TODO should prevent indexing > len(data).. though doing that before calling this function
+    if data[index] != utils.DLE:
+        return "NOT DLE!"
+    if data[index + 1] == utils.ACK[1]:
+        return "ACK"
+    if data[index + 1] == utils.NAK[1]:
+        return "NAK"
+    if data[index + 1] == utils.SOM[1]:
+        return "SOM"
+    if data[index + 1] == utils.EOM[1]:
+        return "EOM"
+    if data[index + 1] == utils.DLE:
+        # DLE DLE - ("escaped"/double DLE - payload value not header)
+        return "ESCAPED DLE / PAYLOAD VALUE"
+
+    # Should never see this, DLE should either be part of ACK/NAK/SOM/EOM or escaped (DLE DLE) payload value
+    return "LONE DLE!"
+
+
+def _escape_dles(message):
+    """
+    Takes a byte string representing a message - SOM + DATA + EOM (SOM & EOM are required)
+    and replaces any instances of DLE DLE found within the payload with a single DLE
+    :param message: byte string representing SOM + DATA + EOM
+    :return: byte sting with DLE DLE replaced with DLE
+    """
+    r = message[2: -2]  # - Strip SOM & EOM
+    r = r.replace(bytes([utils.DLE, utils.DLE]), bytes([utils.DLE]))
+    return bytes(utils.SOM) + r + bytes(utils.EOM)
+
+    """
+    r = []
+    i = 0
+    while i < len(message) - 1:
+        if message[i] == utils.DLE and message[i + 1] == utils.DLE:
+            i += 1  # - skip first DLE
+        r.append(message[i])
+        i += 1
+    r.append(message[-1])  # - Add last byte
+    return bytes(r)
+    """
 
 
 def test_1():

@@ -10,7 +10,7 @@
 import csv
 
 import cli_utils
-from swp_node_02 import Node
+from swp_node_03 import Node  # TODO TEST _03 with gui router
 
 TITLE = "Import IO"
 VERSION = 0.6
@@ -47,28 +47,19 @@ def _csv_line_to_node(line, io_type):
     else:
         prefix = 'EDIT In SW-P-08 '
 
-    #if io_type == 'source':
-        #return Node.source(int(line[prefix + 'Matrix']) - 1,
-        #                   int(line[prefix + 'Level']) - 1,
-        #                   int(line[prefix + 'ID']) - 1,
-        #                   line['Virtual Patchbay Name'],
-        #                   line['Patch Point Number'],
-        #                   line['Patch Point Default Label'],
-        #                   line['EDIT Patch Point User Label'])
-
     if io_type == 'source':
-        return Node.source(int(line[prefix + 'ID']) - 1,
-                           int(line[prefix + 'Matrix']) - 1,
+        return Node.source(int(line[prefix + 'Matrix']) - 1,
                            int(line[prefix + 'Level']) - 1,
+                           int(line[prefix + 'ID']) - 1,
                            line['Virtual Patchbay Name'],
                            line['Patch Point Number'],
                            line['Patch Point Default Label'],
                            line['EDIT Patch Point User Label'])
 
     elif io_type == 'destination':
-        return Node.destination(int(line[prefix + 'ID']) - 1,
-                                int(line[prefix + 'Matrix']) - 1,
+        return Node.destination(int(line[prefix + 'Matrix']) - 1,
                                 int(line[prefix + 'Level']) - 1,
+                                int(line[prefix + 'ID']) - 1,
                                 line['Virtual Patchbay Name'],
                                 line['Patch Point Number'],
                                 line['Patch Point Default Label'],
