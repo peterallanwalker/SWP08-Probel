@@ -34,10 +34,10 @@ bytes and returns message classes.
 Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a list of separated messages. 
 Handles potential case of a message being split between separate socket receive data chunks.
 
-### swp_utils.py
+#### swp_utils.py
 Provides constants and utility functions for working with the SWP08 protocol
 
-### connection_settings.py
+#### connection_settings.py
 Handles loading of last used settings, user confirm/edit and save as json.
 
 #### router_emulator.py
