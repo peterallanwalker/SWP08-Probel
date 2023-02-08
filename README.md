@@ -30,7 +30,7 @@ Connection.send() accepts raw byte strings or swp_message objects. Connection.ge
 Provides classes for various SWP08 message types that accept human parameters, and a `decode()` method that parses
 bytes and returns message classes.
 
-### swp_unpack.py
+#### swp_unpack.py
 Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a list of separated messages. 
 Handles potential case of a message being split between separate socket receive data chunks.
 
