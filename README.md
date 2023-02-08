@@ -1,6 +1,9 @@
 # SWP08/Probel
 
-Download: [SWP-08-Probel](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/master.zip)
+Download: [SWP-08-Probel Master](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/master.zip)
+Download: [ConnectIO CLI V1.2 (stable CLI based utility for testing SWP08 interation with a router](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
+
+ConnectIO GUI - crosspoint matrix with label handling is beta
 
 ### Router control using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf)
 (Other versions of the protocol doc are available in [this repo's protocol docs folder](https://github.com/peterallanwalker/SWP08-Probel/tree/master/protocol%20docs))
