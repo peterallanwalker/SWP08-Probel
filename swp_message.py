@@ -65,6 +65,33 @@ def decode(encoded_message):
             #print(f"[{TITLE}.decode]: cross point tally dump request")
             matrix, level = utils.decode_matrix_level(encoded_message)
             return GetConnections(matrix, level)
+        
+        elif command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
+            # TODO, jsut focusing on the word/extended, will have to do the short one separately
+            self.matrix, self.level = utils.decode_matrix_level(self.encoded) # - TODO dont need to do this here, set above
+
+            # TODO need to set multiplier, check its the same byte as connect command or adjust
+
+            self.tallies = self.encoded[utils.COMMAND_BYTE + 2]
+
+            # TODO - parse id based on multiplier, div & mod,
+            #        HERE IM JUST USING MOD SO WILL FAIL FOR BIGGER NUMBERS!!
+            self.destination = self.encoded[utils.COMMAND_BYTE + 4]
+            self.source = self.encoded[utils.COMMAND_BYTE + 6]
+
+            # TODO PARSE remaining message for potential extra sources??...
+            # get byte count ...
+            # - Byte count of the data/payload is the 4th byte from the end (SOM-DATA-BTC-CHK-EOM)
+            # - ... ok, the following is working but needs tidying and handling...
+            # - you may get multiple responses to a tally dump request, each response containst the
+            # - FIRST dest ID, the number of tallies returned, and a source for each consecutive destination
+            # - (similar to the push labels message)
+            byte_count = self.encoded[-4]
+            src_byte = utils.COMMAND_BYTE + 6
+            self.source = []
+            while src_byte < len(self.encoded) -4:
+                self.source.append(self.encoded[src_byte])
+                src_byte += 2
 
         else:
             raise ValueError(f"[swp_massage.decode]: {command} command not yet supported")
