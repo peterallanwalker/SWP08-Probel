@@ -68,7 +68,7 @@ def decode(encoded_message):
         
         elif command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
             # TODO, jsut focusing on the word/extended, will have to do the short one separately
-            self.matrix, self.level = utils.decode_matrix_level(self.encoded) # - TODO dont need to do this here, set above
+            matrix, level = utils.decode_matrix_level(encoded_message) # - TODO dont need to do this here, set above
 
             # TODO need to set multiplier, check its the same byte as connect command or adjust
 
@@ -92,6 +92,9 @@ def decode(encoded_message):
             while src_byte < len(self.encoded) -4:
                 self.source.append(self.encoded[src_byte])
                 src_byte += 2
+            
+            return CrossPointTallyDumpWord(first_destination, connected_sources):
+    
 
         else:
             raise ValueError(f"[swp_massage.decode]: {command} command not yet supported")
