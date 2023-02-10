@@ -1,0 +1,98 @@
+# Brio does not return a tally if no source connected to my destination
+# but it does output from first to last, so passes mulitple consecutive destinations
+# ALSO THE PROGRAMN IS NOT OUTPUTING THE BRIO RESPONSE WIHTOUT PRESSING TO SHOW LOGS IN THE BUFFER... AM I GETTINGS TWO ACKS?
+# there is a small delay after the ack...
+
+
+Enter source ID, destination ID & optional label (or press Enter to check received message buffer):
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[17:11:05.251] <<< Received:
+[swp_message object]: command:cross-point tally dump (word/extended), matrix:0, level:0,
+ first destination:3, sources: [13, 3328],
+verbose:
+Destination 3 <- Source 13
+Destination 4 <- Source 3328
+
+Encoded: b'\x10\x02\x17\x00\x02\x00\x03\x05\xdf\x10\x03'
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[17:11:05.251] <<< Received:
+[swp_message object]: command:cross-point tally dump (word/extended), matrix:0, level:0,
+ first destination:6, sources: [16, 4096],
+verbose:
+Destination 6 <- Source 16
+Destination 7 <- Source 4096
+
+Encoded: b'\x10\x02\x17\x00\x02\x00\x06\x05\xdc\x10\x03'
+
+
+Get current connection state for matrix 1, level 1? (y/n)
+
+
+########################################################################################################################
+
+
+Enter source ID, destination ID & optional label (or press Enter to check received message buffer): Get current connection state for matrix 1, level 1? (y/n)
+
+Enter source ID, destination ID & optional label (or press Enter to check received message buffer):
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[17:21:12.353] <<< Received:
+[swp_message object]: command:cross-point tally dump (word/extended), matrix:0, level:0,
+ first destination:3, sources: [13, 3328],
+verbose:
+Destination 3 <- Source 13
+Destination 4 <- Source 3328
+
+Encoded: b'\x10\x02\x17\x00\x02\x00\x03\x05\xdf\x10\x03'
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[17:21:12.353] <<< Received:
+[swp_message object]: command:cross-point tally dump (word/extended), matrix:0, level:0,
+ first destination:6, sources: [16, 4096],
+verbose:
+Destination 6 <- Source 16
+Destination 7 <- Source 4096
+
+Encoded: b'\x10\x02\x17\x00\x02\x00\x06\x05\xdc\x10\x03'
+
+
+Get current connection state for matrix 1, level 1? (y/n)
+---------------------------------------------------------------------------------------
+[17:21:26.385] >>> Sending:
+[swp_message object]: Command: CROSS-POINT TALLY DUMP REQUEST (21), matrix: 0, level: 0
+Encoded: b'\x10\x02\x15\x00\x02\xe9\x10\x03'
+
+
+--------------------------------------------------------------------------
+[17:21:26.401] <<< Received:
+[swp_message object]: Command: ACK - Receipt of valid message acknowledged
+Encoded: b'\x10\x06'
+
+
+
+Enter source ID, destination ID & optional label (or press Enter to check received message buffer):
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[17:21:26.443] <<< Received:
+[swp_message object]: command:cross-point tally dump (word/extended), matrix:0, level:0,
+ first destination:3, sources: [13, 3328],
+verbose:
+Destination 3 <- Source 13
+Destination 4 <- Source 3328
+
+Encoded: b'\x10\x02\x17\x00\x02\x00\x03\x05\xdf\x10\x03'
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+[17:21:26.443] <<< Received:
+[swp_message object]: command:cross-point tally dump (word/extended), matrix:0, level:0,
+ first destination:6, sources: [16, 4096],
+verbose:
+Destination 6 <- Source 16
+Destination 7 <- Source 4096
+
+Encoded: b'\x10\x02\x17\x00\x02\x00\x06\x05\xdc\x10\x03'
+
+
+Get current connection state for matrix 1, level 1? (y/n)
