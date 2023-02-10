@@ -9,7 +9,7 @@ import swp_utils as utils
 from swp_node import Node
 
 TITLE = 'SWP Messages'
-VERSION = 0.3
+VERSION = 0.4
 
 
 def _format_message(payload):
@@ -62,22 +62,28 @@ def decode(encoded_message):
             return PushLabels(destination, labels, matrix, char_len)
 
         elif command == 'cross-point tally dump request':
-            #print(f"[{TITLE}.decode]: cross point tally dump request")
             matrix, level = utils.decode_matrix_level(encoded_message)
             return GetConnections(matrix, level)
         
         elif command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
-            # TODO, jsut focusing on the word/extended, will have to do the short one separately
-            matrix, level = utils.decode_matrix_level(encoded_message) # - TODO dont need to do this here, set above
+            # TODO, just focusing on the word/extended, will have to do the short one separately
+            matrix, level = utils.decode_matrix_level(encoded_message)  # - TODO don't need to do this here, set above
 
             # TODO need to set multiplier, check its the same byte as connect command or adjust
-
-            self.tallies = self.encoded[utils.COMMAND_BYTE + 2]
+            
+            #print("DEBUG SWP MESSAGE, tally dump bytes", encoded_message)
+            
+            tallies = [utils.COMMAND_BYTE + 2]
+            
+            #print("DEBUG SWP MESSAGE, tallies", tallies)
 
             # TODO - parse id based on multiplier, div & mod,
             #        HERE IM JUST USING MOD SO WILL FAIL FOR BIGGER NUMBERS!!
-            self.destination = self.encoded[utils.COMMAND_BYTE + 4]
-            self.source = self.encoded[utils.COMMAND_BYTE + 6]
+            first_destination = encoded_message[utils.COMMAND_BYTE + 4]
+            first_destination = Node(matrix, level, first_destination, "Destination")
+            
+            sources = []
+            sources.append(encoded_message[utils.COMMAND_BYTE + 6])
 
             # TODO PARSE remaining message for potential extra sources??...
             # get byte count ...
@@ -86,14 +92,14 @@ def decode(encoded_message):
             # - you may get multiple responses to a tally dump request, each response containst the
             # - FIRST dest ID, the number of tallies returned, and a source for each consecutive destination
             # - (similar to the push labels message)
-            byte_count = self.encoded[-4]
-            src_byte = utils.COMMAND_BYTE + 6
-            self.source = []
-            while src_byte < len(self.encoded) -4:
-                self.source.append(self.encoded[src_byte])
+            byte_count = encoded_message[-4]
+            src_byte = encoded_message[utils.COMMAND_BYTE + 6]
+            
+            while src_byte < len(encoded_message) - 4:
+                sources.append(encoded_message[src_byte])
                 src_byte += 2
             
-            return CrossPointTallyDumpWord(first_destination, connected_sources):
+            return CrossPointTallyDumpWord(first_destination, sources)
     
 
         else:
@@ -219,7 +225,7 @@ class CrossPointTallyDumpWord:
             self.command = "cross-point tally dump (word/extended)"
             self.matrix = first_destination.matrix
             self.level = first_destination.level
-            self.destination = first_destination
+            self.destination = first_destination.id
             self.sources = connected_sources
             self.encoded = self._encode()
 
@@ -227,7 +233,12 @@ class CrossPointTallyDumpWord:
         matrix_level = utils.encode_matrix_level(self.matrix, self.level)
         data = [utils.COMMANDS[self.command], matrix_level, len(self.sources),
                 int(self.destination / 256), self.destination % 256]
+                # TODO - Need to add the source list
         return _format_message(data)
+        
+    def __str__(self):
+        # TODO, when printing sources, print the dest ID as well
+        return f'[swp_message object]: command:{self.command}, matrix:{self.matrix}, level:{self.level}, \n first destination:{self.destination}, sources: {self.sources}'
 
 
 class PushLabels:

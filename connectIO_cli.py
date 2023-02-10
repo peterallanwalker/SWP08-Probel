@@ -8,6 +8,7 @@ import time
 import datetime
 from string import punctuation
 
+# Local files
 import cli_utils
 import settings as config
 from client_connection import Connection
@@ -100,7 +101,7 @@ def send_message(conn, msg):
         response = get_received_messages(conn)
 
     if not response:
-        print("Timeout, no response from router after {}s".format(TIMEOUT))
+        print("Timeout, no response from router after timeout setting of {}s".format(TIMEOUT))
 
 
 if __name__ == '__main__':
