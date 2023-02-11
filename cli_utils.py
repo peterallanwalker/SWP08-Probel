@@ -27,11 +27,13 @@ def print_block(heading='', rows=()):
     row_width = len(max(rows, key=len))
     if row_width > width:
         width = row_width
-
+    # Above breaks if passing long lines with embedded '\n', so quick fix...
+    if width > 60:
+        width = 60
     print("{}\n{}".format(width * '-', heading))
     for row in rows:
         print(row)
-    print("\n")
+    #print("\n")
 
 
 def get_number(prompt='number'):

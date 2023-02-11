@@ -5,9 +5,10 @@
 # - Peter Walker, April 2022
 
 import cli_utils
+import swp_utils
 
 TITLE = "SWP Node"
-VERSION = 0.3
+VERSION = 0.4
 
 
 class Node:
@@ -66,6 +67,79 @@ class Node:
                                                                                      connected_source)
 
 
+def get_by_matrix_level(matrix, level, nodes):
+    """
+    Take a list of Nodes and return Nodes with given matrix & level
+    :param matrix: int
+    :param level: int
+    :param nodes: list of Node objects
+    :return: list of Node objects of given matrix & level
+    """
+    r = []
+    for node in nodes:
+        if node.matrix == matrix and node.level == level:
+            r.append(node)
+    return r
+
+
+def get_consecutive_nodes(nodes, matrix=1, level=1, max_set_size=64):
+    """
+    Splits a list of nodes into lists of nodes with consecutive IDs for a given matrix & level
+    :param nodes: list of Node objects
+    :param matrix: int
+    :param level: int
+    :param max_set_size: int, limit max size of the node lists (max tally qty in a tally dump message is 64)
+    :return: list of lists of sorted consecutive nodes
+    """
+    nodes = get_by_matrix_level(matrix, level, nodes)
+    r = []
+    l = []
+    # Sort node list by their ids (the lambda is equivalent of `def get_id(node): return node.id`
+    nodes.sort(key=lambda n: n.id)
+    # Split single node list into lists of nodes with consecutive IDs
+
+    for n in range(len(nodes)):
+        try:
+            # Check if nodes have consecutive ids
+            if nodes[n+1].id - nodes[n].id == 1:
+                # Check if already added (to add first entry in new list)
+                if nodes[n] not in l:
+                    l.append(nodes[n])
+                # Add the next one
+                l.append(nodes[n + 1])
+
+            else:
+                l = set_max_list_len(l, max_set_size)
+                for i in l:
+                    r.append(i)
+                l = []
+        except IndexError:
+            pass
+
+    l = set_max_list_len(l, max_set_size)
+    for i in l:
+        r.append(i)
+    return r
+
+
+def set_max_list_len(node_list, max_len):
+    return [node_list[i * max_len:(i + 1) * max_len] for i in range((len(node_list) + max_len - 1) // max_len)]
+
+
+def get_connected_sources(destination_list):
+    """
+    :param destination_list: list of Node.destination objects
+    :return: list of connected sources for each destination
+    """
+    r = []
+    for dest in destination_list:
+        if dest.connected_source:
+            r.append(dest.connected_source.id)
+        else:
+            r.append(swp_utils.MUTE_ID)
+    return r
+
+
 if __name__ == '__main__':
 
     cli_utils.print_header(TITLE, VERSION)
@@ -75,3 +149,35 @@ if __name__ == '__main__':
 
     print(source)
     print(destination)
+
+    # Create unsorted node list
+    matrix = 1
+    level = 1
+    nodes = []
+    ids = [100, 1, 2, 99, 50, 4, 98, 101, 5, 7, 6, 49, 51]  # unsorted list of IDs
+    for i in ids:
+        nodes.append(Node.destination(matrix, level, i))  # list of unsorted nodes
+    # Add some more on different matrix/level
+    matrix = 2
+    level = 2
+    for i in ids:
+        nodes.append(Node.destination(matrix, level, i))  # list of unsorted nodes
+
+    # Split node list into sorted lists of nodes with consecutive ids in default matrix/level of 1/1
+    consecutive_nodes = get_consecutive_nodes(nodes, matrix=2, level=2)
+
+    for node_list in consecutive_nodes:
+        print("--------------")
+        for node in node_list:
+            print(node)
+
+    nodes = []
+    for i in range(200):
+        nodes.append(Node.destination(1, 1, i))
+
+    consecutive_nodes = get_consecutive_nodes(nodes, matrix=1, level=1)
+    for node_list in consecutive_nodes:
+        print("--------")
+        for node in node_list:
+            print(node)
+        print(len(node_list))

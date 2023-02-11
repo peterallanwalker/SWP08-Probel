@@ -1,5 +1,5 @@
-# - SWP08/Probel router emulator,
-# -   A virtual router for testing SWP controller when no real router available
+# - SWP08/Probel router emulator
+# - A virtual router for testing SWP controller when no real router available
 # - Peter Walker, June 2022
 
 import os
@@ -10,9 +10,10 @@ import swp_utils
 from import_io import import_io_from_csv
 from socket_connection_manager import Server
 import swp_message as swp_message
+import swp_node
 
 TITLE = "SWP08/Probel Router Emulator"
-VERSION = 1.1
+VERSION = 1.2
 LOCALHOST = '127.0.0.1'
 CONFIG_FILE = 'emulator_settings.txt'
 
@@ -76,10 +77,17 @@ class Router:
 
             elif message.command in ('push_labels', 'push_labels_extended'):
                 print(f'[{TITLE}.process_incoming_messages]:Label/s received')
+                # TODO Apply labels to self.destinations
 
             elif message.command == 'cross-point tally dump request':
-                print(f'[{TITLE}.process_incoming_messages]:Cross-point tally dump request received')
+                print(f'[{TITLE}.process_incoming_messages]:Cross-point tally dump request received for '
+                      f'matrix:{message.matrix}, level:{message.level}')
+                consecutive_destinations = swp_node.get_consecutive_nodes(self.destinations, matrix=message.matrix, level=message.level)
 
+                for destinations in consecutive_destinations:
+                    response = swp_message.CrossPointTallyDumpWord(destinations)
+                    swp_utils.print_message(datetime.datetime.now(), "sending", response)
+                    connection.send_message(response)
 
             else:
                 print(f'[{TITLE}.process_incoming_messages]:Message type unsupported: {message.command}')
@@ -115,6 +123,7 @@ if __name__ == '__main__':
     print("Destinations:")
     for dst in router.destinations:
         print(dst)
+
     print("Listening for client connections...")
     while True:
         router.process_incoming_messages()

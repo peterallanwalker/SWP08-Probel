@@ -15,6 +15,7 @@ import cli_utils
 TITLE = "SWP08 utilities"
 VERSION = 1.2
 PORT = 61000  # - TCP port for SWP08 protocol
+MUTE_ID = 1023  # - ID to represent a "mute source" / no connection
 
 # - SPECIAL VALUES
 # - DLE is a special value used to identify SOM/EOM. Wherever 0x10/16 is within payload it should be escaped
@@ -99,10 +100,6 @@ def encode_matrix_level(matrix, level):
     level = format(level, '04b')
     # - Concatenate to 8 bits and return as decimal int
     return int(matrix + level, 2)
-
-
-def encode_multiplier():
-    pass
 
 
 def encode_source_destination_multiplier(source, destination):
@@ -292,6 +289,10 @@ def match_source(msg, sources):
     for src in sources:
         if src.matrix == msg.matrix and src.level == msg.level and src.id == msg.source:
             return src
+
+
+def div_mod(value, factor=256):
+    return int(value / factor), value % factor
 
 
 if __name__ == '__main__':

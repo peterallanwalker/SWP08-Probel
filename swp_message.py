@@ -5,11 +5,13 @@
 # - https://github.com/peterallanwalker/SWP08-Probel/blob/master/protocol%20docs/SW-P-08%20Issue%2032.pdf
 
 import cli_utils
+import swp_utils
 import swp_utils as utils
 from swp_node import Node
+import swp_node
 
 TITLE = 'SWP Messages'
-VERSION = 0.4
+VERSION = 0.3
 
 
 def _format_message(payload):
@@ -44,7 +46,10 @@ def decode(encoded_message):
     elif encoded_message == bytes(utils.NAK):
         return Response(response='NAK')
     else:
+        # Get the command byte and lookup the key for that value in utils.COMMANDS
         command = list(utils.COMMANDS.keys())[list(utils.COMMANDS.values()).index(encoded_message[utils.COMMAND_BYTE])]
+
+        # Create an swp_message object based on the command type
         if command in ('connect', 'connected'):
             source, destination = utils.decode_connect_source_destination(encoded_message)
             matrix, level = utils.decode_matrix_level(encoded_message)
@@ -64,43 +69,34 @@ def decode(encoded_message):
         elif command == 'cross-point tally dump request':
             matrix, level = utils.decode_matrix_level(encoded_message)
             return GetConnections(matrix, level)
-        
-        elif command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
-            # TODO, just focusing on the word/extended, will have to do the short one separately
-            matrix, level = utils.decode_matrix_level(encoded_message)  # - TODO don't need to do this here, set above
 
-            # TODO need to set multiplier, check its the same byte as connect command or adjust
-            
-            #print("DEBUG SWP MESSAGE, tally dump bytes", encoded_message)
-            
-            tallies = [utils.COMMAND_BYTE + 2]
-            
-            #print("DEBUG SWP MESSAGE, tallies", tallies)
+        # TODO, handle "cross-point tally dump (byte)" message type
+        #elif command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
+        elif command == "cross-point tally dump (word/extended)":
+            # - TODO calling separately this for every message at moment, should move to single call above
+            matrix, level = utils.decode_matrix_level(encoded_message)
 
-            # TODO - parse id based on multiplier, div & mod,
-            #        HERE IM JUST USING MOD SO WILL FAIL FOR BIGGER NUMBERS!!
-            first_destination = encoded_message[utils.COMMAND_BYTE + 4]
-            first_destination = Node(matrix, level, first_destination, "Destination")
-            
-            sources = []
-            sources.append(encoded_message[utils.COMMAND_BYTE + 6])
+            tallies = encoded_message[utils.COMMAND_BYTE + 2]  # Number of connections represented in the message
 
-            # TODO PARSE remaining message for potential extra sources??...
-            # get byte count ...
-            # - Byte count of the data/payload is the 4th byte from the end (SOM-DATA-BTC-CHK-EOM)
-            # - ... ok, the following is working but needs tidying and handling...
-            # - you may get multiple responses to a tally dump request, each response containst the
-            # - FIRST dest ID, the number of tallies returned, and a source for each consecutive destination
-            # - (similar to the push labels message)
-            byte_count = encoded_message[-4]
-            src_byte = encoded_message[utils.COMMAND_BYTE + 6]
-            
-            while src_byte < len(encoded_message) - 4:
-                sources.append(encoded_message[src_byte])
-                src_byte += 2
-            
-            return CrossPointTallyDumpWord(first_destination, sources)
-    
+            first_destination_div = encoded_message[utils.COMMAND_BYTE + 3]
+            first_destination_mod = encoded_message[utils.COMMAND_BYTE + 4]
+            first_destination = 256 * first_destination_div + first_destination_mod
+            destinations = []
+            connected_sources = []
+
+            for i in range(tallies):
+                # TODO - THIS IS NOT GETTING THE RIGHT BYTES
+                div = encoded_message[utils.COMMAND_BYTE + 5 + (i * 2)]
+                mod = encoded_message[utils.COMMAND_BYTE + 6 + (i * 2)]
+                source_id = 256 * div + mod
+                connected_sources.append(Node.source(matrix, level, source_id))
+
+            for i in range(tallies):
+                destination = Node.destination(matrix, level, first_destination + i)
+                destination.connected_source = connected_sources[i]
+                destinations.append(destination)
+
+            return CrossPointTallyDumpWord(destinations)
 
         else:
             raise ValueError(f"[swp_massage.decode]: {command} command not yet supported")
@@ -217,28 +213,44 @@ class GetConnections:
 
 
 class CrossPointTallyDumpWord:
-    def __init__(self, first_destination, connected_sources):
-        if len(connected_sources) > 64:
-            print(f'[{TITLE}.CrossPointTallyDumpWord]: Max number of tallies per message is 64, {len(connected_sources)}'
-                  f' received')
+    def __init__(self, destinations):
+        if len(destinations) > 64:
+            print(f'[{TITLE}.CrossPointTallyDumpWord]: Max number of tallies per message is 64,'
+                  f' {len(destinations)} received')
         else:
             self.command = "cross-point tally dump (word/extended)"
-            self.matrix = first_destination.matrix
-            self.level = first_destination.level
-            self.destination = first_destination.id
-            self.sources = connected_sources
+            # This message type only passes the first destination, and provides the 'tally' (connected source)
+            # for that destination and every following consecutive ID'd destination, up to a max of 64
+            # It assumes all destinations and sources are of the same matrix & level.
+            self.first_destination = destinations[0]
+            self.matrix = self.first_destination.matrix
+            self.level = self.first_destination.level
+            self.sources = swp_node.get_connected_sources(destinations)
+            self.verbose = self._verbose_listing()
             self.encoded = self._encode()
 
     def _encode(self):
         matrix_level = utils.encode_matrix_level(self.matrix, self.level)
         data = [utils.COMMANDS[self.command], matrix_level, len(self.sources),
-                int(self.destination / 256), self.destination % 256]
-                # TODO - Need to add the source list
+                int(self.first_destination.id / 256), self.first_destination.id % 256]
+        for source in self.sources:
+            source = utils.div_mod(source)
+            data += source
         return _format_message(data)
-        
+
+    def _verbose_listing(self):
+        r = ''
+        for i, src in enumerate(self.sources):
+            if src == swp_utils.MUTE_ID:
+                src = str(src) + '(swp_utils.MUTE_ID)'
+            r += f'Destination {self.first_destination.id + i} <- Source {src}\n'
+        return r
+
     def __str__(self):
         # TODO, when printing sources, print the dest ID as well
-        return f'[swp_message object]: command:{self.command}, matrix:{self.matrix}, level:{self.level}, \n first destination:{self.destination}, sources: {self.sources}'
+        
+        return f'[swp_message object]: command:{self.command}, matrix:{self.matrix}, level:{self.level}, ' \
+               f'\nConnections:\n{self.verbose}'
 
 
 class PushLabels:
