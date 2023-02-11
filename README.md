@@ -41,7 +41,8 @@ Provides constants and utility functions for working with the SWP08 protocol
 Handles loading of last used settings, user confirm/edit and save as json.
 
 #### router_emulator.py
-Basic SWP08 router emulator with server side socket for testing ConnectIO locally in the absence of a real router
+Basic SWP08 router emulator with server side socket for testing connectIO locally in the absence of a real router.
+usage: start router_emulator.py, then start connectIO.py in another terminal window and enter address 127.0.0.1 (localhost) for connectIO to connect with the router emulator.
 
 #### import_io.py
 Used by router emulator (& ConnectIO GUI) to import Calrec VPB config CSV files.
