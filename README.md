@@ -50,8 +50,8 @@ Used by router emulator (& ConnectIO GUI) to import Calrec VPB config CSV files.
 Provides server-side equivalent of client_connection.py for use by router_emulator.py
 
 ### TODO:
-- [ ] Check handling of DLE's within payload properly... check I'm properly escaping them when encoding payload. 
-  Decode was failing, e.g. connect destination 16 to source 3, gets encoded as \x16\x03 which 
-  I'm identifying as a false EOM but am not parsing to find the actual EOM in such case!... Possibly fixed, can't remember!
+- [ ] handling DLE's within payload properly... escape them when encoding payload. 
+  Decode was failing, e.g. connect destination 17 to source 4, gets encoded as \x10\x03 which 
+  I'm identifying as a false EOM but am not parsing to find the actual EOM in such case!
 
  
