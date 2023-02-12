@@ -17,8 +17,12 @@ repeatedly entering `help` until the help info is displayed gets it recognising 
 
 
 ## connectIO.py
-The main script, providing CLI based user interaction for exchanging SWP08 messages with a router. Currently supports
-making connections with optional label to push, and requesting current connection state (tally dump).
+The main script, providing CLI based user interaction for exchanging SWP08 messages with a router. 
+
+Currently supports making connections with optional label to push, and requesting current connection state (tally dump). 
+
+Note CLI values are protocol level / zero-based, whereas Calrec UI & CSV is one-based, so a matrix/level/id of e.g. 1 
+in the UI/CSV is 0 in the CLI.
 
 
 ### Supporting files
