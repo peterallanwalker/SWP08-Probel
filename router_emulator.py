@@ -80,8 +80,8 @@ class Router:
                 # TODO Apply labels to self.destinations
 
             elif message.command == 'cross-point tally dump request':
-                print(f'[{TITLE}.process_incoming_messages]:Cross-point tally dump request received for '
-                      f'matrix:{message.matrix}, level:{message.level}')
+                #print(f'[{TITLE}.process_incoming_messages]:Cross-point tally dump request received for '
+                #      f'matrix:{message.matrix}, level:{message.level}')
                 consecutive_destinations = swp_node.get_consecutive_nodes(self.destinations, matrix=message.matrix, level=message.level)
 
                 for destinations in consecutive_destinations:
