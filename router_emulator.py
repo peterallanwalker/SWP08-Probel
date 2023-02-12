@@ -15,7 +15,7 @@ import swp_node
 TITLE = "SWP08/Probel Router Emulator"
 VERSION = 1.2
 LOCALHOST = '127.0.0.1'
-CONFIG_FILE = 'emulator_settings.txt'
+CONFIG_FILE = 'router_emulator_settings.txt'
 
 
 def prompt_for_csv_file():

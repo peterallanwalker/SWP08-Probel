@@ -1,0 +1,27 @@
+# SAMPLE OUTPUT FROM ARGO TALLY DUMP
+# NOTE HOW IT OUTPUTS HIGHEST DEST FIRST< SO NO CONSECUTIVE DESTS SO A MESSAGE FOR EACH ONE
+# Apollo+ seems to be the same
+
+
+[16:40:39.007] <<< Received:
+[swp_message object]: command:cross-point tally dump (word/extended), matrix:0, level:0,
+ first destination:2, sources: [12]
+Encoded: b'\x10\x02\x17\x00\x01\x00\x02\x05\xe1\x10\x03'
+
+
+DEBUG SWP TALLY DUMP MESSAGE, number of tallies: 1
+tally 0
+-----------------------------------------------------------------------------------------------------------------------------
+[16:40:39.007] <<< Received:
+[swp_message object]: command:cross-point tally dump (word/extended), matrix:0, level:0,
+ first destination:1, sources: [11]
+Encoded: b'\x10\x02\x17\x00\x01\x00\x01\x05\xe2\x10\x03'
+
+
+DEBUG SWP TALLY DUMP MESSAGE, number of tallies: 1
+tally 0
+-----------------------------------------------------------------------------------------------------------------------------
+[16:40:39.007] <<< Received:
+[swp_message object]: command:cross-point tally dump (word/extended), matrix:0, level:0,
+ first destination:0, sources: [10]
+Encoded: b'\x10\x02\x17\x00\x01\x00\x00\x05\xe3\x10\x03'

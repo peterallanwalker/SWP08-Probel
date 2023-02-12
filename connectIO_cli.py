@@ -94,7 +94,7 @@ def send_message(conn, msg):
     t = time.time()
     ts = 0  # - timer
 
-    # TODO Retry after timeout, check for ACK
+    # TODO Retry after timeout, check for ACK, add optional short delay after ACK for Brio lag on tally dump
     response = False
     while not response and ts < TIMEOUT:
         ts = time.time() - t

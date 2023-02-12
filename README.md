@@ -54,4 +54,7 @@ Provides server-side equivalent of client_connection.py for use by router_emulat
   Decode was failing, e.g. connect destination 16 to source 3, gets encoded as \x16\x03 which 
   I'm identifying as a false EOM but am not parsing to find the actual EOM in such case!... Possibly fixed, can't remember!
 
- 
+- [ ] Set a delay - Brio seems to have a small lag after ACK before sending tally dump (check timestamps in sample output) 
+  maybe around generic send / connectIO line 97... looks like I need to add 500ms 
+  
+- [ ] Add the mute ID to user option
