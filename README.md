@@ -17,7 +17,8 @@ repeatedly entering `help` until the help info is displayed gets it recognising 
 
 
 ## connectIO.py
-The main script, providing CLI based user interaction for exchanging SWP08 messages with a router. 
+The main script, providing CLI based user interaction for exchanging SWP08 messages with a router. Currently supports
+making connections with optional label to push, and requesting current connection state (tally dump).
 
 
 ### Supporting files
