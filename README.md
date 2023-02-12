@@ -41,7 +41,8 @@ Provides constants and utility functions for working with the SWP08 protocol
 Handles loading of last used settings, user confirm/edit and save as json.
 
 #### router_emulator.py
-Basic SWP08 router emulator with server side socket for testing ConnectIO locally in the absence of a real router
+Basic SWP08 router emulator with server side socket for testing connectIO locally in the absence of a real router.
+usage: start router_emulator.py, then start connectIO.py in another terminal window and enter address 127.0.0.1 (localhost) for connectIO to connect with the router emulator.
 
 #### import_io.py
 Used by router emulator (& ConnectIO GUI) to import Calrec VPB config CSV files.
@@ -50,9 +51,9 @@ Used by router emulator (& ConnectIO GUI) to import Calrec VPB config CSV files.
 Provides server-side equivalent of client_connection.py for use by router_emulator.py
 
 ### TODO:
-- [ ] Check handling of DLE's within payload properly... check I'm properly escaping them when encoding payload. 
-  Decode was failing, e.g. connect destination 16 to source 3, gets encoded as \x16\x03 which 
-  I'm identifying as a false EOM but am not parsing to find the actual EOM in such case!... Possibly fixed, can't remember!
+- [ ] handling DLE's within payload properly... escape them when encoding payload. 
+  Decode was failing, e.g. connect destination 17 to source 4, gets encoded as \x10\x03 which 
+  I'm identifying as a false EOM but am not parsing to find the actual EOM in such case!
 
 - [ ] Set a delay - Brio seems to have a small lag after ACK before sending tally dump (check timestamps in sample output) 
   maybe around generic send / connectIO line 97... looks like I need to add 500ms 
