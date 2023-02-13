@@ -34,8 +34,11 @@ incoming messages, and provides public methods for sending messages and getting 
 Connection.send() accepts raw byte strings or swp_message objects. Connection.get_message returns the oldest message in the input buffer (along with the timestamp of when it was received) 
 
 #### swp_message.py
-Provides classes for various SWP08 message types that accept human parameters and provides SWP encoded bytes, 
-and a `decode()` method that parses bytes and returns the relevant message class.
+Provides classes for various SWP08 message types. Message objects provide an `encoded` attribute which is a byte string
+that can be passed to a socket, e.g. `client_connection.Connection.send()`, and a `__str__` method, so they print informatively. 
+
+Also provides a `decode()` function that takes byte-strings (as received over a socket via swp_unpack) and returns
+swp message objects.
 
 #### swp_unpack.py
 Checks byte strings for SWP08 headers/SOM and end-of-message/EOM, returning a list of separated messages. 
@@ -66,12 +69,13 @@ Provides server-side equivalent of client_connection.py for use by router_emulat
   I'm identifying as a false EOM but am not parsing to find the actual EOM in such case!
 
 - [ ] Set a delay - Brio seems to have a small lag after ACK before sending tally dump (check timestamps in sample output) 
-  maybe around generic send / connectIO line 97... looks like I need to add 500ms (currently need to press to view remaining messages in reccieve buffer to see them).
+  maybe around generic send / connectIO line 97... looks like I need to add 500ms 
+  (currently, user needs to press Enter to view remaining messages in receive buffer to see them before moving on).
   
-- [ ] Add the mute ID to user option. Currently, silence/mute/no-connection is hard-coded with the ID 1023 (1024 in UI/csv). Note, Impulse seems to return source ID 0   if there is no source patched, (at least if no silence source id set in COnfigure). Brio does not return a tally if no source.
+- [ ] Add the mute ID as a user option. Currently, silence/mute/no-connection is hard-coded with the ID 1023 (1024 in UI/csv). Note, Impulse seems to return source ID 0   if there is no source patched, (at least if no silence source id set in COnfigure). Brio does not return a tally if no source.
 
-- [ ] Change message str methods to return 1 based output
+- [ ] Change message str methods to return 1 based output to match Calrec UI/csv
 
-- [ ] Setup nodes for router emulator so can run without a csv
+- [ ] Setup default node creation for router emulator so can run without a csv
 
 - [ ] Fix/check GUI issues

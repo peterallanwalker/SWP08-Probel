@@ -241,8 +241,6 @@ class CrossPointTallyDumpWord:
     def _verbose_listing(self):
         r = ''
         for i, src in enumerate(self.sources):
-            if src == swp_utils.MUTE_ID:
-                src = str(src) + '(swp_utils.MUTE_ID)'
             r += f'Destination {self.first_destination.id + i} <- Source {src}\n'
         return r
 
