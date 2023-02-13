@@ -66,7 +66,7 @@ Provides server-side equivalent of client_connection.py for use by router_emulat
   I'm identifying as a false EOM but am not parsing to find the actual EOM in such case!
 
 - [ ] Set a delay - Brio seems to have a small lag after ACK before sending tally dump (check timestamps in sample output) 
-  maybe around generic send / connectIO line 97... looks like I need to add 500ms. 
+  maybe around generic send / connectIO line 97... looks like I need to add 500ms (currently need to press to view remaining messages in reccieve buffer to see them).
   
 - [ ] Add the mute ID to user option. Currently, silence/mute/no-connection is hard-coded with the ID 1023 (1024 in UI/csv)
 
