@@ -23,7 +23,7 @@ TIMEOUT = 3
 MAX_SEND_ATTEMPTS = 5
 
 TITLE = "ConnectIO"
-VERSION = 1.2
+VERSION = 1.3
 
 
 def prompt_matrix_level():
