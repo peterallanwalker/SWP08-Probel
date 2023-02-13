@@ -68,7 +68,7 @@ Provides server-side equivalent of client_connection.py for use by router_emulat
 - [ ] Set a delay - Brio seems to have a small lag after ACK before sending tally dump (check timestamps in sample output) 
   maybe around generic send / connectIO line 97... looks like I need to add 500ms (currently need to press to view remaining messages in reccieve buffer to see them).
   
-- [ ] Add the mute ID to user option. Currently, silence/mute/no-connection is hard-coded with the ID 1023 (1024 in UI/csv)
+- [ ] Add the mute ID to user option. Currently, silence/mute/no-connection is hard-coded with the ID 1023 (1024 in UI/csv). Note, Impulse seems to return source ID 0   if there is no source patched, (at least if no silence source id set in COnfigure). Brio does not return a tally if no source.
 
 - [ ] Change message str methods to return 1 based output
 
