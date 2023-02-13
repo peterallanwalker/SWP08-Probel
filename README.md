@@ -69,3 +69,9 @@ Provides server-side equivalent of client_connection.py for use by router_emulat
   maybe around generic send / connectIO line 97... looks like I need to add 500ms. 
   
 - [ ] Add the mute ID to user option. Currently, silence/mute/no-connection is hard-coded with the ID 1023 (1024 in UI/csv)
+
+- [ ] Change message str methods to return 1 based output
+
+- [ ] Setup nodes for router emulator so can run without a csv
+
+- [ ] Fix/check GUI issues
