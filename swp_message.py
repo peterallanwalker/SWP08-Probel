@@ -41,13 +41,18 @@ def decode(encoded_message):
     :param encoded_message: bytes, pre-validated SWP message as sent/received by a socket
     :return: Message object of the appropriate Class
     """
+    # First check if bytes are a simple ACK or NAK message
     if encoded_message == bytes(utils.ACK):
         return Response()
     elif encoded_message == bytes(utils.NAK):
         return Response(response='NAK')
     else:
-        # Get the command byte and lookup the key for that value in utils.COMMANDS
-        command = list(utils.COMMANDS.keys())[list(utils.COMMANDS.values()).index(encoded_message[utils.COMMAND_BYTE])]
+        # Get the value of the command byte and lookup the key for that value in utils.COMMANDS
+        try:
+            command = list(utils.COMMANDS.keys())[list(utils.COMMANDS.values()).index(encoded_message[utils.COMMAND_BYTE])]
+        except ValueError:
+            print(f'[swp_message.decode]: Command not supported: {encoded_message[utils.COMMAND_BYTE]}')
+            return None
 
         # Create an swp_message object based on the command type
         if command in ('connect', 'connected'):
@@ -59,11 +64,8 @@ def decode(encoded_message):
             destination = utils.decode_labels_destination(encoded_message)
             matrix, level = utils.decode_matrix_level(encoded_message)
             labels = utils.get_labels(encoded_message)
-            # print(f'[{TITLE}.decode]: DEBUG labels: {labels}')
-
-            # - get character length code (dict key) by value
+            # - get the value of the character length byte and look up its key to get the actual char length
             char_len = list(utils.CHAR_LEN_CODES.keys())[list(utils.CHAR_LEN_CODES.values()).index(encoded_message[utils.CHAR_LEN_BYTE])]
-            # print(f'[{TITLE}.decode]: DEBUG char_len: {char_len}')
             return PushLabels(destination, labels, matrix, char_len)
 
         elif command == 'cross-point tally dump request':
@@ -73,9 +75,8 @@ def decode(encoded_message):
         # TODO, handle "cross-point tally dump (byte)" message type
         #elif command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
         elif command == "cross-point tally dump (word/extended)":
-            # - TODO calling separately this for every message at moment, should move to single call above
+            # - TODO I'm getting matrix & level in the same way for every message type so far, so move to above
             matrix, level = utils.decode_matrix_level(encoded_message)
-
             tallies = encoded_message[utils.COMMAND_BYTE + 2]  # Number of connections represented in the message
 
             first_destination_div = encoded_message[utils.COMMAND_BYTE + 3]
@@ -85,13 +86,14 @@ def decode(encoded_message):
             connected_sources = []
 
             for i in range(tallies):
-                # TODO - THIS IS NOT GETTING THE RIGHT BYTES
+                # decode the source ID and create a source node object
                 div = encoded_message[utils.COMMAND_BYTE + 5 + (i * 2)]
                 mod = encoded_message[utils.COMMAND_BYTE + 6 + (i * 2)]
                 source_id = 256 * div + mod
                 connected_sources.append(Node.source(matrix, level, source_id))
 
-            for i in range(tallies):
+                # create destination node object (only the first destination is available in the encoded message,
+                # The subsequent ones have consecutive IDs
                 destination = Node.destination(matrix, level, first_destination + i)
                 destination.connected_source = connected_sources[i]
                 destinations.append(destination)
@@ -99,7 +101,8 @@ def decode(encoded_message):
             return CrossPointTallyDumpWord(destinations)
 
         else:
-            raise ValueError(f"[swp_massage.decode]: {command} command not yet supported")
+            #raise ValueError(f"[swp_massage.decode]: {command} command not yet supported")
+            print(f"[swp_massage.decode]: {command} command not yet supported")
 
 
 class Response:
@@ -245,8 +248,6 @@ class CrossPointTallyDumpWord:
         return r
 
     def __str__(self):
-        # TODO, when printing sources, print the dest ID as well
-        
         return f'[swp_message object]: command:{self.command}, matrix:{self.matrix}, level:{self.level}, ' \
                f'\nConnections:\n{self.verbose}'
 
