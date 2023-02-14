@@ -5,7 +5,6 @@
 # - https://github.com/peterallanwalker/SWP08-Probel/blob/master/protocol%20docs/SW-P-08%20Issue%2032.pdf
 
 import cli_utils
-import swp_utils
 import swp_utils as utils
 from swp_node import Node
 import swp_node
@@ -49,7 +48,8 @@ def decode(encoded_message):
     else:
         # Get the value of the command byte and lookup the key for that value in utils.COMMANDS
         try:
-            command = list(utils.COMMANDS.keys())[list(utils.COMMANDS.values()).index(encoded_message[utils.COMMAND_BYTE])]
+            command = list(utils.COMMANDS.keys())[
+                list(utils.COMMANDS.values()).index(encoded_message[utils.COMMAND_BYTE])]
         except ValueError:
             print(f'[swp_message.decode]: Command not supported: {encoded_message[utils.COMMAND_BYTE]}')
             return None
@@ -65,7 +65,8 @@ def decode(encoded_message):
             matrix, level = utils.decode_matrix_level(encoded_message)
             labels = utils.get_labels(encoded_message)
             # - get the value of the character length byte and look up its key to get the actual char length
-            char_len = list(utils.CHAR_LEN_CODES.keys())[list(utils.CHAR_LEN_CODES.values()).index(encoded_message[utils.CHAR_LEN_BYTE])]
+            char_len = list(utils.CHAR_LEN_CODES.keys())[
+                list(utils.CHAR_LEN_CODES.values()).index(encoded_message[utils.CHAR_LEN_BYTE])]
             return PushLabels(destination, labels, matrix, char_len)
 
         elif command == 'cross-point tally dump request':
@@ -73,7 +74,7 @@ def decode(encoded_message):
             return GetConnections(matrix, level)
 
         # TODO, handle "cross-point tally dump (byte)" message type
-        #elif command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
+        # elif command in ("cross-point tally dump (byte)", "cross-point tally dump (word/extended)"):
         elif command == "cross-point tally dump (word/extended)":
             # - TODO I'm getting matrix & level in the same way for every message type so far, so move to above
             matrix, level = utils.decode_matrix_level(encoded_message)
@@ -101,8 +102,9 @@ def decode(encoded_message):
             return CrossPointTallyDumpWord(destinations)
 
         else:
-            #raise ValueError(f"[swp_massage.decode]: {command} command not yet supported")
+            # raise ValueError(f"[swp_massage.decode]: {command} command not yet supported")
             print(f"[swp_massage.decode]: {command} command not yet supported")
+            return None
 
 
 class Response:
@@ -217,14 +219,18 @@ class GetConnections:
 
 class CrossPointTallyDumpWord:
     def __init__(self, destinations):
+        """
+        :param destinations: list of up to 64 consecutive ID'd destination Nodes
+        (provided by swp_node.get_consecutive_nodes())
+        """
         if len(destinations) > 64:
             print(f'[{TITLE}.CrossPointTallyDumpWord]: Max number of tallies per message is 64,'
                   f' {len(destinations)} received')
         else:
             self.command = "cross-point tally dump (word/extended)"
-            # This message type only passes the first destination, and provides the 'tally' (connected source)
-            # for that destination and every following consecutive ID'd destination, up to a max of 64
-            # It assumes all destinations and sources are of the same matrix & level.
+            # This message type only passes the first destination's ID, the number of tallies/connections in the message
+            # and source IDs for the given destination and every following consecutive ID'd destination,
+            # up to a max of 64. It assumes all destinations and sources are of the same matrix & level.
             self.first_destination = destinations[0]
             self.matrix = self.first_destination.matrix
             self.level = self.first_destination.level
@@ -234,8 +240,8 @@ class CrossPointTallyDumpWord:
 
     def _encode(self):
         matrix_level = utils.encode_matrix_level(self.matrix, self.level)
-        data = [utils.COMMANDS[self.command], matrix_level, len(self.sources),
-                int(self.first_destination.id / 256), self.first_destination.id % 256]
+        data = [utils.COMMANDS[self.command], matrix_level, len(self.sources)]
+        data += utils.div_mod(self.first_destination.id)
         for source in self.sources:
             source = utils.div_mod(source)
             data += source
@@ -261,7 +267,6 @@ class PushLabels:
     Calrec will automatically update the labels of any other destinations that are connected from the same source
     as any destinations that are explicitly getting labels pushed to them.
     """
-
     def __init__(self, first_destination, labels, matrix=0, char_len=12):
         """
         :param first_destination: Node object or int representing ID of the destination for the first label
@@ -271,10 +276,10 @@ class PushLabels:
                          if passed 16 or 32 char length labels.
         """
         if type(first_destination) is Node:
-            # - This message type is only supported for level 0
-            # - I assume the intention is that levels are used to split channels of the same path
+            # - Note, this message type is only supported for level 0
+            # - ... I assume the intention is that levels are used to split channels of the same path
             # - using the same matrix and ID (I should provide an option to "link levels" when making connections.
-            # - e.g. if "main 1 L" is matrix n, level 0, id n, then "main 1 R should be matrix n level 1, id n
+            # - e.g. if "main 1 L" is matrix a, level 0, id b, then "main 1 R should be matrix a level 1, id b
             if first_destination.level != 0:
                 raise ValueError("[swp_message.PushLabels]: Labels can only be pushed to level 0, level {} was passed"
                                  .format(self.destination.level))
@@ -385,5 +390,3 @@ if __name__ == '__main__':
     test_connected()
     test_push_labels()
 
-    # msg = GetConnections(12, 10)
-    # print(msg)
