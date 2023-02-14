@@ -4,7 +4,7 @@ A Python3 application for testing router control - Source to destination cross-p
 using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf)
 (Other versions of the protocol doc are available in [this repo's protocol docs folder](https://github.com/peterallanwalker/SWP08-Probel/tree/master/protocol%20docs))
 
-"cli" branches use standard Python (no external Python modules need to be installed)
+"CLI" branches use standard Python (no external Python modules need to be installed)
 
 #### Downloads:
 - Stable/tested: [Download ConnectIO CLI V1.2](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
