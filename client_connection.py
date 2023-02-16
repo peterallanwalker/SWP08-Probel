@@ -27,9 +27,9 @@ RECEIVE_TIMEOUT = 10
 
 
 class Connection:
-    def __init__(self, ip_address, log=None):
+    def __init__(self, ip_address, port=swp_utils.PORT, log=None):
         self.address = ip_address
-        self.port = swp_utils.PORT
+        self.port = port
         self.sock = None
         self.status = 'Starting'
 
