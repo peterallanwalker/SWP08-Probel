@@ -149,7 +149,8 @@ class Connection:
             # TODO - wait 1s for ACK/NAK & retry 3 times before returning?
             #  (if protocol = swp, will break CSCP doing that... test higher up in connectIO)
             if self.log:
-                self.log.log(time.time(), message, 'sent')
+                #self.log.log(time.time(), message, 'sent')
+                self.log.log(datetime.datetime.now(), message, 'sent')
             return True
         except socket.error as e:
             print("[Connection.send]: Failed to send, error:", e)
