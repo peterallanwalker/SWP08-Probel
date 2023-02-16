@@ -48,7 +48,7 @@ class Router:
             #print("[swp_router.process_incoming messages]: Messages in receive buffer:",
             #      self.connection.receive_buffer_len())
             timestamp, msg = self.connection.get_message()
-            msg = Message.decode(msg)
+            msg = message.decode(msg)
 
             self.log.log(timestamp, msg, 'received')
             if msg.command == 'ACK':
