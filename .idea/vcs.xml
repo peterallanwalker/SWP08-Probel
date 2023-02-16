@@ -4,6 +4,8 @@
     <option name="branchProtectionPatterns">
       <list>
         <option value="master" />
+        <option value="ConnectIO_CLI_V1\.2" />
+        <option value="ConnectIO_CLI_V1\.3" />
       </list>
     </option>
   </component>

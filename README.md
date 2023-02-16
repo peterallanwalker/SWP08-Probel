@@ -1,4 +1,4 @@
-# SWP08/Probel - ConnectIO CLI
+# SWP08/Probel - ConnectIO
 
 A Python3 application for testing router control - Source to destination cross-point switching and pushing of labels 
 using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf)
@@ -7,6 +7,7 @@ using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/s
 #### Downloads:
 - Stable/tested: [Download ConnectIO CLI V1.2](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
 - Beta: [Download ConnectIO CLI V1.3](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.3.zip)
+- Proto GUI: in progress
 
 Cross-point switching tested with Calrec Brio and Apollo+/Impulse audio mixers.
 Label pushing tested with Calrec Apollo+ (label exchange is not supported on Brio or Summa)

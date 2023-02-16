@@ -4,7 +4,6 @@
 
 import datetime
 import sys
-import time
 import socket
 import threading
 
