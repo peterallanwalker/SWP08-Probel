@@ -82,3 +82,4 @@ Provides server-side equivalent of client_connection.py for use by router_emulat
 - [ ] Setup default node creation for router emulator so can run without a csv
 
 - [ ] Fix/check GUI issues
+- [ ] Add port as a settings parameter
