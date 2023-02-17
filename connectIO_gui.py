@@ -71,7 +71,7 @@ from PyQt5.QtGui import QPalette, QColor, QPainter
 import cli_utils
 from css import CSS
 import connectIO_gui_settings as config
-from interface import Router
+from connectIO_gui_router import Router
 
 TITLE = "ConnectIO"
 VERSION = 0.9

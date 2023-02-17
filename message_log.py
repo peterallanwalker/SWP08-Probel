@@ -1,13 +1,20 @@
 # Class for storing sent & received messages
-# TODO - change classname to logger to avoid having to write log.log
+
 # manage buffer / max size
-class MessageLog:
+# TODO - Manage buffer / limit log size
+import datetime
+
+
+class Logger:
     MAX_TX = 30
     MAX_RX = 100
 
     def __init__(self):
         self.received = []
         self.sent = []
+        self.all = []  # TODO - decide whether to keep sent & recieved separately
+                       # (for easy separation into two windows by gui, or keep together for easy print of sequential
+                       # messages and have gui separate them... doing both for now
 
     #def pop_if_full(self, buffer):
     #    if buffer == 'received':
@@ -25,6 +32,8 @@ class MessageLog:
             self.received.append((timestamp, message))
             #self.pop_if_full('received')
 
+        self.all.append((timestamp, direction, message))
+
     def get_message(self, direction):
         if direction == 'sent':
             if self.sent:
@@ -41,3 +50,11 @@ class MessageLog:
         r = ''
         # TODO - provide a function to sort both send and received into a single list ordered by timestamp
         # ... or maybe just hold all messages in one list, with a sent and recieved list (then offload to UI to present in two windows)
+        for message in self.all:
+            if message[1] == "sent":
+                direction = ">>> Sent    :"
+            else:
+                direction = "<<< Received:"
+            #timestamp = datetime.strftime("%a, %d %b %Y %H:%M:%S", datetime.localtime(message[0]))
+            r += (direction + message[2].__str__() + '\n')
+        return r

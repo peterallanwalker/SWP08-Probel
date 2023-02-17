@@ -46,6 +46,7 @@ class Connection:
         # - ...    - maybe unnecessary and would be easier to follow if sent and received logging was done in the same
         #            place
         self.log = log
+        self.log.log("c", "c", "c")
         self.receiver = threading.Thread(target=self._run)
 
         # TODO, check the following...

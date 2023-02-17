@@ -1,4 +1,4 @@
-# - Data model & comms interface to sit between UI and router.
+# - Data model & comms interface to sit between UI and the router/socket connection with the router.
 # - Peter Walker, April 2022
 import time  # - Just for debug
 
@@ -7,7 +7,7 @@ from import_io import import_io_from_csv
 import settings as config
 from client_connection import Connection
 import swp_message as message
-from message_log import MessageLog
+from message_log import Logger
 from swp_utils import match_destination, match_source
 
 TITLE = 'SWP Router'
@@ -18,7 +18,8 @@ class Router:
     # TODO - Added a temporary optional io+config argument as not part of settings in this version
     def __init__(self, settings, io_config=None):
         self.settings = settings
-        self.log = MessageLog()
+        self.log = Logger()
+        self.log.log("test", "test", "test")
         self.connection = Connection(settings["Router IP Address"], settings["Port"], log=self.log)
         #self.connection = Connection(settings["Router IP Address"], settings["Port"])
         if 'IO Config File' in self.settings:
@@ -57,7 +58,7 @@ class Router:
                 print("[swp_router.process_incoming messages]:{} >>> ** NAK received! **".format(timestamp))
             else:
                 print("[swp_router.process_incoming messages]:{} >>> Received Message:{}".format(timestamp,
-                                                                                                 msg.summary))
+                                                                                                 msg))
                 # - Update the data model
                 self._update_data(msg)
 
@@ -181,5 +182,10 @@ if __name__ == '__main__':
         print("Connect test passed")
 
     print("\n", router.destinations[0].connected_source)
+
+    print("MESSAGE LOG:")
+    print(router.log)
+    print("CONNECTION LOG")
+    print(router.connection.log)
 
 
