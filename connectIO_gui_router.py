@@ -1,12 +1,14 @@
 # - Data model & comms interface to sit between UI and the router/socket connection with the router.
 # - Peter Walker, April 2022
+import sys
 import time  # - Just for debug
 
 import cli_utils
-from import_io import import_io_from_csv
 import settings as config
-from client_connection import Connection
 import swp_message as message
+from swp_node import Node
+from import_io import import_io_from_csv
+from client_connection import Connection
 from message_log import Logger
 from swp_utils import match_destination, match_source
 
@@ -19,7 +21,6 @@ class Router:
     def __init__(self, settings, io_config=None):
         self.settings = settings
         self.log = Logger()
-        self.log.log("test", "test", "test")
         self.connection = Connection(settings["Router IP Address"], settings["Port"], log=self.log)
         #self.connection = Connection(settings["Router IP Address"], settings["Port"])
         if 'IO Config File' in self.settings:
@@ -29,9 +30,9 @@ class Router:
             self.source_data = io_config
             self.sources, self.destinations = import_io_from_csv(self.source_data)
         else:
-            self.source_data = ''
-            self.sources = None
-            self.destinations = None
+            self.source_data = 'Default'
+            self.sources = [Node.source(0, 0, 0)]
+            self.destinations = [Node.destination(0, 0, 0)]
 
         self.label_len = settings["Label Length"]
         # - TODO - query the router to get the connected source for each desintation
@@ -161,18 +162,21 @@ if __name__ == '__main__':
 
     settings = config.get_settings()  # - present last used settings and prompt for confirm/edit
     config.save_settings(settings)  # - Save user confirmed settings for next startup
-
     io_config = 'VirtualPatchbays.csv'
-    router = Router(settings, io_config=io_config)
+    #router = Router(settings, io_config=io_config)
+    router = Router(settings)
 
     # - Wait for connection
     while router.connection.status != 'Connected':
         pass
 
-    src = router.sources[0]
-    dst = router.destinations[0]
-
-    router.connect(src, dst)
+    try:
+        src = router.sources[0]
+        dst = router.destinations[0]
+        router.connect(src, dst)
+    except IndexError:
+        print("No sources and/or destinations available")
+        sys.exit()
 
     time.sleep(1)
     router.process_incoming_messages()
@@ -185,7 +189,6 @@ if __name__ == '__main__':
 
     print("MESSAGE LOG:")
     print(router.log)
-    print("CONNECTION LOG")
-    print(router.connection.log)
+
 
 

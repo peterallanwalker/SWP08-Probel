@@ -3,6 +3,7 @@
 # manage buffer / max size
 # TODO - Manage buffer / limit log size
 import datetime
+import time
 
 
 class Logger:
@@ -52,9 +53,18 @@ class Logger:
         # ... or maybe just hold all messages in one list, with a sent and recieved list (then offload to UI to present in two windows)
         for message in self.all:
             if message[1] == "sent":
-                direction = ">>> Sent    :"
+                direction = " >>> Sent    : "
             else:
-                direction = "<<< Received:"
+                direction = " <<< Received: "
+            #print(message[0])
             #timestamp = datetime.strftime("%a, %d %b %Y %H:%M:%S", datetime.localtime(message[0]))
-            r += (direction + message[2].__str__() + '\n')
+            if type(message[0]) == datetime.datetime:
+                timestamp = message[0].strftime("%a, %d %b %Y %H:%M:%S.%f")[:-3]  #to millisecond
+            else:
+                timestamp = ''
+            #timestamp = message[0]
+            r += (timestamp + direction + message[2].__str__() + '\n')
+            timestamp = time.time()
+            #print("DEBUG TIME", time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(timestamp)))
+            #print("DEBUG TIME", datetime.datetime.now().strftime("%a, %d %b %Y %H:%M:%S.%f")[:-3])  #to millisecond
         return r

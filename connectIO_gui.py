@@ -145,6 +145,7 @@ def format_timestamp(timestamp):
     return time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(timestamp))
 
 
+
 def create_labels(router, matrix, level, io_type, label_type):
     """
     :param router: Router object
@@ -1062,7 +1063,7 @@ if __name__ == '__main__':
 
     # - Get last used settings
     # - Note my router is 192.169.1.201
-    # - Use 127.0.0.1 to connect with virtual router running on same machine for testing / running this GUI offline
+    # - Use 127.0.0.1 to connect with router emulator running on same machine for testing / running this GUI offline
     settings = config.load_settings()
     print("[ConnectIO_gui.main]: Settings:\n", settings)
 

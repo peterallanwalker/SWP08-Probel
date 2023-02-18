@@ -1,0 +1,8 @@
+{
+    "Router Name": "test",
+    "Router IP Address": "127.0.0.1",
+    "Port": 61000,
+    "Protocol": "SWP08",
+    "Label Length": 12,
+    "IO Config File": "C:/Users/peter/Documents/pawdev/SWP08-Probel-Wrapper/VirtualPatchbays.csv"
+}

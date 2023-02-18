@@ -17,6 +17,16 @@ class Node:
     (note an entity with both source and destination IDs should be represented as two separate nodes)
     """
     def __init__(self, matrix, level, swp_id, io_type, group="", ch="", label="", user_label=""):
+        """
+        :param matrix: int
+        :param level: int
+        :param swp_id: int
+        :param io_type: str
+        :param group: str
+        :param ch:
+        :param label: str
+        :param user_label: str
+        """
         self.matrix = matrix
         self.level = level
         self.id = swp_id
