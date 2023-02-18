@@ -1,11 +1,12 @@
 # SWP08/Probel
 
-[Download ConnectIO CLI V1.2](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
-
-ConnectIO GUI - crosspoint matrix with label handling is beta
-
 ### Router control using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/sam/Protocols%20and%20MIBs/Router%20Control%20Protocols%20SW-P-88%20Issue%204b.pdf)
 (Other versions of the protocol doc are available in [this repo's protocol docs folder](https://github.com/peterallanwalker/SWP08-Probel/tree/master/protocol%20docs))
+
+#### Downloads:
+- CLI Stable/tested: [Download ConnectIO CLI V1.2](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
+- CLI Beta: [Download ConnectIO CLI V1.3](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.3.zip)
+- GUI Beta: [Download ConnectIO GUI V0.9](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_GUI_V1.zip)
 
 ## Source to destination cross-point switching and pushing of labels.
 
