@@ -5,9 +5,9 @@ using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/s
 (Other versions of the protocol doc are available in [this repo's protocol docs folder](https://github.com/peterallanwalker/SWP08-Probel/tree/master/protocol%20docs))
 
 #### Downloads:
-- Stable/tested: [Download ConnectIO CLI V1.2](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
-- Beta: [Download ConnectIO CLI V1.3](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.3.zip)
-- Proto GUI: in progress
+- CLI Stable/tested: [Download ConnectIO CLI V1.2](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
+- CLI Beta: [Download ConnectIO CLI V1.3](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.3.zip)
+- GUI Beta: [Download ConnectIO GUI V0.9](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_GUI_V1.zip)
 
 Cross-point switching tested with Calrec Brio and Apollo+/Impulse audio mixers.
 Label pushing tested with Calrec Apollo+ (label exchange is not supported on Brio or Summa)
