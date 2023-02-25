@@ -7,7 +7,7 @@ using the [SWP08/Probel protocol](https://wwwapps.grassvalley.com/docs/Manuals/s
 #### Downloads:
 - CLI Stable/tested: [Download ConnectIO CLI V1.2](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.2.zip)
 - CLI Beta: [Download ConnectIO CLI V1.3](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_CLI_V1.3.zip)
-- GUI Beta: [Download ConnectIO GUI V0.9](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_GUI_V1.zip)
+- GUI Beta: [Download ConnectIO GUI V1.0](https://github.com/peterallanwalker/SWP08-Probel/archive/refs/heads/ConnectIO_GUI_V1.zip)
 
 Cross-point switching tested with Calrec Brio and Apollo+/Impulse audio mixers.
 Label pushing tested with Calrec Apollo+ (label exchange is not supported on Brio or Summa)
@@ -19,10 +19,11 @@ and enter `audit/update 105` & `audit/update 70` to enable SWP related debug out
 repeatedly entering `help` until the help info is displayed gets it recognising input)
 
 
-## connectIO.py
-The main script, providing CLI based user interaction for exchanging SWP08 messages with a router. 
+## connectIO_cli.py
+The main script providing CLI based user interaction for exchanging SWP08 messages with a router. Uses standard Python3
+(no additional modules need installing)
 
-Currently supports making connections with optional label to push, and requesting current connection state (tally dump). 
+Supports making connections with optional label to push, and requesting current connection state (tally dump). 
 
 Note CLI values are protocol level / zero-based, whereas Calrec UI & CSV is one-based, so a matrix/level/id of e.g. 1 
 in the UI/CSV is 0 in the CLI.
@@ -82,4 +83,12 @@ Provides server-side equivalent of client_connection.py for use by router_emulat
 - [ ] Setup default node creation for router emulator so can run without a csv
 
 - [ ] Fix/check GUI issues
+  
 - [ ] Add port as a settings parameter
+
+
+## connectIO_gui.py
+
+A Python3 application using PyQT to provide a GUI for cross-point switching. Imports Calrec formatted CSV files to
+present a source-destination matrix and source label input, and a messaging view to observe SWP08 comms between the 
+app and the router. 

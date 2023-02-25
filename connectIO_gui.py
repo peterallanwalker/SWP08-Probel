@@ -142,8 +142,8 @@ def format_timestamp(timestamp):
     """
     #print("DEBUG", timestamp, type(timestamp))
     #print(time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(timestamp)))
-    return time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(timestamp))
-
+    #return time.strftime("%a, %d %b %Y %H:%M:%S", time.localtime(timestamp))
+    return timestamp.strftime("%a, %d %b %Y %H:%M:%S.%f")[:-3]
 
 
 def create_labels(router, matrix, level, io_type, label_type):
@@ -498,7 +498,8 @@ class MessageItem(QWidget):
         timestamp_field = QLabel(format_timestamp(timestamp))
         timestamp_field.setFixedWidth(190)
         #message_field = QLabel(message.__str__())  # TODO, provde a method summary atrribute
-        message_field = QLabel(message.summary)
+        #message_field = QLabel(message.summary)
+        message_field = QLabel(message.__str__())
 
         timestamp_field.setAlignment(Qt.AlignTop)
 
@@ -561,9 +562,9 @@ class MessagingView(QWidget):
         self.sent_window = QVBoxLayout()
         self.received_window = QVBoxLayout()
 
-        self.sent_widget.addWidget(self.sent_window)
-        self.received_widget.addWidget(self.received_window)
-
+        #self.sent_widget.addWidget(self.sent_window)
+        #self.received_widget.addWidget(self.received_window)
+        #self.sent_widget.addWidget(self.sent_scroll_area)
 
         self.background_layout.addWidget(self.label)
         self.background_layout.addLayout(self.messages_layout)
